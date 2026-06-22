@@ -1,0 +1,72 @@
+services:
+  mysql:
+    image: mysql:8.4
+    container_name: do-not-miss-mysql
+    environment:
+      MYSQL_ROOT_PASSWORD: root123456
+      MYSQL_DATABASE: do_not_miss
+      MYSQL_USER: donotmiss
+      MYSQL_PASSWORD: donotmiss123
+    ports:
+      - "3306:3306"
+    volumes:
+      - do_not_miss_mysql:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-uroot", "-proot123456"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  redis:
+    image: redis:7.4-alpine
+    container_name: do-not-miss-redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - do_not_miss_redis:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  rabbitmq:
+    image: rabbitmq:3.13-management
+    container_name: do-not-miss-rabbitmq
+    environment:
+      RABBITMQ_DEFAULT_USER: donotmiss
+      RABBITMQ_DEFAULT_PASS: donotmiss123
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    volumes:
+      - do_not_miss_rabbitmq:/var/lib/rabbitmq
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "-q", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  opensearch:
+    image: opensearchproject/opensearch:2.15.0
+    container_name: do-not-miss-opensearch
+    environment:
+      discovery.type: single-node
+      plugins.security.disabled: "true"
+      OPENSEARCH_INITIAL_ADMIN_PASSWORD: DoNotMiss123!
+      OPENSEARCH_JAVA_OPTS: -Xms512m -Xmx512m
+    ports:
+      - "9200:9200"
+    volumes:
+      - do_not_miss_opensearch:/usr/share/opensearch/data
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fsS http://localhost:9200 >/dev/null || exit 1"]
+      interval: 15s
+      timeout: 10s
+      retries: 20
+
+volumes:
+  do_not_miss_mysql:
+  do_not_miss_redis:
+  do_not_miss_rabbitmq:
+  do_not_miss_opensearch:

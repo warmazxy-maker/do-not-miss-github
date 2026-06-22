@@ -1,0 +1,106 @@
+server:
+  port: ${SERVER_PORT:8080}
+
+spring:
+  config:
+    import: optional:file:./.env[.properties]
+  application:
+    name: do-not-miss-backend
+  datasource:
+    url: ${DB_URL:jdbc:mysql://localhost:3306/do_not_miss?useUnicode=true&characterEncoding=utf8&serverTimezone=Asia/Tokyo}
+    username: ${DB_USERNAME:donotmiss}
+    password: ${DB_PASSWORD:donotmiss123}
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    open-in-view: false
+    properties:
+      hibernate:
+        format_sql: true
+  flyway:
+    enabled: true
+    locations: classpath:db/migration
+  data:
+    redis:
+      host: ${REDIS_HOST:localhost}
+      port: ${REDIS_PORT:6379}
+      password: ${REDIS_PASSWORD:}
+  rabbitmq:
+    host: ${RABBITMQ_HOST:localhost}
+    port: ${RABBITMQ_PORT:5672}
+    username: ${RABBITMQ_USERNAME:donotmiss}
+    password: ${RABBITMQ_PASSWORD:donotmiss123}
+    listener:
+      simple:
+        auto-startup: ${RABBITMQ_LISTENER_AUTO_STARTUP:true}
+        missing-queues-fatal: false
+        default-requeue-rejected: false
+        retry:
+          enabled: true
+          max-attempts: 3
+          initial-interval: 1000
+          multiplier: 2
+
+app:
+  cors:
+    # Static frontend can be opened from file:// during local prototyping.
+    allowed-origins:
+      - "*"
+      - http://localhost:3000
+      - http://localhost:5173
+      - http://127.0.0.1:5500
+      - http://localhost:5500
+  qr:
+    token-ttl-hours: ${QR_TOKEN_TTL_HOURS:168}
+  ai:
+    # mock uses local rule-based AI. qwen/dashscope calls a real OpenAI-compatible model.
+    provider: ${AI_PROVIDER:mock}
+    model: ${AI_MODEL:qwen-plus}
+    embedding-model: ${AI_EMBEDDING_MODEL:text-embedding-v4}
+    embedding-dimensions: ${AI_EMBEDDING_DIMENSIONS:1024}
+    base-url: ${AI_BASE_URL:https://dashscope.aliyuncs.com/compatible-mode/v1}
+    api-key: ${DASHSCOPE_API_KEY:${AI_API_KEY:}}
+    timeout-seconds: ${AI_TIMEOUT_SECONDS:30}
+  mcp:
+    default-timezone: ${MCP_DEFAULT_TIMEZONE:Asia/Tokyo}
+    default-location: ${MCP_DEFAULT_LOCATION:日本 大阪}
+  events:
+    expiration:
+      initial-delay-ms: ${EVENT_EXPIRATION_INITIAL_DELAY_MS:60000}
+      delay-ms: ${EVENT_EXPIRATION_DELAY_MS:300000}
+  search:
+    enabled: ${SEARCH_ENABLED:false}
+    vector-enabled: ${SEARCH_VECTOR_ENABLED:false}
+    rerank-enabled: ${SEARCH_RERANK_ENABLED:false}
+    rerank-top-n: ${SEARCH_RERANK_TOP_N:12}
+    base-url: ${SEARCH_BASE_URL:http://localhost:9200}
+    index-name: ${SEARCH_INDEX_NAME:do_not_miss_events}
+  search-session:
+    ttl-minutes: ${SEARCH_SESSION_TTL_MINUTES:60}
+  user-memory:
+    snapshot-refresh-enabled: ${USER_MEMORY_SNAPSHOT_REFRESH_ENABLED:true}
+    snapshot-refresh-batch-size: ${USER_MEMORY_SNAPSHOT_REFRESH_BATCH_SIZE:10}
+    snapshot-refresh-initial-delay-ms: ${USER_MEMORY_SNAPSHOT_REFRESH_INITIAL_DELAY_MS:60000}
+    snapshot-refresh-delay-ms: ${USER_MEMORY_SNAPSHOT_REFRESH_DELAY_MS:300000}
+  mq:
+    exchange: ${APP_MQ_EXCHANGE:do-not-miss.events}
+    queues:
+      event-index: ${APP_MQ_QUEUE_EVENT_INDEX:do-not-miss.event-index}
+      growth-tag: ${APP_MQ_QUEUE_GROWTH_TAG:do-not-miss.growth-tag}
+      user-profile: ${APP_MQ_QUEUE_USER_PROFILE:do-not-miss.user-profile}
+    routing-keys:
+      event-index: event.index
+      growth-tag: growth-tag.extract
+      user-profile: user-profile.refresh
+    outbox:
+      enabled: ${APP_MQ_OUTBOX_ENABLED:true}
+      batch-size: ${APP_MQ_OUTBOX_BATCH_SIZE:20}
+      max-attempts: ${APP_MQ_OUTBOX_MAX_ATTEMPTS:8}
+      initial-delay-ms: ${APP_MQ_OUTBOX_INITIAL_DELAY_MS:5000}
+      delay-ms: ${APP_MQ_OUTBOX_DELAY_MS:5000}
+      initial-backoff-seconds: ${APP_MQ_OUTBOX_INITIAL_BACKOFF_SECONDS:5}
+      max-backoff-seconds: ${APP_MQ_OUTBOX_MAX_BACKOFF_SECONDS:300}
+
+logging:
+  level:
+    com.donotmiss.backend: INFO

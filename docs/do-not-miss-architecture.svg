@@ -1,0 +1,167 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1500" height="1060" viewBox="0 0 1500 1060">
+  <defs>
+    <marker id="arrow" markerWidth="11" markerHeight="11" refX="10" refY="5.5" orient="auto">
+      <path d="M0,0 L11,5.5 L0,11 Z" fill="#2d4f5d"/>
+    </marker>
+    <marker id="softArrow" markerWidth="10" markerHeight="10" refX="9" refY="5" orient="auto">
+      <path d="M0,0 L10,5 L0,10 Z" fill="#71808b"/>
+    </marker>
+    <style>
+      .bg { fill: #f7f3eb; }
+      .title { font: 800 34px "Microsoft YaHei", "Noto Sans CJK SC", Arial, sans-serif; fill: #16212b; }
+      .subtitle { font: 500 15px "Microsoft YaHei", "Noto Sans CJK SC", Arial, sans-serif; fill: #60717b; }
+      .layer-title { font: 800 18px "Microsoft YaHei", "Noto Sans CJK SC", Arial, sans-serif; fill: #17343d; letter-spacing: .5px; }
+      .box-title { font: 800 17px "Microsoft YaHei", "Noto Sans CJK SC", Arial, sans-serif; fill: #152631; }
+      .box-sub { font: 500 13px "Microsoft YaHei", "Noto Sans CJK SC", Arial, sans-serif; fill: #5c6a73; }
+      .tiny { font: 500 12px "Microsoft YaHei", "Noto Sans CJK SC", Arial, sans-serif; fill: #6b7780; }
+      .tag { font: 800 12px "Microsoft YaHei", "Noto Sans CJK SC", Arial, sans-serif; fill: #0f5d57; }
+      .panel { fill: #fffdfa; stroke: #d8cfc0; stroke-width: 1.2; rx: 10; }
+      .frontend { fill: #eef7f5; stroke: #7eb8b1; }
+      .api { fill: #fff7e8; stroke: #d7a84f; }
+      .agent { fill: #f1f5ff; stroke: #7b95ce; }
+      .data { fill: #f6f0fa; stroke: #a98cc1; }
+      .external { fill: #f4f6f7; stroke: #9ba9b1; }
+      .module { fill: #ffffff; stroke: #d7d1c7; stroke-width: 1; rx: 8; }
+      .module-strong { fill: #eff8f6; stroke: #17837a; stroke-width: 1.4; rx: 8; }
+      .module-ai { fill: #f7f9ff; stroke: #7b95ce; stroke-width: 1.3; rx: 8; }
+      .module-data { fill: #fbf7ff; stroke: #a98cc1; stroke-width: 1.3; rx: 8; }
+      .flow { fill: none; stroke: #2d4f5d; stroke-width: 2.2; marker-end: url(#arrow); }
+      .soft-flow { fill: none; stroke: #71808b; stroke-width: 1.7; stroke-dasharray: 7 6; marker-end: url(#softArrow); }
+      .note { fill: #fff; stroke: #d8cfc0; stroke-width: 1; rx: 8; }
+    </style>
+  </defs>
+
+  <rect class="bg" x="0" y="0" width="1500" height="1060"/>
+  <text class="title" x="60" y="66">Do Not Miss 整体架构图</text>
+  <text class="subtitle" x="60" y="94">面向大学生成长实践的平台：事件发现、挑战、日程、Coach、能力地图、智能简历与 Agent 推荐链路</text>
+
+  <rect class="panel frontend" x="55" y="130" width="1390" height="160"/>
+  <text class="layer-title" x="82" y="165">前端层</text>
+  <rect class="module-strong" x="92" y="185" width="230" height="72"/>
+  <text class="box-title" x="112" y="213">学生端页面</text>
+  <text class="box-sub" x="112" y="237">事件 / 关注 / 挑战 / 日程</text>
+  <rect class="module-strong" x="350" y="185" width="250" height="72"/>
+  <text class="box-title" x="370" y="213">个人成就</text>
+  <text class="box-sub" x="370" y="237">能力地图 + 里程碑时间线</text>
+  <rect class="module-strong" x="628" y="185" width="250" height="72"/>
+  <text class="box-title" x="648" y="213">AI 助手区域</text>
+  <text class="box-sub" x="648" y="237">事件推荐 / 计划推荐 / Coach</text>
+  <rect class="module" x="906" y="185" width="230" height="72"/>
+  <text class="box-title" x="926" y="213">社会端页面</text>
+  <text class="box-sub" x="926" y="237">组织发布事件 / 管理事件</text>
+  <rect class="module" x="1164" y="185" width="230" height="72"/>
+  <text class="box-title" x="1184" y="213">静态前端文件</text>
+  <text class="box-sub" x="1184" y="237">index.html / app.js / styles.css</text>
+
+  <rect class="panel api" x="55" y="340" width="1390" height="214"/>
+  <text class="layer-title" x="82" y="375">Spring Boot API 层</text>
+  <rect class="module" x="92" y="398" width="170" height="62"/>
+  <text class="box-title" x="112" y="424">Auth</text>
+  <text class="box-sub" x="112" y="446">注册 / 登录 / Token</text>
+  <rect class="module" x="282" y="398" width="170" height="62"/>
+  <text class="box-title" x="302" y="424">Event</text>
+  <text class="box-sub" x="302" y="446">事件发布 / 查询</text>
+  <rect class="module" x="472" y="398" width="170" height="62"/>
+  <text class="box-title" x="492" y="424">Reservation</text>
+  <text class="box-sub" x="492" y="446">预约 / QR 完成</text>
+  <rect class="module" x="662" y="398" width="170" height="62"/>
+  <text class="box-title" x="682" y="424">Challenge</text>
+  <text class="box-sub" x="682" y="446">自定义挑战</text>
+  <rect class="module" x="852" y="398" width="170" height="62"/>
+  <text class="box-title" x="872" y="424">Schedule</text>
+  <text class="box-sub" x="872" y="446">月视图 / 计划导入</text>
+  <rect class="module" x="1042" y="398" width="170" height="62"/>
+  <text class="box-title" x="1062" y="424">Coach</text>
+  <text class="box-sub" x="1062" y="446">聊天 / 日志 / 复习</text>
+  <rect class="module-strong" x="1232" y="398" width="170" height="62"/>
+  <text class="box-title" x="1252" y="424">Achievement</text>
+  <text class="box-sub" x="1252" y="446">成就 / 标签 / 里程碑</text>
+
+  <rect class="module-ai" x="92" y="480" width="270" height="48"/>
+  <text class="box-title" x="112" y="511">AiService 统一编排入口</text>
+  <rect class="module-ai" x="390" y="480" width="270" height="48"/>
+  <text class="box-title" x="410" y="511">Agent Run Log</text>
+  <rect class="module-ai" x="688" y="480" width="300" height="48"/>
+  <text class="box-title" x="708" y="511">OpenAI-Compatible LLM Client</text>
+  <rect class="module-ai" x="1016" y="480" width="386" height="48"/>
+  <text class="box-title" x="1036" y="511">UserMemoryService / Profile Snapshot</text>
+
+  <rect class="panel agent" x="55" y="604" width="1390" height="236"/>
+  <text class="layer-title" x="82" y="638">AI / Agent 与检索层</text>
+  <rect class="module-ai" x="92" y="660" width="206" height="62"/>
+  <text class="box-title" x="112" y="686">Query Rewrite Gate</text>
+  <text class="box-sub" x="112" y="708">多轮上下文 / 结构化查询</text>
+  <rect class="module-ai" x="322" y="660" width="206" height="62"/>
+  <text class="box-title" x="342" y="686">Hybrid Retrieval</text>
+  <text class="box-sub" x="342" y="708">BM25 + Vector + 本地打分</text>
+  <rect class="module-ai" x="552" y="660" width="206" height="62"/>
+  <text class="box-title" x="572" y="686">LLM Reranker</text>
+  <text class="box-sub" x="572" y="708">重排 / 理由 / Critic</text>
+  <rect class="module-ai" x="782" y="660" width="206" height="62"/>
+  <text class="box-title" x="802" y="686">Multi-Agent Planner</text>
+  <text class="box-sub" x="802" y="708">Goal / Planner / Checker / Critic</text>
+  <rect class="module-ai" x="1012" y="660" width="206" height="62"/>
+  <text class="box-title" x="1032" y="686">Coach Agent</text>
+  <text class="box-sub" x="1032" y="708">对话 / 日志 / 长期复习</text>
+  <rect class="module-ai" x="1242" y="660" width="160" height="62"/>
+  <text class="box-title" x="1262" y="686">MCP Tools</text>
+  <text class="box-sub" x="1262" y="708">时间 / 定位上下文</text>
+
+  <rect class="module-strong" x="92" y="750" width="292" height="62"/>
+  <text class="box-title" x="112" y="776">Growth Tag Extraction Agent</text>
+  <text class="box-sub" x="112" y="798">活动/挑战/复盘 -> 能力标签证据</text>
+  <rect class="module-strong" x="414" y="750" width="292" height="62"/>
+  <text class="box-title" x="434" y="776">Ability Map</text>
+  <text class="box-sub" x="434" y="798">标签分数 / 证据数 / 重要性分</text>
+  <rect class="module-strong" x="736" y="750" width="292" height="62"/>
+  <text class="box-title" x="756" y="776">Milestone Timeline</text>
+  <text class="box-sub" x="756" y="798">按能力查看成长证据轨迹</text>
+  <rect class="module-strong" x="1058" y="750" width="344" height="62"/>
+  <text class="box-title" x="1078" y="776">Self-Analysis / Smart Resume Agent</text>
+  <text class="box-sub" x="1078" y="798">优先引用高分标签和重要里程碑</text>
+
+  <rect class="panel data" x="55" y="888" width="920" height="124"/>
+  <text class="layer-title" x="82" y="922">数据与中间件层</text>
+  <rect class="module-data" x="92" y="944" width="230" height="46"/>
+  <text class="box-title" x="112" y="973">MySQL</text>
+  <text class="tiny" x="184" y="973">events / users / achievements / growth_tags</text>
+  <rect class="module-data" x="350" y="944" width="180" height="46"/>
+  <text class="box-title" x="370" y="973">Redis</text>
+  <text class="tiny" x="428" y="973">Token / QR / Cache</text>
+  <rect class="module-data" x="558" y="944" width="202" height="46"/>
+  <text class="box-title" x="578" y="973">OpenSearch</text>
+  <text class="tiny" x="686" y="973">BM25 + Vector Index</text>
+  <rect class="module-data" x="788" y="944" width="150" height="46"/>
+  <text class="box-title" x="808" y="973">Flyway</text>
+  <text class="tiny" x="872" y="973">DB migrations</text>
+
+  <rect class="panel external" x="1015" y="888" width="430" height="124"/>
+  <text class="layer-title" x="1042" y="922">外部服务</text>
+  <rect class="module" x="1052" y="944" width="170" height="46"/>
+  <text class="box-title" x="1072" y="973">千问 / DashScope</text>
+  <rect class="module" x="1246" y="944" width="160" height="46"/>
+  <text class="box-title" x="1266" y="973">Embedding API</text>
+
+  <path class="flow" d="M750 290 L750 340"/>
+  <path class="flow" d="M750 554 L750 604"/>
+  <path class="flow" d="M514 840 L514 888"/>
+  <path class="flow" d="M230 528 C260 590 255 615 195 660"/>
+  <path class="flow" d="M298 691 L322 691"/>
+  <path class="flow" d="M528 691 L552 691"/>
+  <path class="flow" d="M758 691 L782 691"/>
+  <path class="soft-flow" d="M885 722 C905 748 1030 730 1115 750"/>
+  <path class="flow" d="M238 750 C250 725 250 720 230 704"/>
+  <path class="flow" d="M384 781 L414 781"/>
+  <path class="flow" d="M706 781 L736 781"/>
+  <path class="flow" d="M1028 781 L1058 781"/>
+  <path class="soft-flow" d="M525 528 C555 570 608 610 655 660"/>
+  <path class="soft-flow" d="M838 528 C876 570 1020 608 1115 660"/>
+  <path class="soft-flow" d="M1210 528 C1250 570 1300 602 1322 660"/>
+  <path class="soft-flow" d="M659 722 C650 790 650 850 659 944"/>
+  <path class="soft-flow" d="M425 722 C465 794 500 870 659 944"/>
+  <path class="soft-flow" d="M1115 722 C1128 790 1136 870 1137 944"/>
+  <path class="soft-flow" d="M195 722 C195 790 200 870 207 944"/>
+
+  <rect class="note" x="60" y="1022" width="1385" height="26"/>
+  <text class="tiny" x="78" y="1040">关键闭环：完成活动/挑战 -> 成就记录 -> LLM 抽取成长标签 -> 能力地图与里程碑 -> 智能简历引用证据；推荐链路：自然语言需求 -> Query Rewrite -> Hybrid Retrieval -> Rerank/Critic -> 推荐事件或计划。</text>
+</svg>

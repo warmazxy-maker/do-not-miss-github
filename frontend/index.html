@@ -1,0 +1,691 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>do not miss</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <div class="app-shell">
+      <header class="topbar">
+        <a class="brand" href="#" aria-label="do not miss 首页">
+          <span class="brand-mark">dnm</span>
+          <span class="brand-name">do not miss</span>
+        </a>
+
+        <div class="role-switch" aria-label="端切换">
+          <button class="role-button is-active" type="button" data-role="student">学生端</button>
+          <button class="role-button" type="button" data-role="social">社会端</button>
+        </div>
+
+        <section class="auth-panel" aria-label="用户登录">
+          <div class="auth-user" id="authUser"></div>
+          <form class="auth-form" id="authForm">
+            <input id="authAccount" name="account" type="text" placeholder="用户名 / 邮箱" required />
+            <input id="authEmail" name="email" type="email" placeholder="邮箱" hidden />
+            <input id="authPassword" name="password" type="password" placeholder="密码" required />
+            <select id="authRole" name="role" hidden>
+              <option value="STUDENT">学生</option>
+              <option value="SOCIAL">社会端</option>
+            </select>
+            <button class="secondary-button" type="submit" id="authSubmit">登录</button>
+            <button class="text-button" type="button" id="authModeToggle">注册</button>
+            <button class="text-button" type="button" id="logoutButton" hidden>退出</button>
+          </form>
+          <p class="auth-message" id="authMessage" role="status" aria-live="polite"></p>
+        </section>
+      </header>
+
+      <main class="workspace">
+        <section class="intro-panel" aria-labelledby="page-title">
+          <div>
+            <p class="eyebrow" id="pageEyebrow">学生端</p>
+            <h1 id="page-title">不错过真正能带来成长的实践机会。</h1>
+          </div>
+          <div class="stats" aria-label="事件概览">
+            <div>
+              <span id="totalEvents">0</span>
+              <p>可参与事件</p>
+            </div>
+            <div>
+              <span id="paidEvents">0</span>
+              <p>含报酬</p>
+            </div>
+          </div>
+        </section>
+
+        <section class="role-view" id="studentView" data-view="student">
+          <nav class="module-nav" aria-label="学生端模块">
+            <button class="module-button is-active" type="button" data-module="events">
+              <span class="module-icon" aria-hidden="true">◇</span>
+              <span>事件</span>
+            </button>
+            <button class="module-button" type="button" data-module="reservations">
+              <span class="module-icon" aria-hidden="true">□</span>
+              <span>我的预约</span>
+            </button>
+            <button class="module-button" type="button" data-module="schedule">
+              <span class="module-icon" aria-hidden="true">▦</span>
+              <span>日程</span>
+            </button>
+            <button class="module-button" type="button" data-module="challenges">
+              <span class="module-icon" aria-hidden="true">◧</span>
+              <span>挑战</span>
+            </button>
+            <button class="module-button" type="button" data-module="coach">
+              <span class="module-icon" aria-hidden="true">◌</span>
+              <span>教练</span>
+            </button>
+            <button class="module-button" type="button" data-module="following">
+              <span class="module-icon" aria-hidden="true">☆</span>
+              <span>关注</span>
+            </button>
+            <button class="module-button" type="button" data-module="achievement">
+              <span class="module-icon" aria-hidden="true">△</span>
+              <span>个人成就</span>
+            </button>
+          </nav>
+
+          <section class="student-module" id="studentEventsModule" data-module-panel="events">
+            <div class="student-grid">
+              <section class="panel discovery-panel" aria-labelledby="discovery-title">
+                <div class="panel-header">
+                  <div>
+                    <p class="eyebrow">事件</p>
+                    <h2 id="discovery-title">事件检索</h2>
+                  </div>
+                  <select id="studentBenefitFilter" class="compact-select" aria-label="收益筛选">
+                    <option value="all">全部收益</option>
+                    <option value="skill">技能经验</option>
+                    <option value="money">金钱报酬</option>
+                  </select>
+                </div>
+
+                <div class="search-area">
+                  <label class="search-box" for="studentSearch">
+                    <span aria-hidden="true">⌕</span>
+                    <input id="studentSearch" type="search" placeholder="搜索地点、组织、技能或内容" />
+                  </label>
+                  <div class="category-tabs" id="categoryTabs" aria-label="事件分类">
+                    <button class="category-button is-active" type="button" data-category="all">全部</button>
+                    <button class="category-button" type="button" data-category="公益">公益</button>
+                    <button class="category-button" type="button" data-category="企业">企业</button>
+                    <button class="category-button" type="button" data-category="校内">校内</button>
+                    <button class="category-button" type="button" data-category="线上">线上</button>
+                    <button class="category-button" type="button" data-category="研究">研究</button>
+                    <button class="category-button" type="button" data-category="文化">文化</button>
+                  </div>
+                </div>
+
+                <div class="student-event-list" id="studentEventList" aria-live="polite"></div>
+                <div class="pagination" id="studentPagination" aria-label="事件分页"></div>
+                <div class="empty-state" id="studentEmptyState">
+                  <div class="empty-icon" aria-hidden="true">+</div>
+                  <h3>没有找到匹配事件</h3>
+                  <p>换一个关键词或分类。</p>
+                </div>
+              </section>
+
+              <aside class="panel assistant-panel" aria-labelledby="assistant-title">
+                <div class="panel-header">
+                  <div>
+                    <p class="eyebrow">AI</p>
+                    <h2 id="assistant-title">AI助手</h2>
+                  </div>
+                </div>
+                <div class="assistant-body">
+                  <label for="aiNeed">我的需求</label>
+                  <textarea id="aiNeed" rows="5" placeholder="想提升日语沟通，周末可参加，最好有一点报酬"></textarea>
+                  <div class="reservation-actions">
+                    <button class="primary-button" type="button" id="aiRecommend">推荐事件</button>
+                    <button class="secondary-button" type="button" id="aiPlanRecommend">推荐计划</button>
+                  </div>
+                  <div class="ai-result" id="aiResult" aria-live="polite"></div>
+                </div>
+              </aside>
+            </div>
+          </section>
+
+          <section class="student-module" id="reservationsModule" data-module-panel="reservations" hidden>
+            <section class="panel reservations-panel" aria-labelledby="reservations-title">
+              <div class="panel-header">
+                <div>
+                  <p class="eyebrow">预约</p>
+                  <h2 id="reservations-title">我的预约</h2>
+                </div>
+              </div>
+              <div class="reservation-list" id="reservationList" aria-live="polite"></div>
+              <div class="empty-state" id="reservationEmptyState">
+                <div class="empty-icon" aria-hidden="true">+</div>
+                <h3>还没有预约事件</h3>
+                <p>预约后会出现在这里。</p>
+              </div>
+            </section>
+          </section>
+
+          <section class="student-module" id="scheduleModule" data-module-panel="schedule" hidden>
+            <div class="schedule-grid">
+              <section class="panel schedule-calendar-panel" aria-labelledby="schedule-title">
+                <div class="panel-header">
+                  <div>
+                    <p class="eyebrow">Schedule</p>
+                    <h2 id="schedule-title">月视图</h2>
+                  </div>
+                  <div class="schedule-toolbar">
+                    <button class="secondary-button icon-button" type="button" id="schedulePrevMonth" aria-label="上个月">‹</button>
+                    <span id="scheduleMonthLabel" class="schedule-month-label"></span>
+                    <button class="secondary-button icon-button" type="button" id="scheduleNextMonth" aria-label="下个月">›</button>
+                    <button class="secondary-button" type="button" id="scheduleToday">今天</button>
+                  </div>
+                </div>
+                <div class="schedule-weekdays" aria-hidden="true">
+                  <span>一</span><span>二</span><span>三</span><span>四</span><span>五</span><span>六</span><span>日</span>
+                </div>
+                <div class="schedule-calendar" id="scheduleCalendar" aria-live="polite"></div>
+                <div class="empty-state" id="scheduleEmptyState">
+                  <div class="empty-icon" aria-hidden="true">+</div>
+                  <h3>这个月还没有安排</h3>
+                  <p>预约活动会自动进入日程，也可以手动安排挑战或学习时间。</p>
+                </div>
+              </section>
+
+              <section class="panel schedule-editor-panel" aria-labelledby="schedule-editor-title">
+                <div class="panel-header">
+                  <div>
+                    <p class="eyebrow">安排</p>
+                    <h2 id="schedule-editor-title">添加时间块</h2>
+                  </div>
+                </div>
+                <form class="event-form" id="scheduleForm">
+                  <div class="field-row">
+                    <label for="scheduleChallengeSelect">关联挑战</label>
+                    <select id="scheduleChallengeSelect" name="challengeId">
+                      <option value="">自定义安排</option>
+                    </select>
+                  </div>
+                  <div class="field-row">
+                    <label for="scheduleTitle">标题</label>
+                    <input id="scheduleTitle" name="title" type="text" placeholder="学习 Go 语言" required />
+                  </div>
+                  <div class="field-row compact-fields">
+                    <label for="scheduleStart">开始</label>
+                    <input id="scheduleStart" name="startTime" type="datetime-local" required />
+                    <label for="scheduleEnd">结束</label>
+                    <input id="scheduleEnd" name="endTime" type="datetime-local" required />
+                  </div>
+                  <div class="field-row">
+                    <label for="scheduleLocation">地点</label>
+                    <input id="scheduleLocation" name="location" type="text" placeholder="自习室 / 线上 / 大阪" />
+                  </div>
+                  <div class="field-row">
+                    <label for="scheduleNotes">备注</label>
+                    <textarea id="scheduleNotes" name="notes" rows="4" placeholder="写下计划内容、产出目标或提醒"></textarea>
+                  </div>
+                  <div class="reservation-actions">
+                    <button class="primary-button" type="submit" id="scheduleSubmit">保存日程</button>
+                    <button class="secondary-button" type="button" id="scheduleReset">清空</button>
+                  </div>
+                  <p class="form-message" id="scheduleMessage" role="status" aria-live="polite"></p>
+                </form>
+              </section>
+            </div>
+          </section>
+
+          <section class="student-module" id="challengesModule" data-module-panel="challenges" hidden>
+            <div class="challenge-grid">
+              <section class="panel challenge-create-panel" aria-labelledby="challenge-create-title">
+                <div class="panel-header">
+                  <div>
+                    <p class="eyebrow">挑战</p>
+                    <h2 id="challenge-create-title">创建挑战</h2>
+                  </div>
+                </div>
+                <form class="event-form" id="challengeForm">
+                  <div class="field-row">
+                    <label for="challengeTitle">挑战名称</label>
+                    <input id="challengeTitle" name="title" type="text" placeholder="学完黑马商城项目" required />
+                  </div>
+                  <div class="field-row">
+                    <label for="challengeCategory">类型</label>
+                    <select id="challengeCategory" name="category" required>
+                      <option value="技能挑战">技能挑战</option>
+                      <option value="考试挑战">考试挑战</option>
+                      <option value="身体挑战">身体挑战</option>
+                      <option value="作品挑战">作品挑战</option>
+                      <option value="生活挑战">生活挑战</option>
+                      <option value="其他挑战">其他挑战</option>
+                    </select>
+                  </div>
+                  <div class="field-row">
+                    <label for="challengeGoal">目标</label>
+                    <input id="challengeGoal" name="goal" type="text" placeholder="完成项目、写完部署笔记、整理作品集" required />
+                  </div>
+                  <div class="field-row">
+                    <label for="challengeDescription">内容</label>
+                    <textarea id="challengeDescription" name="description" rows="5" placeholder="写下你准备如何完成这个挑战" required></textarea>
+                  </div>
+                  <button class="primary-button" type="submit">创建挑战</button>
+                  <p class="form-message" id="challengeMessage" role="status" aria-live="polite"></p>
+                </form>
+              </section>
+
+              <section class="panel challenge-list-panel" aria-labelledby="challenge-list-title">
+                <div class="panel-header">
+                  <div>
+                    <p class="eyebrow">进行中</p>
+                    <h2 id="challenge-list-title">我的挑战</h2>
+                  </div>
+                </div>
+                <div class="challenge-list" id="challengeList" aria-live="polite"></div>
+                <div class="pagination" id="challengePagination" aria-label="挑战分页"></div>
+                <div class="empty-state" id="challengeEmptyState">
+                  <div class="empty-icon" aria-hidden="true">+</div>
+                  <h3>还没有挑战</h3>
+                  <p>创建一个自己的目标。</p>
+                </div>
+              </section>
+            </div>
+          </section>
+
+          <section class="student-module" id="coachModule" data-module-panel="coach" hidden>
+            <div class="coach-grid">
+              <section class="panel coach-chat-panel" aria-labelledby="coach-title">
+                <div class="panel-header">
+                  <div>
+                    <p class="eyebrow">Coach</p>
+                    <h2 id="coach-title">日志与教练</h2>
+                  </div>
+                  <button class="secondary-button" type="button" id="coachGenerateLog">生成今日日志</button>
+                </div>
+                <div class="coach-messages" id="coachMessages" aria-live="polite"></div>
+                <form class="coach-form" id="coachForm">
+                  <textarea id="coachInput" name="message" rows="4" placeholder="今天做了什么、卡在哪里、学到了什么，都可以直接说。你也可以说：生成日志。" required></textarea>
+                  <button class="primary-button" type="submit" id="coachSend">发送</button>
+                </form>
+                <p class="form-message" id="coachMessage" role="status" aria-live="polite"></p>
+              </section>
+
+              <section class="panel coach-log-panel" aria-labelledby="coach-log-title">
+                <div class="panel-header">
+                  <div>
+                    <p class="eyebrow">Logs</p>
+                    <h2 id="coach-log-title">成长日志</h2>
+                  </div>
+                </div>
+                <div class="coach-log-list" id="coachLogList" aria-live="polite"></div>
+                <div class="empty-state" id="coachLogEmptyState">
+                  <div class="empty-icon" aria-hidden="true">+</div>
+                  <h3>还没有日志</h3>
+                  <p>和教练聊完后生成日志，它会进入长期成长记忆。</p>
+                </div>
+              </section>
+            </div>
+          </section>
+
+          <section class="student-module" id="followingModule" data-module-panel="following" hidden>
+            <section class="panel following-panel" aria-labelledby="following-title">
+              <div class="panel-header">
+                <div>
+                  <p class="eyebrow">关注</p>
+                  <h2 id="following-title">已关注组织</h2>
+                </div>
+              </div>
+              <div class="organization-list" id="organizationList" aria-live="polite"></div>
+              <div class="empty-state" id="organizationEmptyState">
+                <div class="empty-icon" aria-hidden="true">+</div>
+                <h3>还没有关注组织</h3>
+                <p>关注后会出现在这里。</p>
+              </div>
+            </section>
+          </section>
+
+          <section class="student-module" id="achievementModule" data-module-panel="achievement" hidden>
+            <div class="achievement-grid">
+              <section class="panel achievement-panel" aria-labelledby="achievement-title">
+                <div class="panel-header">
+                  <div>
+                    <p class="eyebrow">个人成就</p>
+                    <h2 id="achievement-title">参与分析</h2>
+                  </div>
+                  <div class="achievement-numbers" aria-label="成就概览">
+                    <span><strong id="completedCount">0</strong> 已完成</span>
+                    <span><strong id="categoryCount">0</strong> 类别</span>
+                  </div>
+                </div>
+                <section class="ability-map-section" aria-labelledby="ability-map-title">
+                  <div class="ability-map-header">
+                    <div>
+                      <p class="eyebrow">能力地图</p>
+                      <h3 id="ability-map-title">智能标签</h3>
+                    </div>
+                    <button class="secondary-button ability-refresh-button" type="button" id="abilityMapRefresh">刷新能力地图</button>
+                  </div>
+                  <div class="ability-map" id="abilityMap" aria-live="polite"></div>
+                  <div class="ability-map-detail" id="abilityMapDetail"></div>
+                </section>
+                <div class="category-chart" id="categoryChart" aria-live="polite"></div>
+                <div class="empty-state" id="achievementEmptyState">
+                  <div class="empty-icon" aria-hidden="true">+</div>
+                  <h3>还没有完成记录</h3>
+                  <p>扫码完成后会生成成就数据。</p>
+                </div>
+              </section>
+
+              <section class="panel achievement-detail-panel" aria-labelledby="achievement-detail-title">
+                <div class="panel-header">
+                  <div>
+                    <p class="eyebrow">记录</p>
+                    <h2 id="achievement-detail-title">成就档案</h2>
+                  </div>
+                  <div class="submodule-tabs" aria-label="个人成就子模块">
+                    <button class="submodule-button is-active" type="button" data-achievement-tab="history">历史记录</button>
+                    <button class="submodule-button" type="button" data-achievement-tab="analysis">自我分析</button>
+                  </div>
+                </div>
+
+                <div class="achievement-tab" id="historyPanel" data-achievement-panel="history">
+                  <div class="history-list" id="historyList" aria-live="polite"></div>
+                  <div class="pagination" id="historyPagination" aria-label="历史记录分页"></div>
+                  <div class="empty-state" id="historyEmptyState">
+                    <div class="empty-icon" aria-hidden="true">+</div>
+                    <h3>暂无历史记录</h3>
+                    <p>完成活动后记录经历。</p>
+                  </div>
+                </div>
+
+                <div class="achievement-tab analysis-panel" id="analysisPanel" data-achievement-panel="analysis" hidden>
+                  <div class="assistant-body">
+                    <button class="primary-button" type="button" id="analysisGenerate">生成自我分析</button>
+                    <section class="resume-box" aria-labelledby="resume-title">
+                      <p class="eyebrow">智能简历</p>
+                      <h3 id="resume-title">成长经历总结</h3>
+                      <p id="resumeSummary" class="resume-summary"></p>
+                      <ul id="resumeBullets" class="resume-bullets"></ul>
+                    </section>
+                    <section class="curve-box" aria-labelledby="curve-title">
+                      <p class="eyebrow">成长曲线</p>
+                      <h3 id="curve-title">能力发展参考</h3>
+                      <div class="growth-curve" id="growthCurve" aria-live="polite"></div>
+                    </section>
+                  </div>
+                </div>
+              </section>
+            </div>
+          </section>
+        </section>
+
+        <section class="role-view" id="socialView" data-view="social" hidden>
+          <div class="content-grid">
+            <section class="panel publish-panel" id="publish" aria-labelledby="publish-title">
+              <div class="panel-header">
+                <div>
+                  <p class="eyebrow">社会端</p>
+                  <h2 id="publish-title">上传事件</h2>
+                </div>
+                <button class="icon-button" type="button" id="resetForm" aria-label="清空表单" title="清空表单">
+                  <span aria-hidden="true">↺</span>
+                </button>
+              </div>
+
+              <form id="eventForm" class="event-form">
+                <div class="form-split">
+                  <div class="field-row">
+                    <label for="eventTitle">事件名称</label>
+                    <input id="eventTitle" name="title" type="text" placeholder="地方商店街采访协助" required />
+                  </div>
+                  <div class="field-row">
+                    <label for="eventOrganization">组织名称</label>
+                    <input id="eventOrganization" name="organization" type="text" placeholder="NPO / 公司 / 学校部门" required />
+                  </div>
+                </div>
+
+                <div class="form-split">
+                  <div class="field-row">
+                    <label for="eventDate">开始时间</label>
+                    <input id="eventDate" name="date" type="datetime-local" required />
+                  </div>
+                  <div class="field-row">
+                    <label for="eventEndDate">结束时间</label>
+                    <input id="eventEndDate" name="endDate" type="datetime-local" required />
+                  </div>
+                  <div class="field-row">
+                    <label for="eventLocation">地点</label>
+                    <input id="eventLocation" name="location" type="text" placeholder="东京 / 线上 / 校内" required />
+                  </div>
+                </div>
+
+                <div class="field-row">
+                  <label for="eventCategory">分类</label>
+                  <select id="eventCategory" name="category" required>
+                    <option value="公益">公益</option>
+                    <option value="企业">企业</option>
+                    <option value="校内">校内</option>
+                    <option value="线上">线上</option>
+                    <option value="研究">研究</option>
+                    <option value="文化">文化</option>
+                  </select>
+                </div>
+
+                <div class="field-row">
+                  <label for="eventContent">内容</label>
+                  <textarea
+                    id="eventContent"
+                    name="content"
+                    rows="5"
+                    placeholder="写清楚学生需要做什么、适合谁参加"
+                    required
+                  ></textarea>
+                </div>
+
+                <fieldset class="benefit-field">
+                  <legend>可获得</legend>
+                  <div class="segmented">
+                    <label>
+                      <input type="radio" name="benefitType" value="skill" checked />
+                      <span>技能经验</span>
+                    </label>
+                    <label>
+                      <input type="radio" name="benefitType" value="money" />
+                      <span>金钱报酬</span>
+                    </label>
+                    <label>
+                      <input type="radio" name="benefitType" value="both" />
+                      <span>两者都有</span>
+                    </label>
+                  </div>
+                </fieldset>
+
+                <div class="field-row" id="skillField">
+                  <label for="eventSkill">技能 / 经验</label>
+                  <input id="eventSkill" name="skill" type="text" placeholder="日语沟通、活动运营、调研能力" />
+                </div>
+
+                <div class="field-row money-row" id="moneyField">
+                  <label for="eventMoney">金钱</label>
+                  <div class="money-input">
+                    <span>¥</span>
+                    <input id="eventMoney" name="money" type="number" min="0" step="500" placeholder="0" />
+                  </div>
+                </div>
+
+                <button class="primary-button" type="submit">发布事件</button>
+                <p class="form-message" id="formMessage" role="status" aria-live="polite"></p>
+              </form>
+            </section>
+
+            <section class="panel events-panel" id="my-events" aria-labelledby="events-title">
+              <div class="panel-header">
+                <div>
+                  <p class="eyebrow">我的事件</p>
+                  <h2 id="events-title">已发布内容</h2>
+                </div>
+                <div class="filter-group" aria-label="筛选事件">
+                  <button class="filter-button is-active" type="button" data-filter="all">全部</button>
+                  <button class="filter-button" type="button" data-filter="skill">技能</button>
+                  <button class="filter-button" type="button" data-filter="money">报酬</button>
+                </div>
+              </div>
+
+              <div class="event-list" id="eventList" aria-live="polite"></div>
+
+              <div class="empty-state" id="emptyState">
+                <div class="empty-icon" aria-hidden="true">+</div>
+                <h3>还没有发布事件</h3>
+                <p>发布后会出现在这里。</p>
+              </div>
+            </section>
+          </div>
+        </section>
+
+        <div class="plan-modal" id="planModal" hidden>
+          <div class="plan-modal-backdrop" data-plan-close></div>
+          <section class="plan-modal-panel" role="dialog" aria-modal="true" aria-labelledby="planModalTitle">
+            <div class="plan-modal-header">
+              <div>
+                <p class="eyebrow">Action Plan</p>
+                <h2 id="planModalTitle">推荐计划流程图</h2>
+              </div>
+              <div class="reservation-actions">
+                <button class="primary-button" type="button" id="planImportSchedule">写入日程</button>
+                <button class="secondary-button" type="button" id="planModalClose">关闭</button>
+              </div>
+            </div>
+            <div class="plan-modal-body">
+              <aside class="plan-tabs" id="planTabs" aria-label="计划列表"></aside>
+              <div class="plan-flow" id="planFlow" aria-live="polite"></div>
+            </div>
+          </section>
+        </div>
+
+        <template id="eventTemplate">
+          <article class="event-card">
+            <div class="event-card-head">
+              <div>
+                <p class="event-date"></p>
+                <h3 class="event-title"></h3>
+              </div>
+              <button class="delete-button" type="button" aria-label="删除事件" title="删除事件">
+                <span aria-hidden="true">×</span>
+              </button>
+            </div>
+            <p class="event-meta"></p>
+            <p class="event-location"></p>
+            <p class="event-content"></p>
+            <div class="event-benefits"></div>
+          </article>
+        </template>
+
+        <template id="studentEventTemplate">
+          <article class="event-card student-event-card">
+            <div class="event-card-head">
+              <div>
+                <p class="event-date"></p>
+                <h3 class="event-title"></h3>
+              </div>
+              <div class="card-actions">
+                <button class="follow-button" type="button">关注</button>
+                <button class="reserve-button" type="button">预约</button>
+              </div>
+            </div>
+            <p class="event-meta"></p>
+            <p class="event-location"></p>
+            <p class="event-content"></p>
+            <div class="event-benefits"></div>
+          </article>
+        </template>
+
+        <template id="reservationTemplate">
+          <article class="event-card reservation-card">
+            <div class="event-card-head">
+              <div>
+                <p class="event-date"></p>
+                <h3 class="event-title"></h3>
+              </div>
+              <div class="qr-code" aria-hidden="true">
+                <span></span><span></span><span></span><span></span>
+                <span></span><span></span><span></span><span></span>
+                <span></span><span></span><span></span><span></span>
+                <span></span><span></span><span></span><span></span>
+              </div>
+            </div>
+            <p class="event-meta"></p>
+            <p class="event-location"></p>
+            <p class="event-content"></p>
+            <div class="event-benefits"></div>
+            <div class="reservation-actions">
+              <button class="primary-button scan-button" type="button">扫码完成</button>
+              <button class="secondary-button cancel-reservation-button" type="button">取消预约</button>
+            </div>
+          </article>
+        </template>
+
+        <template id="historyTemplate">
+          <article class="history-card">
+            <div class="event-card-head">
+              <div>
+                <p class="event-date"></p>
+                <h3 class="event-title"></h3>
+              </div>
+              <span class="status-pill">已完成</span>
+            </div>
+            <p class="event-meta"></p>
+            <div class="reflection-grid">
+              <label>
+                做了什么
+                <textarea class="did-input" rows="3" placeholder="记录你承担的任务、协作对象和交付结果"></textarea>
+              </label>
+              <label>
+                学到了什么
+                <textarea class="learned-input" rows="3" placeholder="记录能力变化、反思和下次想改进的地方"></textarea>
+              </label>
+            </div>
+            <button class="secondary-button save-reflection-button" type="button">保存记录</button>
+          </article>
+        </template>
+
+        <template id="challengeTemplate">
+          <article class="challenge-card">
+            <div class="event-card-head">
+              <div>
+                <p class="event-date"></p>
+                <h3 class="event-title"></h3>
+              </div>
+              <span class="status-pill challenge-status">进行中</span>
+            </div>
+            <p class="event-meta"></p>
+            <p class="event-content"></p>
+            <div class="reflection-grid">
+              <label>
+                做了什么
+                <textarea class="challenge-did-input" rows="3" placeholder="记录你的产出、任务和结果"></textarea>
+              </label>
+              <label>
+                学到了什么
+                <textarea class="challenge-learned-input" rows="3" placeholder="记录你的能力变化和反思"></textarea>
+              </label>
+            </div>
+            <div class="reservation-actions">
+              <button class="primary-button complete-challenge-button" type="button">完成挑战</button>
+              <button class="secondary-button cancel-challenge-button" type="button">取消挑战</button>
+            </div>
+          </article>
+        </template>
+
+        <template id="organizationTemplate">
+          <article class="organization-card">
+            <div>
+              <p class="organization-type"></p>
+              <h3 class="organization-name"></h3>
+            </div>
+            <p class="organization-summary"></p>
+            <div class="organization-tags"></div>
+            <button class="secondary-button" type="button">取消关注</button>
+          </article>
+        </template>
+      </main>
+    </div>
+
+    <script src="app.js"></script>
+  </body>
+</html>

@@ -1,0 +1,32 @@
+# Environment and secrets
+.env
+*.env
+!.env.example
+*.local
+
+# Java / Maven
+target/
+*.class
+
+# Frontend / Node
+node_modules/
+dist/
+build/
+
+# IDE
+.idea/
+.vscode/
+*.iml
+
+# OS / local files
+.DS_Store
+Thumbs.db
+desktop.ini
+*.log
+logs/
+
+# Temporary / generated local assets
+docker-registry-backup/
+edge-headless-profile/
+repair-docker-update.ps1
+docker-update-admin.log

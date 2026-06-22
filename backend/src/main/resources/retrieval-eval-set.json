@@ -1,0 +1,52 @@
+[
+  {
+    "id": "agent-development-learning",
+    "need": "我想学学agent开发",
+    "expectedEventIds": [20, 21, 17],
+    "expectedTerms": ["agent", "AI", "LLM", "大模型", "开发"],
+    "topK": 5,
+    "note": "Agent 开发学习需求，应该命中 agent 应用教学、大模型 agent 开发竞赛、阿里天池大模型比赛等活动。"
+  },
+  {
+    "id": "java-project-practice",
+    "need": "我想学 Java 程序设计，最好能做一点项目实践",
+    "expectedEventIds": [13, 14, 15],
+    "expectedTerms": ["Java", "java", "Spring", "项目", "后端", "开发"],
+    "topK": 5,
+    "note": "编程项目实践需求，应该命中 Java、Spring、项目开发或后端相关活动。"
+  },
+  {
+    "id": "japanese-zero-study-abroad",
+    "need": "我现在有点想去日本留学，想从零开始学日语",
+    "expectedEventIds": [9, 11, 12],
+    "expectedTerms": ["日语", "翻译", "中日", "口语", "留学生"],
+    "topK": 5,
+    "note": "零基础日语和留学准备，应该命中日语沟通、翻译、跨文化相关活动。"
+  },
+  {
+    "id": "paid-online-work",
+    "need": "我想找一个线上可以参加，而且最好有报酬的活动",
+    "benefitType": "MONEY",
+    "expectedEventIds": [5, 12, 15],
+    "expectedTerms": ["线上", "报酬", "运营", "数据", "文案"],
+    "topK": 5,
+    "note": "线上和报酬偏好，应该优先命中线上、有偿、运营数据类机会。"
+  },
+  {
+    "id": "research-survey",
+    "need": "我想提升研究能力，做一些问卷访谈和数据整理",
+    "category": "RESEARCH",
+    "expectedEventIds": [3, 8, 10],
+    "expectedTerms": ["研究", "调研", "问卷", "访谈", "数据"],
+    "topK": 5,
+    "note": "研究调研类需求，应该命中问卷、访谈、数据整理。"
+  },
+  {
+    "id": "communication-operation",
+    "need": "我想锻炼现场沟通能力和活动执行能力",
+    "expectedEventIds": [2, 4, 16],
+    "expectedTerms": ["现场", "沟通", "执行", "运营", "协作", "活动"],
+    "topK": 5,
+    "note": "沟通和执行类需求，应该命中现场运营、活动执行、团队协作。"
+  }
+]
