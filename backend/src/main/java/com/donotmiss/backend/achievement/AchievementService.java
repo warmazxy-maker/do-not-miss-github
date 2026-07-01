@@ -34,7 +34,7 @@ public class AchievementService {
         return achievementRecordRepository.findByUserIdAndSourceTypeAndSourceId(userId, AchievementSourceType.EVENT, event.getId())
                 .orElseGet(() -> {
                     AchievementRecordEntity record = achievementRecordRepository.save(AchievementRecordEntity.fromCompletedEvent(userId, event));
-                    enqueueGrowthTagExtraction(record);
+                    enqueueDerivedAnalysis(record);
                     profileSnapshotDirtyService.markDirty(userId, "completed-event");
                     return record;
                 });
@@ -46,13 +46,13 @@ public class AchievementService {
                 .map(record -> {
                     record.setDid(challenge.getDid());
                     record.setLearned(challenge.getLearned());
-                    enqueueGrowthTagExtraction(record);
+                    enqueueDerivedAnalysis(record);
                     profileSnapshotDirtyService.markDirty(userId, "updated-completed-challenge");
                     return record;
                 })
                 .orElseGet(() -> {
                     AchievementRecordEntity record = achievementRecordRepository.save(AchievementRecordEntity.fromCompletedChallenge(userId, challenge));
-                    enqueueGrowthTagExtraction(record);
+                    enqueueDerivedAnalysis(record);
                     profileSnapshotDirtyService.markDirty(userId, "completed-challenge");
                     return record;
                 });
@@ -86,17 +86,18 @@ public class AchievementService {
                 .orElseThrow(() -> ApiException.notFound("历史记录不存在：" + recordId));
         record.setDid(blankToNull(request.did()));
         record.setLearned(blankToNull(request.learned()));
-        enqueueGrowthTagExtraction(record);
+        enqueueDerivedAnalysis(record);
         profileSnapshotDirtyService.markDirty(userId, "updated-achievement-reflection");
         return AchievementDtos.AchievementRecordResponse.from(record);
     }
 
-    private void enqueueGrowthTagExtraction(AchievementRecordEntity record) {
+    private void enqueueDerivedAnalysis(AchievementRecordEntity record) {
         if (record == null || record.getId() == null) {
             return;
         }
         String sourceType = record.getSourceType() == null ? null : record.getSourceType().name();
         domainEventPublisher.publishGrowthTagExtraction(record.getId(), record.getUserId(), sourceType);
+        domainEventPublisher.publishAbilityEvidenceAssessment(record.getId(), record.getUserId());
     }
 
     @Transactional(readOnly = true)

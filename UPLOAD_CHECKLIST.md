@@ -1,15 +1,16 @@
 # GitHub Upload Checklist
 
-## Must Not Upload
+## 必须确认不要上传
 
 - `backend/.env`
 - `backend/target/`
-- `node_modules/`
-- local logs
-- Docker repair scripts or local registry backups
-- real API keys, tokens, passwords, or private screenshots
+- `frontend/node_modules/`
+- `frontend/dist/`
+- `*.log`
+- 本地录屏、截图、压缩包、私有脚本
+- 真实 API Key、Token、密码、Cookie
 
-## Should Upload
+## 应该上传
 
 - `backend/src/`
 - `backend/pom.xml`
@@ -17,26 +18,33 @@
 - `backend/.env.example`
 - `backend/DEPLOYMENT_GUIDE.md`
 - `backend/PROBLEM_LOG.md`
-- `backend/AGENT_OPTIMIZATION_BACKLOG.md`
+- `frontend/src/`
+- `frontend/package.json`
+- `frontend/package-lock.json`
 - `frontend/index.html`
-- `frontend/styles.css`
-- `frontend/app.js`
+- `frontend/vite.config.ts`
 - `docs/`
-- root `README.md`
-- root `.gitignore`
+- 根目录 `README.md`
+- 根目录 `.gitignore`
 
-## Suggested Git Commands
+## GitHub Desktop
 
-Install Git first if `git` is not available in PowerShell.
+如果你用 GitHub Desktop：
+
+1. 打开本地仓库 `D:\warma\Documents\do-not-miss-github`。
+2. 确认 Changes 里没有 `.env`、`target`、`node_modules`、`dist`。
+3. 填写提交信息。
+4. Commit to main。
+5. Push origin。
+
+## 命令行
+
+如果你用命令行：
 
 ```powershell
-cd <your-local-path>\do-not-miss-github
-git init
+cd D:\warma\Documents\do-not-miss-github
+git status
 git add .
-git commit -m "Initial commit"
-git branch -M main
-git remote add origin https://github.com/<your-name>/<your-repo>.git
-git push -u origin main
+git commit -m "Update Do Not Miss project"
+git push
 ```
-
-If you use GitHub Desktop, choose the `do-not-miss-github` folder as the local repository folder.

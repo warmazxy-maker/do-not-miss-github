@@ -1,52 +1,416 @@
 [
   {
-    "id": "agent-development-learning",
-    "need": "我想学学agent开发",
-    "expectedEventIds": [20, 21, 17],
-    "expectedTerms": ["agent", "AI", "LLM", "大模型", "开发"],
+    "id": "java-zero-beginner",
+    "need": "我完全没有编程基础，想先从 Java 的语法、集合和面向对象开始学，最好能做一个简单的小程序",
+    "judgments": [
+      {"eventId": 27, "relevance": 3, "reason": "零基础、Java 入门、面向对象和小程序实践完全匹配"},
+      {"eventId": 28, "relevance": 2, "reason": "Java 项目实践相关，但难度高于零基础"},
+      {"eventId": 29, "relevance": 1, "reason": "Java 项目相关，但竞赛和团队答辩不适合作为第一步"},
+      {"eventId": 32, "relevance": 1, "reason": "涉及 Java，但主要目标是转向 Go"}
+    ],
+    "expectedEventIds": [27],
+    "expectedTerms": ["Java", "零基础", "面向对象", "集合"],
     "topK": 5,
-    "note": "Agent 开发学习需求，应该命中 agent 应用教学、大模型 agent 开发竞赛、阿里天池大模型比赛等活动。"
+    "note": "测试零基础和入门难度识别，目标是 Java 零基础入门训练营，而不是进阶项目或 JVM 调优。"
   },
   {
-    "id": "java-project-practice",
-    "need": "我想学 Java 程序设计，最好能做一点项目实践",
-    "expectedEventIds": [13, 14, 15],
-    "expectedTerms": ["Java", "java", "Spring", "项目", "后端", "开发"],
+    "id": "spring-boot-online-project",
+    "need": "我已经会一点 Java，想在线上完整做一次后端项目，最好包含订单、库存、登录和数据库设计",
+    "location": "线上",
+    "judgments": [
+      {"eventId": 28, "relevance": 3, "reason": "线上完整后端项目及订单、库存、登录、数据库完全匹配"},
+      {"eventId": 32, "relevance": 1, "reason": "同为线上后端服务实践，但重点是从 Java 迁移到 Go"}
+    ],
+    "expectedEventIds": [28],
+    "expectedTerms": ["Spring Boot", "订单", "库存", "MySQL", "后端"],
     "topK": 5,
-    "note": "编程项目实践需求，应该命中 Java、Spring、项目开发或后端相关活动。"
+    "note": "测试项目语义和线上约束，目标是 Spring Boot 商城项目实战。"
   },
   {
-    "id": "japanese-zero-study-abroad",
-    "need": "我现在有点想去日本留学，想从零开始学日语",
-    "expectedEventIds": [9, 11, 12],
-    "expectedTerms": ["日语", "翻译", "中日", "口语", "留学生"],
+    "id": "java-paid-competition-osaka",
+    "need": "我想在大阪参加 Java 团队开发比赛，希望能提交完整作品、现场答辩，而且最好有奖金",
+    "category": "COMPANY",
+    "benefitType": "BOTH",
+    "location": "大阪",
+    "judgments": [
+      {"eventId": 29, "relevance": 3, "reason": "大阪、Java 团队竞赛、作品答辩和奖金全部匹配"}
+    ],
+    "expectedEventIds": [29],
+    "expectedTerms": ["Java", "团队", "答辩", "奖金", "项目"],
     "topK": 5,
-    "note": "零基础日语和留学准备，应该命中日语沟通、翻译、跨文化相关活动。"
+    "note": "测试 Java、竞赛、线下地点和报酬的组合约束。"
   },
   {
-    "id": "paid-online-work",
-    "need": "我想找一个线上可以参加，而且最好有报酬的活动",
-    "benefitType": "MONEY",
-    "expectedEventIds": [5, 12, 15],
-    "expectedTerms": ["线上", "报酬", "运营", "数据", "文案"],
+    "id": "jvm-performance-diagnosis",
+    "need": "我的 Java 服务有时会卡顿，我想学习怎么分析 GC 停顿、内存泄漏、线程阻塞和 CPU 热点",
+    "judgments": [
+      {"eventId": 30, "relevance": 3, "reason": "GC、内存泄漏、线程与 CPU 性能诊断完全匹配"},
+      {"eventId": 28, "relevance": 1, "reason": "属于 Java 后端实践，但不教授 JVM 调优"},
+      {"eventId": 32, "relevance": 1, "reason": "涉及后端并发模型，但核心是 Go 迁移"}
+    ],
+    "expectedEventIds": [30],
+    "expectedTerms": ["JVM", "GC", "内存泄漏", "线程", "性能"],
     "topK": 5,
-    "note": "线上和报酬偏好，应该优先命中线上、有偿、运营数据类机会。"
+    "note": "测试 Java 进阶性能问题，不能被普通 Java 入门活动替代。"
   },
   {
-    "id": "research-survey",
-    "need": "我想提升研究能力，做一些问卷访谈和数据整理",
+    "id": "android-kotlin-app",
+    "need": "我想做一个安卓记账 App，准备用 Kotlin 写，还想练习界面、状态管理和本地存储",
+    "judgments": [
+      {"eventId": 31, "relevance": 3, "reason": "Kotlin、Android、记账应用和本地存储完全匹配"},
+      {"eventId": 27, "relevance": 1, "reason": "提供基础编程训练，但不是移动开发"},
+      {"eventId": 28, "relevance": 1, "reason": "属于应用项目开发，但技术栈和平台不同"}
+    ],
+    "expectedEventIds": [31],
+    "expectedTerms": ["Android", "Kotlin", "记账", "移动应用"],
+    "topK": 5,
+    "note": "测试移动开发语义，区分 Java 后端和 Kotlin Android。"
+  },
+  {
+    "id": "java-to-go-migration",
+    "need": "我已经做过 Java 后端，现在想转 Go，重点想比较两者的并发模型并尝试迁移一个服务",
+    "location": "线上",
+    "judgments": [
+      {"eventId": 32, "relevance": 3, "reason": "Java 转 Go、并发模型比较和服务迁移完全匹配"},
+      {"eventId": 28, "relevance": 2, "reason": "能继续积累 Java 后端项目经验，但不包含 Go 迁移"}
+    ],
+    "expectedEventIds": [32],
+    "expectedTerms": ["Java", "Go", "并发", "迁移", "微服务"],
+    "topK": 5,
+    "note": "测试跨语言学习路线和已有基础条件。"
+  },
+  {
+    "id": "agent-tool-calling-beginner",
+    "need": "我想从零做一个会调用工具的 AI 学习助手，需要学习结构化输出、Tool Calling 和异常兜底",
+    "judgments": [
+      {"eventId": 33, "relevance": 3, "reason": "从零构建 Tool Calling 学习助手完全匹配"},
+      {"eventId": 34, "relevance": 2, "reason": "Agent 工作流相关，但偏多智能体和进阶框架"},
+      {"eventId": 35, "relevance": 2, "reason": "规划和工具调用相关，但形式是竞赛"},
+      {"eventId": 36, "relevance": 1, "reason": "属于 LLM 应用基础设施，但主题是 RAG 检索"},
+      {"eventId": 48, "relevance": 1, "reason": "能学习 Agent 理论，但不是动手开发课程"}
+    ],
+    "expectedEventIds": [33],
+    "expectedTerms": ["Agent", "Tool Calling", "结构化输出", "异常"],
+    "topK": 5,
+    "note": "测试 Agent 入门开发，目标不是多智能体或普通生成式 AI。"
+  },
+  {
+    "id": "langgraph-multi-agent",
+    "need": "我想用 LangGraph 实现 Planner、Executor、Critic 协作的多智能体工作流，还要能保存共享状态",
+    "location": "线上",
+    "judgments": [
+      {"eventId": 34, "relevance": 3, "reason": "LangGraph 与 Planner、Executor、Critic 完全匹配"},
+      {"eventId": 33, "relevance": 2, "reason": "Agent 工作流相关，但以单 Agent 工具调用为主"},
+      {"eventId": 35, "relevance": 2, "reason": "多步骤 Agent 工程相关，但竞赛不专注 LangGraph"}
+    ],
+    "expectedEventIds": [34],
+    "expectedTerms": ["LangGraph", "Planner", "Executor", "Critic", "多智能体"],
+    "topK": 5,
+    "note": "测试 Multi-Agent 精确技术语义。"
+  },
+  {
+    "id": "paid-agent-competition",
+    "need": "我想参加线上大模型 Agent 比赛，做一个能规划和调用工具的作品，最好有奖金",
+    "category": "COMPANY",
+    "benefitType": "BOTH",
+    "location": "线上",
+    "judgments": [
+      {"eventId": 35, "relevance": 3, "reason": "线上 Agent 竞赛、规划、工具调用和奖金完全匹配"}
+    ],
+    "expectedEventIds": [35],
+    "expectedTerms": ["Agent", "竞赛", "规划", "工具调用", "奖金"],
+    "topK": 5,
+    "note": "测试 Agent 竞赛与 Agent 教学之间的区分。"
+  },
+  {
+    "id": "rag-hybrid-retrieval",
+    "need": "我想系统学习 RAG 检索，亲手实现 BM25、向量召回、RRF 融合和 reranker，并比较评测结果",
     "category": "RESEARCH",
-    "expectedEventIds": [3, 8, 10],
-    "expectedTerms": ["研究", "调研", "问卷", "访谈", "数据"],
+    "judgments": [
+      {"eventId": 36, "relevance": 3, "reason": "BM25、向量、RRF、Reranker 与评测完全匹配"},
+      {"eventId": 48, "relevance": 2, "reason": "包含 RAG 论文阅读和复现实验，但不系统实现检索链路"}
+    ],
+    "expectedEventIds": [36],
+    "expectedTerms": ["RAG", "BM25", "Embedding", "RRF", "Reranker"],
     "topK": 5,
-    "note": "研究调研类需求，应该命中问卷、访谈、数据整理。"
+    "note": "测试 RAG 专业词和完整检索链路。"
   },
   {
-    "id": "communication-operation",
-    "need": "我想锻炼现场沟通能力和活动执行能力",
-    "expectedEventIds": [2, 4, 16],
-    "expectedTerms": ["现场", "沟通", "执行", "运营", "协作", "活动"],
+    "id": "paid-ai-content-operation",
+    "need": "我想找一份在线实习，用生成式 AI 做选题和文章，同时运营账号、分析阅读数据并拿到报酬",
+    "category": "COMPANY",
+    "benefitType": "BOTH",
+    "location": "线上",
+    "judgments": [
+      {"eventId": 37, "relevance": 3, "reason": "生成式 AI、内容运营、数据分析和有偿实习完全匹配"},
+      {"eventId": 52, "relevance": 1, "reason": "同为有偿 AI 远程工作，但内容是数据标注而非运营"}
+    ],
+    "expectedEventIds": [37],
+    "expectedTerms": ["AI", "内容运营", "文案", "数据分析", "报酬"],
     "topK": 5,
-    "note": "沟通和执行类需求，应该命中现场运营、活动执行、团队协作。"
+    "note": "测试 AI 内容运营，区分普通中文社媒兼职和 AI 数据标注。"
+  },
+  {
+    "id": "generative-ai-art",
+    "need": "我想在京都体验 AI 画画，学习怎么用提示词控制构图和风格，最后完成一张插画",
+    "category": "CULTURE",
+    "location": "京都",
+    "judgments": [
+      {"eventId": 38, "relevance": 3, "reason": "京都、AI 绘画、提示词、构图和插画完全匹配"}
+    ],
+    "expectedEventIds": [38],
+    "expectedTerms": ["AI", "绘画", "提示词", "插画", "京都"],
+    "topK": 5,
+    "note": "测试生成式 AI 艺术场景，避免召回 Agent 开发活动。"
+  },
+  {
+    "id": "japanese-n5-online-zero",
+    "need": "我日语完全是零基础，想在线上从五十音开始学，目标先达到 N5 水平",
+    "location": "线上",
+    "judgments": [
+      {"eventId": 39, "relevance": 3, "reason": "线上、零基础、五十音和 N5 完全匹配"},
+      {"eventId": 42, "relevance": 1, "reason": "同为线上日语实践，但需要一定日语基础且侧重字幕翻译"}
+    ],
+    "expectedEventIds": [39],
+    "expectedTerms": ["日语", "N5", "零基础", "五十音", "线上"],
+    "topK": 5,
+    "note": "测试日语学习难度，不能把翻译、商务日语或留学说明会排在前面。"
+  },
+  {
+    "id": "japanese-speaking-osaka",
+    "need": "我会一些基础日语但开口比较困难，想通过口语陪练、职场交流或公益服务增加真实沟通机会",
+    "judgments": [
+      {"eventId": 40, "relevance": 3, "reason": "日语口语陪练和生活会话最符合需求"},
+      {"eventId": 41, "relevance": 2, "reason": "能训练商务日语和职场交流，但难度更高"},
+      {"eventId": 50, "relevance": 2, "reason": "能在儿童阅读公益中进行真实日语沟通"},
+      {"eventId": 44, "relevance": 1, "reason": "提供现场中日沟通机会，但更侧重翻译和活动执行"}
+    ],
+    "expectedEventIds": [40],
+    "expectedTerms": ["日语口语", "大阪", "生活会话", "日本大学生"],
+    "topK": 5,
+    "note": "测试口语陪练与零基础课程的区别。"
+  },
+  {
+    "id": "business-japanese-paid-tokyo",
+    "need": "我准备在日本找工作，想去东京学习敬语、商务邮件、电话应对和会议表达，最好是有报酬的实习",
+    "category": "COMPANY",
+    "benefitType": "BOTH",
+    "location": "东京",
+    "judgments": [
+      {"eventId": 41, "relevance": 3, "reason": "东京、有偿实习、商务日语、敬语和会议表达完全匹配"}
+    ],
+    "expectedEventIds": [41],
+    "expectedTerms": ["商务日语", "敬语", "邮件", "东京", "实习"],
+    "topK": 5,
+    "note": "测试商务日语、求职和报酬约束。"
+  },
+  {
+    "id": "anime-subtitle-translation",
+    "need": "我想通过中日翻译实践提升语言能力，线上字幕翻译或文化活动现场口译都可以",
+    "judgments": [
+      {"eventId": 42, "relevance": 3, "reason": "线上字幕翻译、时间轴和校对完全匹配"},
+      {"eventId": 44, "relevance": 3, "reason": "文化活动现场翻译同样完全满足中日翻译实践"},
+      {"eventId": 41, "relevance": 1, "reason": "包含双语资料和商务日语，但不是专门翻译活动"}
+    ],
+    "expectedEventIds": [42],
+    "expectedTerms": ["动漫", "字幕", "中日翻译", "校对", "志愿"],
+    "topK": 5,
+    "note": "测试线上字幕翻译，区分现场翻译活动。"
+  },
+  {
+    "id": "japan-study-application",
+    "need": "我准备去日本留学，既想了解选学校、研究计划书和签证，也希望补足日语沟通能力",
+    "judgments": [
+      {"eventId": 43, "relevance": 3, "reason": "院校、研究计划书、签证和奖学金申请完全匹配"},
+      {"eventId": 39, "relevance": 2, "reason": "适合补足零基础日语，为留学做语言准备"},
+      {"eventId": 40, "relevance": 2, "reason": "适合提高日本生活场景口语"},
+      {"eventId": 41, "relevance": 1, "reason": "对后续日本求职和商务交流有帮助，但不是申请阶段核心需求"}
+    ],
+    "expectedEventIds": [43],
+    "expectedTerms": ["留学", "研究计划书", "签证", "奖学金", "院校"],
+    "topK": 5,
+    "note": "测试否定意图和留学申请语义，避免召回日语课程。"
+  },
+  {
+    "id": "live-translation-culture-festival",
+    "need": "我想做中日翻译实践，线上字幕翻译或文化活动现场口译都可以，如果有报酬更好",
+    "judgments": [
+      {"eventId": 44, "relevance": 3, "reason": "现场翻译、游客引导和报酬完全匹配"},
+      {"eventId": 42, "relevance": 2, "reason": "线上字幕翻译符合翻译实践，但没有报酬"},
+      {"eventId": 41, "relevance": 1, "reason": "有报酬并涉及双语资料，但主要是商务日语实习"}
+    ],
+    "expectedEventIds": [44],
+    "expectedTerms": ["中日", "现场翻译", "文化节", "引导", "报酬"],
+    "topK": 5,
+    "note": "测试现场翻译、文化类别、京都和报酬组合。"
+  },
+  {
+    "id": "survey-design-research",
+    "need": "我想系统学习社会研究方法，从问卷量表、访谈编码到研究数据整理都想接触",
+    "category": "RESEARCH",
+    "judgments": [
+      {"eventId": 45, "relevance": 3, "reason": "问卷、量表、抽样和偏差控制完全匹配"},
+      {"eventId": 46, "relevance": 3, "reason": "访谈、转录和编码覆盖质性研究方法"},
+      {"eventId": 47, "relevance": 2, "reason": "覆盖研究数据清洗和描述统计，但更偏数据处理"}
+    ],
+    "expectedEventIds": [45],
+    "expectedTerms": ["问卷", "量表", "抽样", "偏差", "预测试"],
+    "topK": 5,
+    "note": "测试问卷设计，区分数据清洗和质性访谈。"
+  },
+  {
+    "id": "qualitative-interview-coding",
+    "need": "我想在线学习半结构化访谈，练习追问、转录、开放编码和主题分析",
+    "category": "RESEARCH",
+    "location": "线上",
+    "judgments": [
+      {"eventId": 46, "relevance": 3, "reason": "线上访谈、转录、开放编码和主题分析完全匹配"},
+      {"eventId": 47, "relevance": 1, "reason": "同为线上研究数据处理，但属于量化清洗"}
+    ],
+    "expectedEventIds": [46],
+    "expectedTerms": ["访谈", "转录", "开放编码", "主题分析"],
+    "topK": 5,
+    "note": "测试质性研究语义，区分问卷和量化数据处理。"
+  },
+  {
+    "id": "paid-python-data-cleaning",
+    "need": "我想参与问卷研究相关实践，从问卷设计、访谈到用 Python 清洗数据都可以",
+    "category": "RESEARCH",
+    "judgments": [
+      {"eventId": 47, "relevance": 3, "reason": "Python 问卷数据清洗和统计完全匹配"},
+      {"eventId": 45, "relevance": 3, "reason": "覆盖问卷设计、量表和预测试"},
+      {"eventId": 46, "relevance": 2, "reason": "覆盖访谈和编码，是相关的质性研究实践"}
+    ],
+    "expectedEventIds": [47],
+    "expectedTerms": ["Python", "Pandas", "数据清洗", "缺失值", "报酬"],
+    "topK": 5,
+    "note": "测试 Python 数据处理、研究场景与有偿约束。"
+  },
+  {
+    "id": "llm-paper-reading-osaka",
+    "need": "我想深入学习 Agent 和 RAG，论文阅读、系统实现或多智能体实验都可以",
+    "judgments": [
+      {"eventId": 48, "relevance": 3, "reason": "Agent/RAG 论文阅读、讲解和复现实验完全匹配"},
+      {"eventId": 36, "relevance": 3, "reason": "系统实现 RAG 混合检索并进行评测"},
+      {"eventId": 34, "relevance": 2, "reason": "多智能体实验和工作流状态研究相关"},
+      {"eventId": 33, "relevance": 1, "reason": "适合 Agent 工程入门，但研究深度较低"}
+    ],
+    "expectedEventIds": [48],
+    "expectedTerms": ["论文", "Agent", "RAG", "复现", "大阪"],
+    "topK": 5,
+    "note": "测试学术论文阅读，区分工程工作坊和开发竞赛。"
+  },
+  {
+    "id": "paid-exhibition-operation-osaka",
+    "need": "我想锻炼线下活动执行和现场运营能力，可以做签到、引导、问卷收集或物资服务",
+    "judgments": [
+      {"eventId": 49, "relevance": 3, "reason": "签到、引导、问卷和会场整理完全匹配"},
+      {"eventId": 53, "relevance": 2, "reason": "包含物资发放、路线引导和大型活动执行"},
+      {"eventId": 44, "relevance": 2, "reason": "包含游客引导和文化活动现场执行"},
+      {"eventId": 37, "relevance": 1, "reason": "涉及活动与内容运营，但不是线下现场执行"}
+    ],
+    "expectedEventIds": [49],
+    "expectedTerms": ["展会", "签到", "引导", "问卷", "现场运营"],
+    "topK": 5,
+    "note": "测试现场运营，区分研究问卷和普通志愿活动。"
+  },
+  {
+    "id": "children-japanese-reading-tokyo",
+    "need": "我想用日语参加公益或志愿活动，在真实服务中练沟通、翻译或陪伴能力",
+    "judgments": [
+      {"eventId": 50, "relevance": 3, "reason": "日语儿童阅读陪伴和公益服务完全匹配"},
+      {"eventId": 40, "relevance": 3, "reason": "日语口语陪练和公益交流完全匹配"},
+      {"eventId": 42, "relevance": 2, "reason": "中日字幕翻译志愿活动符合语言公益实践"},
+      {"eventId": 44, "relevance": 1, "reason": "能做中日翻译服务，但属于有偿文化活动"}
+    ],
+    "expectedEventIds": [50],
+    "expectedTerms": ["儿童", "日语", "绘本", "阅读", "公益"],
+    "topK": 5,
+    "note": "测试日语能力和儿童公益场景的组合。"
+  },
+  {
+    "id": "paid-chinese-social-media",
+    "need": "我想找线上中文社交媒体兼职，主要写推文、整理活动资讯、安排发布计划并分析阅读数据",
+    "benefitType": "BOTH",
+    "location": "线上",
+    "judgments": [
+      {"eventId": 51, "relevance": 3, "reason": "线上中文社媒兼职、推文、发布计划和数据分析完全匹配"},
+      {"eventId": 37, "relevance": 3, "reason": "线上有偿内容运营、文章和阅读数据分析同样匹配"}
+    ],
+    "expectedEventIds": [51],
+    "expectedTerms": ["中文", "社媒", "推文", "发布计划", "兼职"],
+    "topK": 5,
+    "note": "测试中文社媒兼职，区分 AI 新媒体实习。"
+  },
+  {
+    "id": "paid-ai-data-annotation",
+    "need": "我想找远程 AI 兼职，给对话做意图标注、检查模型回答是否正确，并整理错误类型",
+    "category": "COMPANY",
+    "benefitType": "BOTH",
+    "location": "线上",
+    "judgments": [
+      {"eventId": 52, "relevance": 3, "reason": "远程有偿 AI 数据标注、回答检查和错误分类完全匹配"},
+      {"eventId": 37, "relevance": 1, "reason": "同为有偿 AI 线上工作，但岗位是内容运营"},
+      {"eventId": 35, "relevance": 1, "reason": "同为 Agent/AI 实践，但形式是开发竞赛"}
+    ],
+    "expectedEventIds": [52],
+    "expectedTerms": ["AI", "数据标注", "意图", "模型回答", "错误分析"],
+    "topK": 5,
+    "note": "测试 AI 数据质量岗位，区分 Agent 开发和内容运营。"
+  },
+  {
+    "id": "osaka-marathon-volunteer",
+    "need": "我想参加大阪的体育志愿服务，最好是在马拉松现场负责补给、物资发放和路线引导",
+    "location": "大阪",
+    "judgments": [
+      {"eventId": 53, "relevance": 3, "reason": "大阪马拉松志愿服务完全匹配"},
+      {"eventId": 54, "relevance": 2, "reason": "同样提供跑步和体能相关实践，但不是志愿服务"}
+    ],
+    "expectedEventIds": [53],
+    "expectedTerms": ["大阪", "马拉松", "志愿", "补给", "路线引导"],
+    "topK": 5,
+    "note": "测试体育志愿活动和具体岗位语义。"
+  },
+  {
+    "id": "fitness-training-osaka",
+    "need": "我想在大阪规律锻炼身体，通过跑步、核心力量和体能测试改善自己的运动状态",
+    "category": "CAMPUS",
+    "location": "大阪",
+    "judgments": [
+      {"eventId": 54, "relevance": 3, "reason": "大阪校园体能、跑步、核心力量和测试完全匹配"}
+    ],
+    "expectedEventIds": [54],
+    "expectedTerms": ["体能", "跑步", "力量", "训练", "大阪"],
+    "topK": 5,
+    "note": "测试健身意图，不能因为出现跑步而只召回马拉松志愿者。"
+  },
+  {
+    "id": "cet6-online-study",
+    "need": "我想在线参加语言学习活动，英语考试训练或日语入门都可以，最好有持续练习和复盘",
+    "location": "线上",
+    "judgments": [
+      {"eventId": 55, "relevance": 3, "reason": "英语考试训练、模考和复盘完全匹配"},
+      {"eventId": 39, "relevance": 3, "reason": "线上日语入门和阶段练习完全匹配"},
+      {"eventId": 42, "relevance": 1, "reason": "属于线上日语实践，但不是系统语言课程"}
+    ],
+    "expectedEventIds": [55],
+    "expectedTerms": ["CET-6", "六级", "听力", "写作", "模考"],
+    "topK": 5,
+    "note": "测试英语考试学习场景。"
+  },
+  {
+    "id": "java-agent-mock-interview",
+    "need": "我想在线模拟一次技术面试，方向是 Java 后端和 Agent 工程，希望有人深挖项目并给逐项反馈",
+    "category": "COMPANY",
+    "location": "线上",
+    "judgments": [
+      {"eventId": 56, "relevance": 3, "reason": "线上 Java 后端与 Agent 模拟面试、项目深挖和反馈完全匹配"},
+      {"eventId": 32, "relevance": 1, "reason": "提供 Java/Go 工程内容，可作为后端面试准备的弱相关实践"},
+      {"eventId": 35, "relevance": 1, "reason": "提供 Agent 工程作品实践，可作为面试素材但不是面试训练"}
+    ],
+    "expectedEventIds": [56],
+    "expectedTerms": ["模拟面试", "Java后端", "Agent工程", "项目深挖", "反馈"],
+    "topK": 5,
+    "note": "测试求职面试语义，区分 Java 课程和 Agent 开发活动。"
   }
 ]

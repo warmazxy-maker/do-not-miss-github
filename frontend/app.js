@@ -339,6 +339,9 @@ const planModalClose = document.querySelector("#planModalClose");
 const planImportSchedule = document.querySelector("#planImportSchedule");
 const planTabs = document.querySelector("#planTabs");
 const planFlow = document.querySelector("#planFlow");
+const judgeModal = document.querySelector("#judgeModal");
+const judgeModalClose = document.querySelector("#judgeModalClose");
+const judgeModalBody = document.querySelector("#judgeModalBody");
 
 const SCHEDULE_DAY_START_HOUR = 7;
 const SCHEDULE_DAY_END_HOUR = 22;
@@ -381,8 +384,12 @@ let reservations = [];
 let completedRecords = [];
 let growthTags = [];
 let growthTagDetails = new Map();
-let selectedGrowthTagId = "";
 let loadingGrowthTagDetailId = "";
+let abilityStates = [];
+let abilityResults = [];
+let abilityJudges = [];
+let selectedAbilityStateId = "";
+let activeJudgeId = "";
 let challenges = [];
 let scheduleItems = [];
 let coachMessagesData = [];
@@ -672,16 +679,28 @@ historyPagination.addEventListener("click", (event) => {
 });
 
 abilityMap.addEventListener("click", (event) => {
-  const tagButton = event.target.closest("[data-growth-tag-id]");
+  const stateButton = event.target.closest("[data-ability-state-id]");
 
-  if (!tagButton) {
+  if (!stateButton) {
     return;
   }
 
-  selectGrowthTag(tagButton.dataset.growthTagId);
+  selectAbilityState(stateButton.dataset.abilityStateId);
 });
 
 abilityMapDetail.addEventListener("click", async (event) => {
+  const judgeButton = event.target.closest("[data-judge-id]");
+  if (judgeButton) {
+    await openJudgeModal(judgeButton.dataset.judgeId);
+    return;
+  }
+
+  const appealButton = event.target.closest("[data-appeal-result-id]");
+  if (appealButton) {
+    await submitAbilityAppeal(appealButton.dataset.appealResultId);
+    return;
+  }
+
   const milestoneButton = event.target.closest("[data-milestone-evidence-id]");
 
   if (!milestoneButton) {
@@ -693,7 +712,7 @@ abilityMapDetail.addEventListener("click", async (event) => {
 
 abilityMapRefresh.addEventListener("click", async () => {
   if (!authSession?.token) {
-    showAuthMessage("请先登录后再刷新能力地图。", "error");
+    showAuthMessage("请先登录后再同步能力评分。", "error");
     return;
   }
 
@@ -702,14 +721,9 @@ abilityMapRefresh.addEventListener("click", async () => {
   abilityMapRefresh.textContent = "刷新中...";
 
   try {
-    await fetchBackendJson("/api/achievements/growth-tags/rebuild", {
-      method: "POST"
-    });
-    growthTagDetails = new Map();
-    growthTags = (await fetchBackendJson("/api/achievements/growth-tags")).map(mapBackendGrowthTag);
-    selectedGrowthTagId = growthTags[0]?.id ?? "";
+    await reloadAbilityData();
     renderAbilityMap();
-    showAuthMessage("能力地图已刷新。", "success");
+    showAuthMessage("能力评分状态已同步。", "success");
   } catch (error) {
     showAuthMessage(`刷新失败：${error.message}`, "error");
   } finally {
@@ -742,6 +756,20 @@ planModal.addEventListener("click", (event) => {
   if (event.target.closest("[data-plan-close]")) {
     closePlanModal();
   }
+});
+
+judgeModalClose.addEventListener("click", closeJudgeModal);
+judgeModal.addEventListener("click", (event) => {
+  if (event.target.closest("[data-judge-close]")) {
+    closeJudgeModal();
+  }
+});
+judgeModalBody.addEventListener("submit", async (event) => {
+  if (!event.target.matches("#judgeAnswerForm")) {
+    return;
+  }
+  event.preventDefault();
+  await submitJudgeAnswers(event.target);
 });
 planTabs.addEventListener("click", (event) => {
   const index = Number(event.target.closest("[data-plan-index]")?.dataset.planIndex);
@@ -1359,78 +1387,83 @@ function renderAchievements() {
 }
 
 function renderAbilityMap() {
-  const orderedTags = [...growthTags].sort((a, b) =>
-    b.importanceScore - a.importanceScore ||
-    b.score - a.score ||
-    b.evidenceCount - a.evidenceCount ||
-    a.name.localeCompare(b.name)
+  const orderedStates = [...abilityStates].sort((a, b) =>
+    b.abilityScore - a.abilityScore ||
+    b.experienceScore - a.experienceScore ||
+    a.dimension.localeCompare(b.dimension)
   );
   abilityMap.innerHTML = "";
   abilityMapDetail.innerHTML = "";
-  abilityMapRefresh.hidden = !authSession?.token || completedRecords.length === 0;
+  abilityMapRefresh.hidden = !authSession?.token;
 
-  if (!selectedGrowthTagId || !orderedTags.some((tag) => tag.id === selectedGrowthTagId)) {
-    selectedGrowthTagId = orderedTags[0]?.id ?? "";
+  if (!selectedAbilityStateId || !orderedStates.some((state) => state.id === selectedAbilityStateId)) {
+    selectedAbilityStateId = orderedStates[0]?.id ?? "";
   }
 
-  if (orderedTags.length === 0) {
+  if (orderedStates.length === 0) {
     const note = document.createElement("div");
     note.className = "ability-map-empty";
     note.textContent = completedRecords.length > 0
-      ? "能力标签待生成。"
-      : "完成活动或挑战后生成能力标签。";
+      ? "能力证据正在异步评估，稍后点击“同步评分状态”。"
+      : "完成活动或挑战后，系统会生成可审计的能力评估。";
     abilityMap.append(note);
     abilityMapDetail.hidden = true;
     return;
   }
 
-  const visibleTags = orderedTags.slice(0, 14);
-  if (!visibleTags.some((tag) => tag.id === selectedGrowthTagId)) {
-    selectedGrowthTagId = visibleTags[0]?.id ?? "";
+  const visibleStates = orderedStates.slice(0, 14);
+  if (!visibleStates.some((state) => state.id === selectedAbilityStateId)) {
+    selectedAbilityStateId = visibleStates[0]?.id ?? "";
   }
 
-  const maxScore = Math.max(...orderedTags.map((tag) => tag.score), 1);
   const stage = document.createElement("div");
   const avatar = document.createElement("div");
   const avatarInitial = document.createElement("strong");
   const avatarLabel = document.createElement("span");
   const tagCloud = document.createElement("div");
+  const averageScore = orderedStates.reduce((sum, state) => sum + state.abilityScore, 0) / orderedStates.length;
 
   stage.className = "ability-map-stage";
   avatar.className = "ability-avatar";
   avatarInitial.textContent = (authSession?.user.username ?? "Me").slice(0, 1).toUpperCase();
-  avatarLabel.textContent = `${orderedTags.length} 个能力标签`;
+  avatarLabel.textContent = `${orderedStates.length} 项能力 · 均值 ${Math.round(averageScore)}`;
   avatar.append(avatarInitial, avatarLabel);
   tagCloud.className = "ability-tag-cloud";
 
-  visibleTags.forEach((tag, index) => {
+  visibleStates.forEach((state, index) => {
     const button = document.createElement("button");
     const name = document.createElement("span");
     const meta = document.createElement("small");
-    const intensity = tag.score / maxScore;
-    const level = Math.max(0, Math.min(4, Math.floor(intensity * 5)));
-    const position = getAbilityBubblePosition(index, visibleTags.length, intensity);
+    const intensity = Math.max(0, Math.min(1, state.abilityScore / 100));
+    const level = Math.max(0, Math.min(4, Math.floor(state.abilityScore / 20)));
+    const position = getAbilityBubblePosition(index, visibleStates.length, intensity);
+    const pendingJudge = findPendingJudgeForState(state.id);
 
     button.type = "button";
     button.className = `ability-tag ability-tag-level-${level}`;
-    button.dataset.growthTagId = tag.id;
-    button.classList.toggle("is-active", tag.id === selectedGrowthTagId);
-    button.classList.toggle("is-milestone", tag.importanceScore > 0);
+    button.dataset.abilityStateId = state.id;
+    button.classList.toggle("is-active", state.id === selectedAbilityStateId);
+    button.classList.toggle("is-review", Boolean(pendingJudge));
     button.style.setProperty("--bubble-x", `${position.x}%`);
     button.style.setProperty("--bubble-y", `${position.y}%`);
     button.style.setProperty("--bubble-size", `${Math.round(92 + intensity * 48)}px`);
     button.style.setProperty("--bubble-delay", `${Math.min(index * 45, 420)}ms`);
-    name.textContent = tag.name;
-    meta.textContent = `${tag.score} 分 · ${tag.evidenceCount} 条证据`;
+    name.textContent = state.dimension;
+    meta.textContent = `${formatAbilityScore(state.abilityScore)} · ${rankLabel(state.rank)}`;
     button.append(name, meta);
+    if (pendingJudge) {
+      const badge = document.createElement("em");
+      badge.className = "ability-review-badge";
+      badge.textContent = "待验证";
+      button.append(badge);
+    }
     tagCloud.append(button);
   });
 
   stage.append(avatar, tagCloud);
   abilityMap.append(stage);
-  const selectedTag = orderedTags.find((tag) => tag.id === selectedGrowthTagId) ?? orderedTags[0];
-  renderAbilityMapDetail(selectedTag);
-  queueGrowthTagDetailLoad(selectedTag.id);
+  const selectedState = orderedStates.find((state) => state.id === selectedAbilityStateId) ?? orderedStates[0];
+  renderAbilityMapDetail(selectedState);
 }
 
 function getAbilityBubblePosition(index, total, intensity) {
@@ -1450,53 +1483,69 @@ function getAbilityBubblePosition(index, total, intensity) {
   };
 }
 
-function renderAbilityMapDetail(tag) {
+function renderAbilityMapDetail(state) {
   abilityMapDetail.innerHTML = "";
 
-  if (!tag) {
+  if (!state) {
     abilityMapDetail.hidden = true;
     return;
   }
 
   abilityMapDetail.hidden = false;
-  const detail = growthTagDetails.get(tag.id);
+  const header = document.createElement("div");
+  const heading = document.createElement("div");
   const title = document.createElement("strong");
-  const description = document.createElement("p");
+  const subtitle = document.createElement("p");
+  const rank = document.createElement("span");
+  const scorePanel = document.createElement("div");
+  const scoreGauge = document.createElement("div");
+  const scoreValue = document.createElement("strong");
+  const scoreLabel = document.createElement("span");
   const metrics = document.createElement("div");
-  const score = document.createElement("span");
-  const evidence = document.createElement("span");
-  const milestone = document.createElement("span");
-  const timelineTitle = document.createElement("div");
+  const experience = document.createElement("span");
+  const confidence = document.createElement("span");
+  const uncertainty = document.createElement("span");
+  const stateResults = resultsForState(state.id);
+  const pendingJudge = findPendingJudgeForState(state.id);
 
-  title.textContent = tag.name;
-  description.textContent = tag.description || "来自已完成活动、挑战和复盘的成长证据。";
+  header.className = "ability-detail-header";
+  heading.className = "ability-detail-heading";
+  title.textContent = state.dimension;
+  subtitle.textContent = "由活动证据、个人复盘、来源可信度和确定性评分引擎共同计算。";
+  rank.className = `ability-rank ability-rank-${state.rank.toLowerCase()}`;
+  rank.textContent = rankLabel(state.rank);
+  heading.append(title, subtitle, rank);
+
+  scorePanel.className = "ability-score-panel";
+  scoreGauge.className = "ability-score-gauge";
+  scoreGauge.style.setProperty("--ability-progress", `${Math.max(0, Math.min(100, state.abilityScore))}%`);
+  scoreValue.textContent = formatAbilityScore(state.abilityScore);
+  scoreLabel.textContent = "能力分 / 100";
+  scoreGauge.append(scoreValue, scoreLabel);
+  scorePanel.append(scoreGauge);
+
   metrics.className = "ability-map-metrics";
-  score.textContent = `累计 ${tag.score} 分`;
-  evidence.textContent = `${tag.evidenceCount} 条证据`;
-  milestone.textContent = tag.importanceScore > 0 ? `重要性 ${tag.importanceScore}` : "暂无里程碑";
-  timelineTitle.className = "milestone-road-title";
-  timelineTitle.textContent = "成长里程碑";
+  experience.textContent = `经验 ${formatAbilityScore(state.experienceScore)}`;
+  confidence.textContent = `可信程度 ${Math.round((1 - state.abilityUncertainty) * 100)}%`;
+  uncertainty.textContent = `不确定度 ${state.abilityUncertainty.toFixed(2)}`;
+  metrics.append(experience, confidence, uncertainty);
+  header.append(heading, scorePanel);
+  abilityMapDetail.append(header, metrics);
 
-  metrics.append(score, evidence, milestone);
-  abilityMapDetail.append(title, description, metrics, timelineTitle);
-
-  if (!detail) {
-    const loading = document.createElement("div");
-    loading.className = "milestone-road-note";
-    loading.textContent = loadingGrowthTagDetailId === tag.id ? "正在读取标签证据..." : "点击标签查看成长证据。";
-    abilityMapDetail.append(loading);
-    return;
+  if (pendingJudge) {
+    abilityMapDetail.append(createJudgeNotice(pendingJudge));
   }
 
-  renderMilestoneRoad(detail.evidences ?? []);
+  abilityMapDetail.append(createAbilityResultSection(stateResults));
+  renderAbilityEvidenceSection(state);
 }
 
-function renderMilestoneRoad(evidences) {
+function renderMilestoneRoad(evidences, container = abilityMapDetail) {
   if (evidences.length === 0) {
     const empty = document.createElement("div");
     empty.className = "milestone-road-note";
     empty.textContent = "这个标签暂时还没有可展示的证据。";
-    abilityMapDetail.append(empty);
+    container.append(empty);
     return;
   }
 
@@ -1555,11 +1604,11 @@ function renderMilestoneRoad(evidences) {
       road.append(node);
     });
 
-  abilityMapDetail.append(road);
+  container.append(road);
 }
 
-function selectGrowthTag(tagId) {
-  selectedGrowthTagId = tagId;
+function selectAbilityState(stateId) {
+  selectedAbilityStateId = stateId;
   renderAbilityMap();
 }
 
@@ -1569,7 +1618,6 @@ async function queueGrowthTagDetailLoad(tagId) {
   }
 
   loadingGrowthTagDetailId = tagId;
-  renderAbilityMapDetail(growthTags.find((tag) => tag.id === tagId));
 
   try {
     const detail = mapBackendGrowthTagDetail(await fetchBackendJson(`/api/achievements/growth-tags/${tagId}`));
@@ -1580,16 +1628,18 @@ async function queueGrowthTagDetailLoad(tagId) {
     if (loadingGrowthTagDetailId === tagId) {
       loadingGrowthTagDetailId = "";
     }
-    if (selectedGrowthTagId === tagId) {
-      renderAbilityMapDetail(growthTags.find((tag) => tag.id === tagId));
+    const selectedState = abilityStates.find((state) => state.id === selectedAbilityStateId);
+    if (selectedState && findGrowthTagForState(selectedState)?.id === tagId) {
+      renderAbilityMapDetail(selectedState);
     }
   }
 }
 
 async function toggleGrowthMilestone(evidenceId) {
-  const detail = growthTagDetails.get(selectedGrowthTagId);
+  const selectedState = abilityStates.find((state) => state.id === selectedAbilityStateId);
+  const tag = findGrowthTagForState(selectedState);
+  const detail = tag ? growthTagDetails.get(tag.id) : null;
   const evidence = detail?.evidences.find((item) => item.id === evidenceId);
-  const tag = growthTags.find((item) => item.id === selectedGrowthTagId);
 
   if (!evidence || !tag) {
     return;
@@ -1610,14 +1660,133 @@ async function toggleGrowthMilestone(evidenceId) {
     });
     const [tagData, detailData] = await Promise.all([
       fetchBackendJson("/api/achievements/growth-tags"),
-      fetchBackendJson(`/api/achievements/growth-tags/${selectedGrowthTagId}`)
+      fetchBackendJson(`/api/achievements/growth-tags/${tag.id}`)
     ]);
     growthTags = tagData.map(mapBackendGrowthTag);
-    growthTagDetails.set(selectedGrowthTagId, mapBackendGrowthTagDetail(detailData));
+    growthTagDetails.set(tag.id, mapBackendGrowthTagDetail(detailData));
     renderAbilityMap();
   } catch (error) {
     showAuthMessage(`里程碑更新失败：${error.message}`, "error");
   }
+}
+
+function createJudgeNotice(judge) {
+  const notice = document.createElement("section");
+  const copy = document.createElement("div");
+  const eyebrow = document.createElement("span");
+  const title = document.createElement("strong");
+  const reason = document.createElement("p");
+  const button = document.createElement("button");
+
+  notice.className = "ability-judge-notice";
+  copy.className = "ability-judge-copy";
+  eyebrow.className = "ability-judge-label";
+  eyebrow.textContent = judge.status === "IN_PROGRESS" ? "验证进行中" : "需要能力验证";
+  title.textContent = judge.proposedRank && judge.proposedRank !== judge.currentRank
+    ? `通过后可确认 ${rankLabel(judge.proposedRank)}`
+    : "这次高影响评分需要进一步确认";
+  reason.textContent = formatJudgeReasons(judge.triggerReasons);
+  button.className = "primary-button";
+  button.type = "button";
+  button.dataset.judgeId = judge.id;
+  button.textContent = judge.status === "IN_PROGRESS" ? "继续作答" : "开始验证";
+  copy.append(eyebrow, title, reason);
+  notice.append(copy, button);
+  return notice;
+}
+
+function createAbilityResultSection(results) {
+  const section = document.createElement("section");
+  const heading = document.createElement("div");
+  const title = document.createElement("strong");
+  const description = document.createElement("span");
+  const list = document.createElement("div");
+
+  section.className = "ability-result-section";
+  heading.className = "ability-result-heading";
+  title.textContent = "评分记录";
+  description.textContent = "每次变化都保留证据版本与计算结果";
+  heading.append(title, description);
+  list.className = "ability-result-list";
+
+  if (results.length === 0) {
+    const empty = document.createElement("div");
+    empty.className = "milestone-road-note";
+    empty.textContent = "当前能力还没有可展示的评分记录。";
+    list.append(empty);
+  } else {
+    results.slice(0, 5).forEach((result) => {
+      const card = document.createElement("article");
+      const top = document.createElement("div");
+      const status = document.createElement("span");
+      const gain = document.createElement("strong");
+      const change = document.createElement("p");
+      const meta = document.createElement("p");
+      const appeal = document.createElement("details");
+      const appealSummary = document.createElement("summary");
+      const appealText = document.createElement("textarea");
+      const appealButton = document.createElement("button");
+
+      card.className = "ability-result-card";
+      top.className = "ability-result-top";
+      status.className = `ability-result-status status-${result.status.toLowerCase()}`;
+      status.textContent = scoreStatusLabel(result.status);
+      gain.textContent = `经验 +${formatAbilityScore(result.verifiedExperienceGain)}`;
+      change.textContent = `能力分 ${formatAbilityScore(result.oldAbilityScore)} → ${formatAbilityScore(result.newAbilityScore)}`;
+      meta.textContent = `${formatDate(result.createdAt)} · 规则 ${result.scoringRuleVersion}`;
+      appeal.className = "ability-appeal";
+      appeal.dataset.appealPanel = result.id;
+      appealSummary.textContent = "对这次评分有疑问";
+      appealText.rows = 3;
+      appealText.maxLength = 1200;
+      appealText.placeholder = "说明你认为遗漏或判断不准确的证据";
+      appealText.dataset.appealReason = result.id;
+      appealButton.className = "secondary-button";
+      appealButton.type = "button";
+      appealButton.dataset.appealResultId = result.id;
+      appealButton.textContent = "提交申诉";
+
+      top.append(status, gain);
+      appeal.append(appealSummary, appealText, appealButton);
+      card.append(top, change, meta, appeal);
+      list.append(card);
+    });
+  }
+
+  section.append(heading, list);
+  return section;
+}
+
+function renderAbilityEvidenceSection(state) {
+  const section = document.createElement("section");
+  const title = document.createElement("div");
+  const growthTag = findGrowthTagForState(state);
+  const detail = growthTag ? growthTagDetails.get(growthTag.id) : null;
+
+  section.className = "ability-evidence-section";
+  title.className = "milestone-road-title";
+  title.textContent = "成长证据与里程碑";
+  section.append(title);
+  abilityMapDetail.append(section);
+
+  if (!growthTag) {
+    const empty = document.createElement("div");
+    empty.className = "milestone-road-note";
+    empty.textContent = "新版能力评分已生成，但旧里程碑证据尚未匹配到这个能力维度。";
+    section.append(empty);
+    return;
+  }
+
+  if (!detail) {
+    const loading = document.createElement("div");
+    loading.className = "milestone-road-note";
+    loading.textContent = loadingGrowthTagDetailId === growthTag.id ? "正在读取成长证据..." : "正在准备成长证据...";
+    section.append(loading);
+    queueGrowthTagDetailLoad(growthTag.id);
+    return;
+  }
+
+  renderMilestoneRoad(detail.evidences ?? [], section);
 }
 
 function renderCategoryChart() {
@@ -2033,6 +2202,348 @@ async function importActivePlanToSchedule() {
   }
 }
 
+async function openJudgeModal(judgeId) {
+  if (!judgeModal || !judgeModalBody) {
+    return;
+  }
+  let judge = abilityJudges.find((item) => item.id === String(judgeId));
+  if (!judge) {
+    return;
+  }
+
+  activeJudgeId = judge.id;
+  judgeModal.hidden = false;
+  renderJudgeModal(judge, judge.status === "PENDING" ? "正在生成能力验证题目..." : "");
+  judgeModalClose?.focus();
+
+  if (judge.status !== "PENDING") {
+    return;
+  }
+
+  try {
+    judge = mapBackendJudgeAssessment(await fetchBackendJson(`/api/ability-judges/${judge.id}/start`, {
+      method: "POST"
+    }));
+    replaceJudge(judge);
+    renderJudgeModal(judge);
+  } catch (error) {
+    renderJudgeModal(judge, `题目生成失败：${error.message}`);
+  }
+}
+
+function closeJudgeModal() {
+  if (judgeModal) {
+    judgeModal.hidden = true;
+  }
+  activeJudgeId = "";
+}
+
+function renderJudgeModal(judge, message = "") {
+  if (!judgeModalBody) {
+    return;
+  }
+  judgeModalBody.innerHTML = "";
+
+  const overview = document.createElement("section");
+  const title = document.createElement("h3");
+  const status = document.createElement("span");
+  const meta = document.createElement("div");
+  const score = document.createElement("span");
+  const rank = document.createElement("span");
+  const reasons = document.createElement("p");
+
+  overview.className = "judge-overview";
+  title.textContent = judge.dimension;
+  status.className = `judge-decision decision-${judge.decision.toLowerCase()}`;
+  status.textContent = judgeDecisionLabel(judge.decision, judge.status);
+  meta.className = "judge-overview-meta";
+  score.textContent = `触发能力分 ${formatAbilityScore(judge.abilityScoreAtTrigger)}`;
+  rank.textContent = `${rankLabel(judge.currentRank)} → ${rankLabel(judge.proposedRank)}`;
+  reasons.textContent = formatJudgeReasons(judge.triggerReasons);
+  meta.append(score, rank);
+  overview.append(status, title, meta, reasons);
+  judgeModalBody.append(overview);
+
+  if (message) {
+    const note = document.createElement("div");
+    note.className = "judge-loading";
+    note.textContent = message;
+    judgeModalBody.append(note);
+  }
+
+  if (judge.status === "IN_PROGRESS") {
+    judgeModalBody.append(createJudgeAnswerForm(judge));
+    return;
+  }
+
+  if (judge.status === "COMPLETED") {
+    judgeModalBody.append(createJudgeResult(judge));
+    return;
+  }
+
+  if (!message) {
+    const note = document.createElement("div");
+    note.className = "judge-loading";
+    note.textContent = judge.status === "FAILED"
+      ? "本次能力验证启动失败，请关闭后重试。"
+      : "能力验证任务正在准备。";
+    judgeModalBody.append(note);
+  }
+}
+
+function createJudgeAnswerForm(judge) {
+  const form = document.createElement("form");
+  const intro = document.createElement("p");
+  const submit = document.createElement("button");
+  const existingAnswers = new Map((judge.answers ?? []).map((answer) => [answer.questionId, answer.answer]));
+
+  form.id = "judgeAnswerForm";
+  form.className = "judge-answer-form";
+  intro.className = "judge-form-intro";
+  intro.textContent = "请结合你真实完成的工作回答。系统关注事实细节、原理理解和排错思路。";
+  form.append(intro);
+
+  (judge.questions ?? []).forEach((question, index) => {
+    const field = document.createElement("label");
+    const number = document.createElement("span");
+    const prompt = document.createElement("strong");
+    const focus = document.createElement("small");
+    const textarea = document.createElement("textarea");
+
+    field.className = "judge-question";
+    number.textContent = String(index + 1).padStart(2, "0");
+    prompt.textContent = question.prompt;
+    focus.textContent = `验证点：${question.focus || "综合能力"}`;
+    textarea.rows = 5;
+    textarea.maxLength = 4000;
+    textarea.required = true;
+    textarea.dataset.judgeQuestionId = question.id;
+    textarea.value = existingAnswers.get(question.id) ?? "";
+    textarea.placeholder = "写下你的真实思考和做法";
+    field.append(number, prompt, focus, textarea);
+    form.append(field);
+  });
+
+  submit.className = "primary-button judge-submit";
+  submit.type = "submit";
+  submit.textContent = "提交验证";
+  form.append(submit);
+  return form;
+}
+
+function createJudgeResult(judge) {
+  const section = document.createElement("section");
+  const score = document.createElement("div");
+  const scoreValue = document.createElement("strong");
+  const scoreLabel = document.createElement("span");
+  const summary = document.createElement("p");
+  const confidence = document.createElement("p");
+  const list = document.createElement("div");
+
+  section.className = "judge-result";
+  score.className = "judge-result-score";
+  scoreValue.textContent = judge.rubric ? String(judge.rubric.totalScore) : "—";
+  scoreLabel.textContent = "Judge 得分";
+  score.append(scoreValue, scoreLabel);
+  summary.textContent = judge.reviewReason || judge.rubric?.overallFeedback || "本次验证已经完成。";
+  confidence.className = "judge-confidence-change";
+  confidence.textContent = judge.confidenceAfter == null
+    ? "画像可信度未自动调整"
+    : `画像可信度 ${Math.round(judge.confidenceBefore * 100)}% → ${Math.round(judge.confidenceAfter * 100)}%`;
+  list.className = "judge-rubric-list";
+
+  (judge.rubric?.items ?? []).forEach((item, index) => {
+    const card = document.createElement("article");
+    const top = document.createElement("div");
+    const label = document.createElement("strong");
+    const points = document.createElement("span");
+    const feedback = document.createElement("p");
+
+    card.className = "judge-rubric-card";
+    top.className = "judge-rubric-top";
+    label.textContent = `第 ${index + 1} 题`;
+    points.textContent = `${item.score}/${item.maxScore}`;
+    feedback.textContent = item.feedback || "暂无逐题反馈。";
+    top.append(label, points);
+    card.append(top, feedback);
+    list.append(card);
+  });
+
+  section.append(score, summary, confidence, list);
+  return section;
+}
+
+async function submitJudgeAnswers(form) {
+  const judge = abilityJudges.find((item) => item.id === activeJudgeId);
+  if (!judge) {
+    return;
+  }
+  const submit = form.querySelector(".judge-submit");
+  const answers = [...form.querySelectorAll("[data-judge-question-id]")].map((textarea) => ({
+    questionId: textarea.dataset.judgeQuestionId,
+    answer: normalize(textarea.value)
+  }));
+  if (answers.some((answer) => answer.answer.length < 8)) {
+    renderJudgeModal(judge, "每道题至少需要写出一个完整的回答。");
+    return;
+  }
+
+  submit.disabled = true;
+  submit.textContent = "判卷中...";
+  try {
+    const updated = mapBackendJudgeAssessment(await fetchBackendJson(`/api/ability-judges/${judge.id}/submit`, {
+      method: "POST",
+      body: JSON.stringify({ answers })
+    }));
+    replaceJudge(updated);
+    await reloadAbilityData();
+    renderAbilityMap();
+    renderJudgeModal(abilityJudges.find((item) => item.id === updated.id) ?? updated);
+  } catch (error) {
+    submit.disabled = false;
+    submit.textContent = "重新提交";
+    const note = document.createElement("div");
+    note.className = "judge-loading";
+    note.textContent = `提交失败：${error.message}`;
+    form.prepend(note);
+  }
+}
+
+async function submitAbilityAppeal(resultId) {
+  const panel = abilityMapDetail.querySelector(`[data-appeal-panel="${resultId}"]`);
+  const textarea = panel?.querySelector(`[data-appeal-reason="${resultId}"]`);
+  const button = panel?.querySelector(`[data-appeal-result-id="${resultId}"]`);
+  const reason = normalize(textarea?.value);
+  if (!reason) {
+    showAuthMessage("请先说明你认为评分遗漏了什么证据。", "error");
+    textarea?.focus();
+    return;
+  }
+
+  button.disabled = true;
+  button.textContent = "提交中...";
+  try {
+    await fetchBackendJson(`/api/ability-scoring/results/${resultId}/appeals`, {
+      method: "POST",
+      body: JSON.stringify({
+        reason,
+        evidenceNote: reason
+      })
+    });
+    panel.open = false;
+    textarea.value = "";
+    button.textContent = "已提交";
+    showAuthMessage("评分申诉已提交，等待复核。", "success");
+  } catch (error) {
+    button.disabled = false;
+    button.textContent = "重新提交";
+    showAuthMessage(`申诉失败：${error.message}`, "error");
+  }
+}
+
+function replaceJudge(updated) {
+  const index = abilityJudges.findIndex((item) => item.id === updated.id);
+  if (index >= 0) {
+    abilityJudges.splice(index, 1, updated);
+  } else {
+    abilityJudges.unshift(updated);
+  }
+}
+
+function resultsForState(stateId) {
+  const state = abilityStates.find((item) => item.id === String(stateId));
+  if (!state) {
+    return [];
+  }
+  return abilityResults
+    .filter((result) => canonicalAbilityName(result.dimension) === canonicalAbilityName(state.dimension))
+    .sort((a, b) => compareDate(b.createdAt, a.createdAt));
+}
+
+function findPendingJudgeForState(stateId) {
+  return abilityJudges
+    .filter((judge) => judge.abilityStateId === String(stateId))
+    .sort((a, b) => compareDate(b.createdAt, a.createdAt))
+    .find((judge) => judge.status !== "COMPLETED" || judge.decision === "MANUAL_REVIEW");
+}
+
+function findGrowthTagForState(state) {
+  if (!state) {
+    return null;
+  }
+  const normalized = canonicalAbilityName(state.normalizedDimension || state.dimension);
+  return growthTags.find((tag) => canonicalAbilityName(tag.normalizedName || tag.name) === normalized)
+    ?? growthTags.find((tag) => {
+      const candidate = canonicalAbilityName(tag.name);
+      const dimension = canonicalAbilityName(state.dimension);
+      return candidate && dimension && (candidate.includes(dimension) || dimension.includes(candidate));
+    })
+    ?? null;
+}
+
+function canonicalAbilityName(value) {
+  return String(value ?? "")
+    .trim()
+    .toLowerCase()
+    .replace(/[\s_]+/g, "-")
+    .replace(/[^a-z0-9\u4e00-\u9fff-]/g, "");
+}
+
+function formatAbilityScore(value) {
+  const number = Number(value ?? 0);
+  return Number.isInteger(number) ? String(number) : number.toFixed(1);
+}
+
+function rankLabel(rank) {
+  return {
+    UNRATED: "待评估",
+    FOUNDATION: "基础",
+    DEVELOPING: "成长中",
+    PROFICIENT: "熟练",
+    ADVANCED: "进阶",
+    EXPERT: "专家"
+  }[rank] ?? rank ?? "待评估";
+}
+
+function scoreStatusLabel(status) {
+  return {
+    PROVISIONAL: "暂定",
+    VERIFIED: "已验证",
+    REVIEW_REQUIRED: "待 Judge",
+    SUPERSEDED: "已替换"
+  }[status] ?? status;
+}
+
+function judgeDecisionLabel(decision, status) {
+  if (status === "PENDING") {
+    return "待开始";
+  }
+  if (status === "IN_PROGRESS") {
+    return "作答中";
+  }
+  return {
+    PASS: "验证通过",
+    FAIL: "未通过",
+    MANUAL_REVIEW: "人工复核",
+    PENDING: "待判定"
+  }[decision] ?? decision;
+}
+
+function formatJudgeReasons(reasons = []) {
+  const labels = {
+    DIFFICULTY_GAP_OVER_40: "活动难度明显高于当前能力",
+    HIGH_SINGLE_ACTIVITY_GAIN: "单次经历带来的能力增量较高",
+    HIGH_DIFFICULTY_WITH_WEAK_EVIDENCE: "高难度声明的证据仍然偏弱",
+    STRONG_CLAIM_WITH_LOW_SOURCE_VERIFIABILITY: "强能力声明缺少可验证来源",
+    POSSIBLE_SCORE_FARMING: "经历与历史记录过于相似",
+    RANK_PROMOTION_REQUIRES_JUDGE: "能力等级即将跨越正式阈值",
+    LOW_CONFIDENCE_WITH_STRONG_CLAIM: "画像可信度较低但能力声明较强",
+    LOW_EXTRACTION_CONFIDENCE_FOR_HIGH_IMPACT_RESULT: "高影响结果的证据抽取置信度不足"
+  };
+  const text = reasons.map((reason) => labels[reason] ?? reason).join("；");
+  return text || "系统需要进一步确认这次能力变化。";
+}
+
 async function buildMcpToolContext() {
   const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone || "Asia/Tokyo";
   const context = {
@@ -2362,8 +2873,7 @@ async function handleHistoryAction(event) {
       })
     });
     Object.assign(record, mapBackendAchievementToCompletedRecord(updatedRecord));
-    growthTagDetails = new Map();
-    growthTags = (await fetchBackendJson("/api/achievements/growth-tags")).map(mapBackendGrowthTag);
+    await reloadAbilityData();
     saveButton.textContent = "已保存";
     renderAbilityMap();
     renderSelfAnalysis();
@@ -3165,8 +3675,12 @@ async function reloadBackendData() {
       completedRecords = [];
       growthTags = [];
       growthTagDetails = new Map();
-      selectedGrowthTagId = "";
       loadingGrowthTagDetailId = "";
+      abilityStates = [];
+      abilityResults = [];
+      abilityJudges = [];
+      selectedAbilityStateId = "";
+      activeJudgeId = "";
       challenges = [];
       scheduleItems = [];
       coachMessagesData = [];
@@ -3174,12 +3688,27 @@ async function reloadBackendData() {
       return;
     }
 
-    const [followData, reservationData, challengeData, historyData, growthTagData, scheduleData, coachMessageData, coachLogData] = await Promise.all([
+    const [
+      followData,
+      reservationData,
+      challengeData,
+      historyData,
+      growthTagData,
+      abilityStateData,
+      abilityResultData,
+      abilityJudgeData,
+      scheduleData,
+      coachMessageData,
+      coachLogData
+    ] = await Promise.all([
       fetchBackendJson("/api/follows"),
       fetchBackendJson("/api/reservations"),
       fetchBackendJson("/api/challenges"),
       fetchBackendJson("/api/achievements/history"),
       fetchBackendJson("/api/achievements/growth-tags"),
+      fetchBackendJson("/api/ability-scoring/states").catch(() => []),
+      fetchBackendJson("/api/ability-scoring/results").catch(() => []),
+      fetchBackendJson("/api/ability-judges").catch(() => []),
       fetchBackendJson("/api/schedule"),
       fetchBackendJson("/api/coach/messages"),
       fetchBackendJson("/api/coach/logs")
@@ -3191,15 +3720,46 @@ async function reloadBackendData() {
     growthTags = growthTagData.map(mapBackendGrowthTag);
     growthTagDetails = new Map();
     loadingGrowthTagDetailId = "";
-    selectedGrowthTagId = growthTags.some((tag) => tag.id === selectedGrowthTagId)
-      ? selectedGrowthTagId
-      : growthTags[0]?.id ?? "";
+    abilityStates = abilityStateData.map(mapBackendAbilityState);
+    abilityResults = abilityResultData.map(mapBackendAbilityResult);
+    abilityJudges = abilityJudgeData.map(mapBackendJudgeAssessment);
+    selectedAbilityStateId = abilityStates.some((state) => state.id === selectedAbilityStateId)
+      ? selectedAbilityStateId
+      : abilityStates[0]?.id ?? "";
     scheduleItems = scheduleData.map(mapBackendScheduleToFrontend);
     coachMessagesData = coachMessageData;
     coachLogs = coachLogData;
   } catch (error) {
     showAuthMessage(`后端连接失败：${error.message}`, "error");
   }
+}
+
+async function reloadAbilityData() {
+  if (!authSession?.token) {
+    abilityStates = [];
+    abilityResults = [];
+    abilityJudges = [];
+    growthTags = [];
+    growthTagDetails = new Map();
+    selectedAbilityStateId = "";
+    return;
+  }
+
+  const [stateData, resultData, judgeData, growthTagData] = await Promise.all([
+    fetchBackendJson("/api/ability-scoring/states"),
+    fetchBackendJson("/api/ability-scoring/results"),
+    fetchBackendJson("/api/ability-judges"),
+    fetchBackendJson("/api/achievements/growth-tags")
+  ]);
+  abilityStates = stateData.map(mapBackendAbilityState);
+  abilityResults = resultData.map(mapBackendAbilityResult);
+  abilityJudges = judgeData.map(mapBackendJudgeAssessment);
+  growthTags = growthTagData.map(mapBackendGrowthTag);
+  growthTagDetails = new Map();
+  loadingGrowthTagDetailId = "";
+  selectedAbilityStateId = abilityStates.some((state) => state.id === selectedAbilityStateId)
+    ? selectedAbilityStateId
+    : abilityStates[0]?.id ?? "";
 }
 
 async function getBackendAuthToken() {
@@ -3366,6 +3926,62 @@ function mapBackendGrowthTagEvidence(evidence) {
     milestone: Boolean(evidence.milestone),
     milestoneReason: evidence.milestoneReason ?? "",
     occurredAt: evidence.occurredAt ?? ""
+  };
+}
+
+function mapBackendAbilityState(state) {
+  return {
+    id: String(state.id),
+    dimension: state.dimension ?? "未命名能力",
+    normalizedDimension: state.normalizedDimension ?? "",
+    experienceScore: Number(state.experienceScore ?? 0),
+    abilityScore: Number(state.abilityScore ?? 0),
+    abilityUncertainty: Number(state.abilityUncertainty ?? 1),
+    rank: state.rank ?? "UNRATED"
+  };
+}
+
+function mapBackendAbilityResult(result) {
+  return {
+    id: String(result.id),
+    achievementRecordId: result.achievementRecordId == null ? "" : String(result.achievementRecordId),
+    dimension: result.dimension ?? "未命名能力",
+    status: result.status ?? "PROVISIONAL",
+    verifiedExperienceGain: Number(result.verifiedExperienceGain ?? 0),
+    oldAbilityScore: Number(result.oldAbilityScore ?? 0),
+    newAbilityScore: Number(result.newAbilityScore ?? 0),
+    newAbilityUncertainty: Number(result.newAbilityUncertainty ?? 1),
+    scoringRuleVersion: result.scoringRuleVersion ?? "",
+    supersedesResultId: result.supersedesResultId == null ? "" : String(result.supersedesResultId),
+    createdAt: result.createdAt ?? ""
+  };
+}
+
+function mapBackendJudgeAssessment(judge) {
+  return {
+    id: String(judge.id),
+    requestId: judge.requestId ?? "",
+    status: judge.status ?? "PENDING",
+    decision: judge.decision ?? "PENDING",
+    scoreResultId: judge.scoreResultId == null ? "" : String(judge.scoreResultId),
+    abilityStateId: judge.abilityStateId == null ? "" : String(judge.abilityStateId),
+    dimension: judge.dimension ?? "未命名能力",
+    normalizedDimension: judge.normalizedDimension ?? "",
+    triggerReasons: judge.triggerReasons ?? [],
+    questions: judge.questions ?? [],
+    answers: judge.answers ?? [],
+    rubric: judge.rubric ?? null,
+    abilityScoreAtTrigger: Number(judge.abilityScoreAtTrigger ?? 0),
+    confidenceBefore: Number(judge.confidenceBefore ?? 0.5),
+    confidenceDelta: Number(judge.confidenceDelta ?? 0),
+    confidenceAfter: judge.confidenceAfter == null ? null : Number(judge.confidenceAfter),
+    currentRank: judge.currentRank ?? "UNRATED",
+    proposedRank: judge.proposedRank ?? "UNRATED",
+    reviewReason: judge.reviewReason ?? "",
+    startedAt: judge.startedAt ?? "",
+    completedAt: judge.completedAt ?? "",
+    createdAt: judge.createdAt ?? "",
+    updatedAt: judge.updatedAt ?? ""
   };
 }
 

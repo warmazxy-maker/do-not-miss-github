@@ -32,6 +32,10 @@ public class EventEntity {
     @Column(nullable = false)
     private boolean expired = false;
 
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false, length = 32)
+    private EventReviewStatus reviewStatus = EventReviewStatus.APPROVED;
+
     @Column(nullable = false, length = 160)
     private String location;
 
@@ -111,6 +115,14 @@ public class EventEntity {
 
     public void setExpired(boolean expired) {
         this.expired = expired;
+    }
+
+    public EventReviewStatus getReviewStatus() {
+        return reviewStatus;
+    }
+
+    public void setReviewStatus(EventReviewStatus reviewStatus) {
+        this.reviewStatus = reviewStatus;
     }
 
     public String getLocation() {

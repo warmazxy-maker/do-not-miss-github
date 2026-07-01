@@ -8,8 +8,11 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 
 @Service
 public class RetrievalEvalService {
@@ -26,57 +29,48 @@ public class RetrievalEvalService {
 
     @Transactional(readOnly = true)
     public RetrievalDtos.EvalResponse evaluate(String userId) {
-        List<RetrievalDtos.EvalCase> cases = loadCases();
-        List<RetrievalDtos.EvalCaseResult> results = cases.stream()
+        List<RetrievalDtos.EvalCaseResult> results = loadCases().stream()
                 .map(evalCase -> evaluateCase(userId, evalCase, false))
                 .toList();
 
         int hitCount = (int) results.stream().filter(RetrievalDtos.EvalCaseResult::hit).count();
-        double averagePrecision = results.stream()
-                .mapToDouble(RetrievalDtos.EvalCaseResult::precisionAtK)
-                .average()
-                .orElse(0);
         RetrievalDtos.EvalSummary summary = new RetrievalDtos.EvalSummary(
                 results.size(),
                 hitCount,
                 results.isEmpty() ? 0 : round((double) hitCount / results.size()),
-                round(averagePrecision)
+                average(results, RetrievalDtos.EvalCaseResult::precisionAtK),
+                average(results, RetrievalDtos.EvalCaseResult::recallAtK),
+                average(results, RetrievalDtos.EvalCaseResult::ndcgAtK),
+                average(results, RetrievalDtos.EvalCaseResult::reciprocalRank)
         );
         return new RetrievalDtos.EvalResponse(summary, results);
     }
 
     @Transactional(readOnly = true)
     public RetrievalDtos.EvalAbResponse evaluateAb(String userId) {
-        List<RetrievalDtos.EvalCase> cases = loadCases();
-        List<RetrievalDtos.EvalAbCaseResult> results = cases.stream()
+        List<RetrievalDtos.EvalAbCaseResult> results = loadCases().stream()
                 .map(evalCase -> evaluateAbCase(userId, evalCase))
                 .toList();
-
-        double currentHitRate = hitRate(results.stream()
+        List<RetrievalDtos.EvalCaseResult> currentResults = results.stream()
                 .map(RetrievalDtos.EvalAbCaseResult::current)
-                .toList());
-        double baselineHitRate = hitRate(results.stream()
+                .toList();
+        List<RetrievalDtos.EvalCaseResult> baselineResults = results.stream()
                 .map(RetrievalDtos.EvalAbCaseResult::baseline)
-                .toList());
-        double currentMrr = meanReciprocalRank(results.stream()
-                .map(RetrievalDtos.EvalAbCaseResult::current)
-                .toList());
-        double baselineMrr = meanReciprocalRank(results.stream()
-                .map(RetrievalDtos.EvalAbCaseResult::baseline)
-                .toList());
-        int improvedCount = (int) results.stream().filter(item -> "current".equals(item.winner())).count();
-        int regressedCount = (int) results.stream().filter(item -> "baseline".equals(item.winner())).count();
-        int tiedCount = (int) results.stream().filter(item -> "tie".equals(item.winner())).count();
+                .toList();
 
         RetrievalDtos.EvalAbSummary summary = new RetrievalDtos.EvalAbSummary(
                 results.size(),
-                currentHitRate,
-                baselineHitRate,
-                currentMrr,
-                baselineMrr,
-                improvedCount,
-                regressedCount,
-                tiedCount
+                hitRate(currentResults),
+                hitRate(baselineResults),
+                average(currentResults, RetrievalDtos.EvalCaseResult::recallAtK),
+                average(baselineResults, RetrievalDtos.EvalCaseResult::recallAtK),
+                average(currentResults, RetrievalDtos.EvalCaseResult::ndcgAtK),
+                average(baselineResults, RetrievalDtos.EvalCaseResult::ndcgAtK),
+                average(currentResults, RetrievalDtos.EvalCaseResult::reciprocalRank),
+                average(baselineResults, RetrievalDtos.EvalCaseResult::reciprocalRank),
+                (int) results.stream().filter(item -> "current".equals(item.winner())).count(),
+                (int) results.stream().filter(item -> "baseline".equals(item.winner())).count(),
+                (int) results.stream().filter(item -> "tie".equals(item.winner())).count()
         );
         return new RetrievalDtos.EvalAbResponse(summary, results);
     }
@@ -84,23 +78,24 @@ public class RetrievalEvalService {
     private RetrievalDtos.EvalAbCaseResult evaluateAbCase(String userId, RetrievalDtos.EvalCase evalCase) {
         RetrievalDtos.EvalCaseResult current = evaluateCase(userId, evalCase, false);
         RetrievalDtos.EvalCaseResult baseline = evaluateCase(userId, evalCase, true);
-        double delta = round(current.reciprocalRank() - baseline.reciprocalRank());
-        String winner = winner(delta);
+        double ndcgDelta = round(current.ndcgAtK() - baseline.ndcgAtK());
+        double reciprocalRankDelta = round(current.reciprocalRank() - baseline.reciprocalRank());
         return new RetrievalDtos.EvalAbCaseResult(
                 evalCase.id(),
                 evalCase.need(),
                 current.topK(),
                 current,
                 baseline,
-                winner,
-                delta,
+                winner(ndcgDelta, reciprocalRankDelta),
+                ndcgDelta,
+                reciprocalRankDelta,
                 evalCase.note()
         );
     }
 
     private RetrievalDtos.EvalCaseResult evaluateCase(String userId,
-                                                      RetrievalDtos.EvalCase evalCase,
-                                                      boolean baseline) {
+                                                       RetrievalDtos.EvalCase evalCase,
+                                                       boolean baseline) {
         int topK = evalCase.topK() == null ? DEFAULT_TOP_K : Math.max(evalCase.topK(), 1);
         RetrievalDtos.TraceRequest request = new RetrievalDtos.TraceRequest(
                 evalCase.need(),
@@ -117,51 +112,115 @@ public class RetrievalEvalService {
                 .limit(topK)
                 .toList();
 
-        List<Long> expectedEventIds = evalCase.expectedEventIds() == null ? List.of() : evalCase.expectedEventIds();
+        List<RetrievalDtos.RelevanceJudgment> judgments = judgments(evalCase);
+        Map<Long, Integer> relevanceByEventId = new LinkedHashMap<>();
+        judgments.forEach(item -> relevanceByEventId.merge(item.eventId(), item.relevance(), Math::max));
         List<String> expectedTerms = evalCase.expectedTerms() == null ? List.of() : evalCase.expectedTerms();
         List<Long> matchedEventIds = new ArrayList<>();
         List<String> matchedTerms = new ArrayList<>();
-        int relevantCount = 0;
-        Integer bestExpectedRank = null;
+        Integer bestRelevantRank = null;
+        Integer bestAnswerRank = null;
+        int maxRelevance = judgments.stream()
+                .mapToInt(RetrievalDtos.RelevanceJudgment::relevance)
+                .max()
+                .orElse(0);
+        double dcg = 0;
 
-        for (RetrievalDtos.CandidateTrace candidate : topCandidates) {
-            List<String> candidateMatches = matchedTerms(candidate, expectedTerms);
-            boolean idMatched = candidate.eventId() != null && expectedEventIds.contains(candidate.eventId());
-            boolean termMatched = expectedEventIds.isEmpty() && !candidateMatches.isEmpty();
-            boolean relevant = idMatched || termMatched;
-            if (relevant) {
-                relevantCount += 1;
-                if (candidate.eventId() != null && !matchedEventIds.contains(candidate.eventId())) {
-                    matchedEventIds.add(candidate.eventId());
+        for (int index = 0; index < topCandidates.size(); index++) {
+            RetrievalDtos.CandidateTrace candidate = topCandidates.get(index);
+            int rank = index + 1;
+            int relevance = relevanceByEventId.getOrDefault(candidate.eventId(), 0);
+            if (relevance > 0) {
+                matchedEventIds.add(candidate.eventId());
+                if (bestRelevantRank == null) {
+                    bestRelevantRank = rank;
                 }
-                if (bestExpectedRank == null) {
-                    bestExpectedRank = candidate.rank();
+                if (bestAnswerRank == null && relevance == maxRelevance) {
+                    bestAnswerRank = rank;
                 }
+                dcg += discountedGain(relevance, rank);
             }
-            candidateMatches.forEach(term -> {
+            matchedTerms(candidate, expectedTerms).forEach(term -> {
                 if (!matchedTerms.contains(term)) {
                     matchedTerms.add(term);
                 }
             });
         }
 
-        double reciprocalRank = bestExpectedRank == null ? 0 : round(1.0 / bestExpectedRank);
+        double idealDcg = idealDcg(judgments, topK);
+        double ndcgAtK = idealDcg == 0 ? 0 : round(dcg / idealDcg);
+        double precisionAtK = round((double) matchedEventIds.size() / topK);
+        double recallAtK = judgments.isEmpty()
+                ? 0
+                : round((double) matchedEventIds.size() / judgments.size());
+        double reciprocalRank = bestAnswerRank == null ? 0 : round(1.0 / bestAnswerRank);
+
         return new RetrievalDtos.EvalCaseResult(
                 evalCase.id(),
                 evalCase.need(),
                 topK,
-                bestExpectedRank != null,
-                round((double) relevantCount / topK),
-                expectedEventIds,
-                matchedEventIds,
-                bestExpectedRank,
+                bestRelevantRank != null,
+                precisionAtK,
+                recallAtK,
+                ndcgAtK,
+                judgments,
+                List.copyOf(matchedEventIds),
+                bestRelevantRank,
+                bestAnswerRank,
                 reciprocalRank,
                 expectedTerms,
-                matchedTerms,
+                List.copyOf(matchedTerms),
                 topCandidates,
                 trace.queryRewrite(),
                 evalCase.note()
         );
+    }
+
+    private List<RetrievalDtos.RelevanceJudgment> judgments(RetrievalDtos.EvalCase evalCase) {
+        if (evalCase.judgments() != null && !evalCase.judgments().isEmpty()) {
+            Map<Long, RetrievalDtos.RelevanceJudgment> normalized = new LinkedHashMap<>();
+            for (RetrievalDtos.RelevanceJudgment item : evalCase.judgments()) {
+                if (item == null || item.eventId() == null || item.relevance() <= 0) {
+                    continue;
+                }
+                int relevance = Math.min(item.relevance(), 3);
+                RetrievalDtos.RelevanceJudgment existing = normalized.get(item.eventId());
+                if (existing == null || relevance > existing.relevance()) {
+                    normalized.put(item.eventId(), new RetrievalDtos.RelevanceJudgment(
+                            item.eventId(),
+                            relevance,
+                            item.reason()
+                    ));
+                }
+            }
+            return List.copyOf(normalized.values());
+        }
+        if (evalCase.expectedEventIds() == null) {
+            return List.of();
+        }
+        return evalCase.expectedEventIds().stream()
+                .filter(id -> id != null)
+                .distinct()
+                .map(id -> new RetrievalDtos.RelevanceJudgment(id, 3, "Legacy expected event"))
+                .toList();
+    }
+
+    private double idealDcg(List<RetrievalDtos.RelevanceJudgment> judgments, int topK) {
+        List<Integer> idealGrades = judgments.stream()
+                .map(RetrievalDtos.RelevanceJudgment::relevance)
+                .sorted(Comparator.reverseOrder())
+                .limit(topK)
+                .toList();
+        double result = 0;
+        for (int index = 0; index < idealGrades.size(); index++) {
+            result += discountedGain(idealGrades.get(index), index + 1);
+        }
+        return result;
+    }
+
+    private double discountedGain(int relevance, int rank) {
+        double gain = Math.pow(2, relevance) - 1;
+        return gain / (Math.log(rank + 1) / Math.log(2));
     }
 
     private List<String> matchedTerms(RetrievalDtos.CandidateTrace candidate, List<String> expectedTerms) {
@@ -193,18 +252,22 @@ public class RetrievalEvalService {
         if (results.isEmpty()) {
             return 0;
         }
-        long hits = results.stream().filter(RetrievalDtos.EvalCaseResult::hit).count();
-        return round((double) hits / results.size());
+        return round((double) results.stream().filter(RetrievalDtos.EvalCaseResult::hit).count()
+                / results.size());
     }
 
-    private double meanReciprocalRank(List<RetrievalDtos.EvalCaseResult> results) {
-        return round(results.stream()
-                .mapToDouble(RetrievalDtos.EvalCaseResult::reciprocalRank)
-                .average()
-                .orElse(0));
+    private double average(List<RetrievalDtos.EvalCaseResult> results,
+                           java.util.function.ToDoubleFunction<RetrievalDtos.EvalCaseResult> metric) {
+        return round(results.stream().mapToDouble(metric).average().orElse(0));
     }
 
-    private String winner(double reciprocalRankDelta) {
+    private String winner(double ndcgDelta, double reciprocalRankDelta) {
+        if (ndcgDelta > WIN_THRESHOLD) {
+            return "current";
+        }
+        if (ndcgDelta < -WIN_THRESHOLD) {
+            return "baseline";
+        }
         if (reciprocalRankDelta > WIN_THRESHOLD) {
             return "current";
         }

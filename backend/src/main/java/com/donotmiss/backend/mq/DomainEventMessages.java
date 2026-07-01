@@ -17,8 +17,24 @@ public final class DomainEventMessages {
         }
     }
 
+    public record EventQualityAnalysisMessage(Long eventId, Instant occurredAt) {
+        public EventQualityAnalysisMessage {
+            if (occurredAt == null) {
+                occurredAt = Instant.now();
+            }
+        }
+    }
+
     public record GrowthTagExtractionMessage(Long recordId, String userId, String sourceType, Instant occurredAt) {
         public GrowthTagExtractionMessage {
+            if (occurredAt == null) {
+                occurredAt = Instant.now();
+            }
+        }
+    }
+
+    public record AbilityEvidenceAssessmentMessage(Long recordId, String userId, Instant occurredAt) {
+        public AbilityEvidenceAssessmentMessage {
             if (occurredAt == null) {
                 occurredAt = Instant.now();
             }

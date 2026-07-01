@@ -34,7 +34,9 @@ public class MqProperties {
 
     public static class Queues {
         private String eventIndex = "do-not-miss.event-index";
+        private String eventQuality = "do-not-miss.event-quality";
         private String growthTag = "do-not-miss.growth-tag";
+        private String abilityEvidence = "do-not-miss.ability-evidence";
         private String userProfile = "do-not-miss.user-profile";
 
         public String getEventIndex() {
@@ -45,12 +47,28 @@ public class MqProperties {
             this.eventIndex = eventIndex;
         }
 
+        public String getEventQuality() {
+            return eventQuality;
+        }
+
+        public void setEventQuality(String eventQuality) {
+            this.eventQuality = eventQuality;
+        }
+
         public String getGrowthTag() {
             return growthTag;
         }
 
         public void setGrowthTag(String growthTag) {
             this.growthTag = growthTag;
+        }
+
+        public String getAbilityEvidence() {
+            return abilityEvidence;
+        }
+
+        public void setAbilityEvidence(String abilityEvidence) {
+            this.abilityEvidence = abilityEvidence;
         }
 
         public String getUserProfile() {
@@ -64,7 +82,9 @@ public class MqProperties {
 
     public static class RoutingKeys {
         private String eventIndex = "event.index";
+        private String eventQuality = "event.quality";
         private String growthTag = "growth-tag.extract";
+        private String abilityEvidence = "ability-evidence.assess";
         private String userProfile = "user-profile.refresh";
 
         public String getEventIndex() {
@@ -75,12 +95,28 @@ public class MqProperties {
             this.eventIndex = eventIndex;
         }
 
+        public String getEventQuality() {
+            return eventQuality;
+        }
+
+        public void setEventQuality(String eventQuality) {
+            this.eventQuality = eventQuality;
+        }
+
         public String getGrowthTag() {
             return growthTag;
         }
 
         public void setGrowthTag(String growthTag) {
             this.growthTag = growthTag;
+        }
+
+        public String getAbilityEvidence() {
+            return abilityEvidence;
+        }
+
+        public void setAbilityEvidence(String abilityEvidence) {
+            this.abilityEvidence = abilityEvidence;
         }
 
         public String getUserProfile() {

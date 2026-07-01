@@ -5,6 +5,9 @@ import com.donotmiss.backend.agentlog.AgentRunType;
 import com.donotmiss.backend.agentlog.AgentStepName;
 import com.donotmiss.backend.ai.OpenAiCompatibleLlmClient;
 import com.donotmiss.backend.common.ApiException;
+import com.donotmiss.backend.eventquality.EventQualityDtos;
+import com.donotmiss.backend.eventquality.EventQualityReportRepository;
+import com.donotmiss.backend.eventquality.EventQualityService;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.stereotype.Service;
@@ -26,6 +29,8 @@ public class GrowthTagService {
     private final AchievementRecordRepository achievementRecordRepository;
     private final GrowthTagRepository tagRepository;
     private final GrowthTagEvidenceRepository evidenceRepository;
+    private final EventQualityReportRepository qualityReportRepository;
+    private final EventQualityService eventQualityService;
     private final OpenAiCompatibleLlmClient llmClient;
     private final AgentRunService agentRunService;
     private final ObjectMapper objectMapper;
@@ -33,12 +38,16 @@ public class GrowthTagService {
     public GrowthTagService(AchievementRecordRepository achievementRecordRepository,
                             GrowthTagRepository tagRepository,
                             GrowthTagEvidenceRepository evidenceRepository,
+                            EventQualityReportRepository qualityReportRepository,
+                            EventQualityService eventQualityService,
                             OpenAiCompatibleLlmClient llmClient,
                             AgentRunService agentRunService,
                             ObjectMapper objectMapper) {
         this.achievementRecordRepository = achievementRecordRepository;
         this.tagRepository = tagRepository;
         this.evidenceRepository = evidenceRepository;
+        this.qualityReportRepository = qualityReportRepository;
+        this.eventQualityService = eventQualityService;
         this.llmClient = llmClient;
         this.agentRunService = agentRunService;
         this.objectMapper = objectMapper;
@@ -277,6 +286,19 @@ public class GrowthTagService {
         context.put("did", record.getDid());
         context.put("learned", record.getLearned());
         context.put("completedAt", record.getCompletedAt() == null ? null : record.getCompletedAt().toString());
+        if (record.getSourceType() == AchievementSourceType.EVENT) {
+            qualityReportRepository.findByEventId(record.getEventId()).ifPresent(report -> {
+                Map<String, Object> quality = new LinkedHashMap<>();
+                quality.put("qualityScore", report.getQualityScore());
+                quality.put("qualityLevel", report.getQualityLevel());
+                quality.put("difficulty", report.getDifficulty());
+                quality.put("summary", report.getSummary());
+                quality.put("learningOutcomesJson", report.getLearningOutcomesJson());
+                quality.put("extractedTagsJson", report.getExtractedTagsJson());
+                quality.put("abilityImpacts", eventQualityService.readAbilityImpacts(report.getAbilityImpactsJson()));
+                context.put("eventQualityReport", quality);
+            });
+        }
         return context;
     }
 
@@ -344,6 +366,7 @@ public class GrowthTagService {
     private List<TagCandidate> ruleCandidates(AchievementRecordEntity record) {
         String text = textOf(record);
         List<TagCandidate> candidates = new ArrayList<>();
+        candidates.addAll(qualityReportCandidates(record));
 
         addIfMatched(candidates, text, "AI Agent 学习", "ai-agent", "围绕 AI、Agent、LLM 或 RAG 的学习与实践", record,
                 "ai", "agent", "llm", "rag", "大模型", "人工智能", "智能体");
@@ -376,6 +399,40 @@ public class GrowthTagService {
         }
 
         return candidates.stream().limit(3).toList();
+    }
+
+    private List<TagCandidate> qualityReportCandidates(AchievementRecordEntity record) {
+        if (record.getSourceType() != AchievementSourceType.EVENT || record.getEventId() == null) {
+            return List.of();
+        }
+        return qualityReportRepository.findByEventId(record.getEventId())
+                .map(report -> eventQualityService.readAbilityImpacts(report.getAbilityImpactsJson()).stream()
+                        .filter(impact -> impact != null && impact.tag() != null && !impact.tag().isBlank())
+                        .map(impact -> fromAbilityImpact(impact, record))
+                        .limit(3)
+                        .toList())
+                .orElse(List.of());
+    }
+
+    private TagCandidate fromAbilityImpact(EventQualityDtos.AbilityImpact impact,
+                                           AchievementRecordEntity record) {
+        String name = compact(impact.tag(), 80);
+        int scoreDelta = impact.score() == null ? defaultScoreDelta(record) : Math.round(impact.score() / 3.5f);
+        scoreDelta = Math.min(Math.max(scoreDelta, 3), 10);
+        String evidence = firstPresent(
+                impact.evidence(),
+                "活动质量预处理 Agent 预测该活动会提升：" + name
+        );
+        String description = name + "相关的成长经历";
+        return new TagCandidate(
+                name,
+                compact(normalize(name), 80),
+                compact(description, 500),
+                scoreDelta,
+                compact("活动质量预处理结果：" + evidence, 800),
+                false,
+                null
+        );
     }
 
     private void addIfMatched(List<TagCandidate> candidates,

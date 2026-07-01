@@ -13,6 +13,10 @@ node_modules/
 dist/
 build/
 
+# Logs
+*.log
+logs/
+
 # IDE
 .idea/
 .vscode/
@@ -22,10 +26,11 @@ build/
 .DS_Store
 Thumbs.db
 desktop.ini
-*.log
-logs/
 
-# Temporary / generated local assets
+# Local generated files
+*.zip
+*.mp4
+.tmp-docx/
 docker-registry-backup/
 edge-headless-profile/
 repair-docker-update.ps1

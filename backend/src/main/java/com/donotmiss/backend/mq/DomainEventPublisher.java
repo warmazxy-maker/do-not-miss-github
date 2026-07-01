@@ -30,10 +30,22 @@ public class DomainEventPublisher {
         publish(properties.getRoutingKeys().getEventIndex(), message);
     }
 
+    public void publishEventQualityAnalysis(Long eventId) {
+        DomainEventMessages.EventQualityAnalysisMessage message =
+                new DomainEventMessages.EventQualityAnalysisMessage(eventId, Instant.now());
+        publish(properties.getRoutingKeys().getEventQuality(), message);
+    }
+
     public void publishGrowthTagExtraction(Long recordId, String userId, String sourceType) {
         DomainEventMessages.GrowthTagExtractionMessage message =
                 new DomainEventMessages.GrowthTagExtractionMessage(recordId, userId, sourceType, Instant.now());
         publish(properties.getRoutingKeys().getGrowthTag(), message);
+    }
+
+    public void publishAbilityEvidenceAssessment(Long recordId, String userId) {
+        DomainEventMessages.AbilityEvidenceAssessmentMessage message =
+                new DomainEventMessages.AbilityEvidenceAssessmentMessage(recordId, userId, Instant.now());
+        publish(properties.getRoutingKeys().getAbilityEvidence(), message);
     }
 
     public void publishUserProfileRefresh(String userId, String reason) {

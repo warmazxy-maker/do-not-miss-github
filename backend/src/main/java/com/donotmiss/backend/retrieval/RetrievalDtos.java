@@ -133,10 +133,18 @@ public class RetrievalDtos {
             String category,
             String benefitType,
             String location,
+            List<RelevanceJudgment> judgments,
             List<Long> expectedEventIds,
             List<String> expectedTerms,
             Integer topK,
             String note
+    ) {
+    }
+
+    public record RelevanceJudgment(
+            Long eventId,
+            int relevance,
+            String reason
     ) {
     }
 
@@ -146,9 +154,12 @@ public class RetrievalDtos {
             int topK,
             boolean hit,
             double precisionAtK,
-            List<Long> expectedEventIds,
+            double recallAtK,
+            double ndcgAtK,
+            List<RelevanceJudgment> judgments,
             List<Long> matchedEventIds,
-            Integer bestExpectedRank,
+            Integer bestRelevantRank,
+            Integer bestAnswerRank,
             double reciprocalRank,
             List<String> expectedTerms,
             List<String> matchedTerms,
@@ -162,7 +173,10 @@ public class RetrievalDtos {
             int caseCount,
             int hitCount,
             double hitRate,
-            double averagePrecisionAtK
+            double averagePrecisionAtK,
+            double averageRecallAtK,
+            double averageNdcgAtK,
+            double meanReciprocalRank
     ) {
     }
 
@@ -179,6 +193,7 @@ public class RetrievalDtos {
             EvalCaseResult current,
             EvalCaseResult baseline,
             String winner,
+            double ndcgDelta,
             double reciprocalRankDelta,
             String note
     ) {
@@ -188,6 +203,10 @@ public class RetrievalDtos {
             int caseCount,
             double currentHitRate,
             double baselineHitRate,
+            double currentAverageRecallAtK,
+            double baselineAverageRecallAtK,
+            double currentAverageNdcgAtK,
+            double baselineAverageNdcgAtK,
             double currentMeanReciprocalRank,
             double baselineMeanReciprocalRank,
             int improvedCount,

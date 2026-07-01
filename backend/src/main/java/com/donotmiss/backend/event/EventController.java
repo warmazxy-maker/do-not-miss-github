@@ -38,6 +38,11 @@ public class EventController {
         return eventService.search(new EventDtos.EventSearchRequest(keyword, category, benefitType, location));
     }
 
+    @GetMapping("/mine")
+    public List<EventDtos.EventResponse> mine(HttpServletRequest request) {
+        return eventService.mine(currentUser.id(request));
+    }
+
     @DeleteMapping("/{eventId}")
     public void delete(@PathVariable Long eventId, HttpServletRequest request) {
         eventService.delete(eventId, currentUser.id(request));

@@ -179,7 +179,7 @@ docker compose version
 进入后端目录：
 
 ```powershell
-cd <your-local-path>\do-not-miss-backend
+cd D:\warma\Documents\do-not-miss-backend
 ```
 
 启动服务：
@@ -514,9 +514,109 @@ curl -X POST "http://localhost:8080/api/mcp/context" `
 
 返回结果会包含 `currentTime`、`location` 和 `toolTrace`。AI 事件推荐和计划推荐会自动使用这份工具上下文；前端会尽量从浏览器读取时区和定位，定位被拒绝时使用后端默认地点。
 
-## 8. 和前端连接
+## 8. 启动 Vue 前端
 
-前端仍然是静态文件，但主要业务数据已经通过 `fetch` 连接后端：
+前端已经升级为：
+
+- Vue 3
+- TypeScript
+- Vite
+- Vue Router
+- Pinia
+
+主要业务数据仍然通过后端 `/api` 接口访问。当前已经迁移完成的基础能力包括：
+
+- 登录 / 注册
+- 七天登录会话恢复
+- 学生端 / 社会端角色路由保护
+- 统一 API 客户端
+- `401` 登录失效处理
+
+原来的静态页面完整保存在：
+
+```text
+do-not-miss-frontend\legacy-index.html
+```
+
+它只用于后续逐模块迁移时对照，不再是默认入口。
+
+### 8.1 安装 Node.js
+
+下载并安装 Node.js LTS：
+
+```text
+https://nodejs.org/
+```
+
+安装后重新打开 PowerShell，检查：
+
+```powershell
+node --version
+npm --version
+```
+
+### 8.2 第一次安装前端依赖
+
+```powershell
+cd D:\warma\Documents\do-not-miss-frontend
+npm install
+```
+
+只有第一次运行、删除过 `node_modules`，或者 `package.json` 发生变化时才需要重新执行。
+
+### 8.3 开发模式启动
+
+先确保 Spring Boot 后端运行在 `8080`，然后新开一个 PowerShell：
+
+```powershell
+cd D:\warma\Documents\do-not-miss-frontend
+npm run dev
+```
+
+浏览器访问：
+
+```text
+http://127.0.0.1:5173
+```
+
+Vite 会把 `/api` 请求代理到：
+
+```text
+http://localhost:8080
+```
+
+因此开发环境不需要在前端代码里写死后端地址。
+
+### 8.4 生产构建
+
+```powershell
+cd D:\warma\Documents\do-not-miss-frontend
+npm run build
+```
+
+构建结果位于：
+
+```text
+do-not-miss-frontend\dist
+```
+
+可以使用：
+
+```powershell
+npm run preview
+```
+
+预览生产构建。
+
+如果前后端部署在不同域名，可以创建前端 `.env`：
+
+```text
+VITE_API_BASE_URL=https://api.example.com
+```
+
+修改环境变量后需要重新执行 `npm run build`。
+
+当前通过 API 连接的业务包括：
 
 - 登录 / 注册
 - 事件列表 / 发布 / 删除
@@ -535,13 +635,7 @@ curl -X POST "http://localhost:8080/api/mcp/context" `
 http://localhost:8080
 ```
 
-启动后端后，直接用浏览器打开：
-
-```text
-<your-local-path>\do-not-miss-frontend\index.html
-```
-
-如果你修改了后端端口，需要同步修改前端 `app.js` 顶部的 `API_BASE_URL`。
+不要再直接双击 `index.html`。Vue Router 和 Vite 模块需要通过开发服务器或生产静态服务器访问。
 
 ## 9. 手动安装 MySQL/Redis 的替代方式
 
@@ -650,7 +744,7 @@ mvn spring-boot:run
 
 ### 13.1 推荐方式：使用本地 `.env` 文件
 
-后端启动时会自动读取后端项目目录下的 `.env` 文件。
+后端启动时会自动读取 `D:\warma\Documents\do-not-miss-backend\.env`。
 
 在后端目录新建 `.env` 文件，内容如下：
 
@@ -658,7 +752,7 @@ mvn spring-boot:run
 AI_PROVIDER=qwen
 AI_MODEL=qwen-plus
 AI_BASE_URL=https://dashscope.aliyuncs.com/compatible-mode/v1
-DASHSCOPE_API_KEY=replace-with-your-dashscope-api-key
+DASHSCOPE_API_KEY=你的百炼API Key
 MCP_DEFAULT_TIMEZONE=Asia/Tokyo
 MCP_DEFAULT_LOCATION=日本 大阪
 ```
@@ -666,7 +760,7 @@ MCP_DEFAULT_LOCATION=日本 大阪
 然后正常启动后端：
 
 ```powershell
-cd <your-local-path>\do-not-miss-backend
+cd D:\warma\Documents\do-not-miss-backend
 docker compose up -d mysql redis
 mvn spring-boot:run
 ```
@@ -678,10 +772,10 @@ mvn spring-boot:run
 在启动后端的同一个 PowerShell 窗口里执行：
 
 ```powershell
-cd <your-local-path>\do-not-miss-backend
+cd D:\warma\Documents\do-not-miss-backend
 
 $env:AI_PROVIDER="qwen"
-# Set DASHSCOPE_API_KEY to your own DashScope key in this shell.
+$env:DASHSCOPE_API_KEY="你的百炼API Key"
 $env:AI_MODEL="qwen-plus"
 $env:AI_BASE_URL="https://dashscope.aliyuncs.com/compatible-mode/v1"
 $env:MCP_DEFAULT_TIMEZONE="Asia/Tokyo"

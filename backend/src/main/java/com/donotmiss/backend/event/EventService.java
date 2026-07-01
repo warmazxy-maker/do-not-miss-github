@@ -47,6 +47,7 @@ public class EventService {
         event.setStartTime(request.startTime());
         event.setEndTime(normalizeEndTime(request.startTime(), request.endTime()));
         event.setExpired(event.getEndTime().isBefore(java.time.LocalDateTime.now()));
+        event.setReviewStatus(EventReviewStatus.PENDING_REVIEW);
         event.setLocation(request.location().trim());
         event.setContent(request.content().trim());
         event.setBenefitType(benefitType);
@@ -55,7 +56,7 @@ public class EventService {
         event.setCreatedByUserId(userId);
 
         EventEntity saved = eventRepository.save(event);
-        domainEventPublisher.publishEventIndex(saved.getId(), DomainEventMessages.EVENT_INDEX_UPSERT);
+        domainEventPublisher.publishEventQualityAnalysis(saved.getId());
         return EventDtos.EventResponse.from(saved);
     }
 
@@ -69,6 +70,13 @@ public class EventService {
     public List<EventDtos.EventResponse> search(EventDtos.EventSearchRequest request) {
         eventExpirationService.expireOverdueEvents();
         return searchEntities(request).stream()
+                .map(EventDtos.EventResponse::from)
+                .toList();
+    }
+
+    @Transactional(readOnly = true)
+    public List<EventDtos.EventResponse> mine(String userId) {
+        return eventRepository.findByCreatedByUserIdOrderByCreatedAtDesc(userId).stream()
                 .map(EventDtos.EventResponse::from)
                 .toList();
     }
@@ -95,6 +103,7 @@ public class EventService {
         return (root, query, builder) -> {
             List<Predicate> predicates = new ArrayList<>();
             predicates.add(builder.isFalse(root.get("expired")));
+            predicates.add(builder.equal(root.get("reviewStatus"), EventReviewStatus.APPROVED));
 
             if (request.keyword() != null && !request.keyword().isBlank()) {
                 String pattern = "%" + request.keyword().trim().toLowerCase() + "%";

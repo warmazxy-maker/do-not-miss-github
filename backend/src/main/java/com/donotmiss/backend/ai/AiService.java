@@ -10,6 +10,7 @@ import com.donotmiss.backend.achievement.GrowthTagRepository;
 import com.donotmiss.backend.agentlog.AgentRunService;
 import com.donotmiss.backend.agentlog.AgentRunType;
 import com.donotmiss.backend.agentlog.AgentStepName;
+import com.donotmiss.backend.agentlog.AgentTraceArtifactService;
 import com.donotmiss.backend.event.EventDtos;
 import com.donotmiss.backend.event.EventEntity;
 import com.donotmiss.backend.event.EventService;
@@ -62,6 +63,7 @@ public class AiService {
     private final ScheduleService scheduleService;
     private final McpToolContextService mcpToolContextService;
     private final AgentRunService agentRunService;
+    private final AgentTraceArtifactService traceArtifactService;
     private final OpenAiCompatibleLlmClient llmClient;
     private final ObjectMapper objectMapper;
     private final String aiMode;
@@ -77,6 +79,7 @@ public class AiService {
                      ScheduleService scheduleService,
                      McpToolContextService mcpToolContextService,
                      AgentRunService agentRunService,
+                     AgentTraceArtifactService traceArtifactService,
                      OpenAiCompatibleLlmClient llmClient,
                      ObjectMapper objectMapper,
                      @Value("${app.ai.provider:mock}") String aiMode) {
@@ -91,6 +94,7 @@ public class AiService {
         this.scheduleService = scheduleService;
         this.mcpToolContextService = mcpToolContextService;
         this.agentRunService = agentRunService;
+        this.traceArtifactService = traceArtifactService;
         this.llmClient = llmClient;
         this.objectMapper = objectMapper;
         this.aiMode = aiMode;
@@ -128,6 +132,13 @@ public class AiService {
                     query,
                     "CLEAR".equalsIgnoreCase(query.contextDecision().action()) ? null : previousContext
             );
+            recordArtifact(
+                    runId,
+                    AgentStepName.QUERY_REWRITE,
+                    "QUERY_REWRITE_RESULT",
+                    queryArtifact(query, previousContext, savedContext),
+                    "goal=" + query.goal() + ", action=" + query.contextDecision().action()
+            );
             AiDtos.EventRecommendationRequest retrievalRequest = new AiDtos.EventRecommendationRequest(
                     query.rewrittenQuery(),
                     request.category(),
@@ -139,6 +150,13 @@ public class AiService {
                     "Hybrid retrieve candidate events.",
                     () -> hybridEventRetrievalService.retrieve(retrievalRequest, memory, toolContext),
                     this::summarizeRetrievedEvents);
+            recordArtifact(
+                    runId,
+                    AgentStepName.RETRIEVAL,
+                    "RETRIEVAL_CANDIDATES",
+                    retrievalArtifact(retrievedEvents),
+                    summarizeRetrievedEvents(retrievedEvents)
+            );
             List<EventEntity> candidates = retrievedEvents.stream().map(RetrievedEvent::event).toList();
             Map<Long, RetrievedEvent> retrievedById = retrievedEvents.stream()
                     .collect(Collectors.toMap(item -> item.event().getId(), Function.identity(), (left, right) -> left, LinkedHashMap::new));
@@ -151,6 +169,13 @@ public class AiService {
                     "Ask model to rerank validated candidates.",
                     () -> recommendEventsWithModel(candidates, history, memory, retrievedById, request, query, toolContext),
                     this::summarizeOptionalRecommendations);
+            modelRecommendations.ifPresent(items -> recordArtifact(
+                    runId,
+                    AgentStepName.LLM_RECOMMENDATION,
+                    "MODEL_RECOMMENDATION_OUTPUT",
+                    recommendationArtifact(items),
+                    summarizeRecommendations(items)
+            ));
 
             List<AiDtos.RecommendedEvent> recommendations;
             String mode;
@@ -162,6 +187,13 @@ public class AiService {
                         "Model unavailable or returned empty result. Use rule fallback.",
                         () -> rankEventsByRules(candidates, query.rewrittenQuery(), textOfHistory(history), memory, retrievedById),
                         this::summarizeRecommendations);
+                recordArtifact(
+                        runId,
+                        AgentStepName.RULE_FALLBACK,
+                        "RULE_FALLBACK_RECOMMENDATION_OUTPUT",
+                        recommendationArtifact(recommendations),
+                        summarizeRecommendations(recommendations)
+                );
                 mode = modelRecommendations.isPresent() ? llmClient.modeLabel() + ":rule-fallback" : fallbackMode();
             }
 
@@ -176,6 +208,17 @@ public class AiService {
                             toolContext
                     ),
                     value -> "mode=" + value.mode() + ", " + summarizeRecommendations(value.recommendations()));
+            recordArtifact(
+                    runId,
+                    AgentStepName.RESPONSE_BUILD,
+                    "FINAL_RESPONSE",
+                    Map.of(
+                            "mode", response.mode(),
+                            "message", response.message(),
+                            "recommendations", recommendationArtifact(response.recommendations())
+                    ),
+                    summarizeRecommendations(response.recommendations())
+            );
             agentRunService.finishRun(runId, response.message() + " " + summarizeRecommendations(response.recommendations()));
             return response;
         } catch (RuntimeException | Error ex) {
@@ -213,6 +256,13 @@ public class AiService {
                     "Goal Agent extracts planning target, constraints and retrieval query.",
                     () -> understandPlanGoal(request, horizonDays),
                     this::summarizePlanGoal);
+            recordArtifact(
+                    runId,
+                    AgentStepName.GOAL_ANALYSIS,
+                    "PLAN_GOAL_UNDERSTANDING",
+                    planGoalArtifact(goal),
+                    summarizePlanGoal(goal)
+            );
             List<RetrievedEvent> retrievedEvents = tracedStep(runId, AgentStepName.RETRIEVAL,
                     "Evidence Collector reuses hybrid retrieval to collect plan events.",
                     () -> hybridEventRetrievalService.retrieve(
@@ -225,12 +275,26 @@ public class AiService {
                             toolContext
                     ),
                     this::summarizeRetrievedEvents);
+            recordArtifact(
+                    runId,
+                    AgentStepName.RETRIEVAL,
+                    "PLAN_RETRIEVAL_CANDIDATES",
+                    retrievalArtifact(retrievedEvents),
+                    summarizeRetrievedEvents(retrievedEvents)
+            );
             List<ScheduleDtos.ScheduleItemResponse> schedule = tracedStep(runId, AgentStepName.SCHEDULE_LOAD,
                     "Load current schedule for conflict awareness.",
                     () -> scheduleService.list(userId, null).stream()
                             .limit(20)
                             .toList(),
                     items -> "scheduleCount=" + items.size());
+            recordArtifact(
+                    runId,
+                    AgentStepName.SCHEDULE_LOAD,
+                    "SCHEDULE_CONTEXT",
+                    scheduleArtifact(schedule),
+                    "scheduleCount=" + schedule.size()
+            );
 
             Optional<List<AiDtos.RecommendedPlan>> modelPlans = tracedStep(runId, AgentStepName.LLM_RECOMMENDATION,
                     "Run multi-agent planners and critic.",
@@ -240,11 +304,29 @@ public class AiService {
                     "Model unavailable or returned empty plans. Use rule fallback.",
                     () -> checkAndFormatPlans(fallbackPlans(request, goal.horizonDays() == null ? horizonDays : goal.horizonDays(), memory, retrievedEvents, schedule), retrievedEvents, schedule, toolContext),
                     this::summarizePlans));
+            recordArtifact(
+                    runId,
+                    modelPlans.isPresent() ? AgentStepName.LLM_RECOMMENDATION : AgentStepName.RULE_FALLBACK,
+                    modelPlans.isPresent() ? "PLAN_MODEL_OUTPUT" : "PLAN_RULE_FALLBACK_OUTPUT",
+                    indexedPlanContext(plans),
+                    summarizePlans(plans)
+            );
 
             Long responseStepId = agentRunService.startStep(runId, AgentStepName.RESPONSE_BUILD, "Build plan recommendation response.");
             String responseSummary = "mode=" + (modelPlans.isPresent() ? llmClient.modeLabel() : fallbackMode())
                     + ", " + summarizePlans(plans);
             agentRunService.completeStep(responseStepId, responseSummary);
+            recordArtifact(
+                    runId,
+                    AgentStepName.RESPONSE_BUILD,
+                    "PLAN_FINAL_RESPONSE",
+                    Map.of(
+                            "mode", modelPlans.isPresent() ? llmClient.modeLabel() : fallbackMode(),
+                            "goal", request.goal(),
+                            "plans", indexedPlanContext(plans)
+                    ),
+                    responseSummary
+            );
             agentRunService.finishRun(runId, responseSummary);
             return new AiDtos.PlanRecommendationResponse(
                 modelPlans.isPresent() ? llmClient.modeLabel() : fallbackMode(),
@@ -458,26 +540,41 @@ public class AiService {
         PlanEvidencePack evidence = new PlanEvidencePack(request, goal, memory, retrievedEvents, schedule, toolContext);
         List<AiDtos.RecommendedPlan> generated = new ArrayList<>();
 
-        tracedStep(runId, AgentStepName.PLANNER_STABLE,
+        Optional<AiDtos.RecommendedPlan> stablePlan = tracedStep(runId, AgentStepName.PLANNER_STABLE,
                 "StablePlannerAgent generates a low-risk plan from retrieval evidence.",
                 () -> generatePlannerPlan(evidence, "稳妥型", "StablePlannerAgent",
                         "节奏均匀、压力较低，优先安排高匹配活动、基础学习和复盘。"),
                 this::summarizeOptionalPlan
-        ).ifPresent(generated::add);
+        );
+        stablePlan.ifPresent(plan -> {
+            generated.add(plan);
+            recordArtifact(runId, AgentStepName.PLANNER_STABLE, "PLANNER_STABLE_OUTPUT",
+                    indexedPlanContext(List.of(plan)), summarizePlans(List.of(plan)));
+        });
 
-        tracedStep(runId, AgentStepName.PLANNER_SPRINT,
+        Optional<AiDtos.RecommendedPlan> sprintPlan = tracedStep(runId, AgentStepName.PLANNER_SPRINT,
                 "SprintPlannerAgent generates a concentrated breakthrough plan from retrieval evidence.",
                 () -> generatePlannerPlan(evidence, "集中突破型", "SprintPlannerAgent",
                         "短周期集中推进，优先安排高强度学习、关键活动和阶段性交付。"),
                 this::summarizeOptionalPlan
-        ).ifPresent(generated::add);
+        );
+        sprintPlan.ifPresent(plan -> {
+            generated.add(plan);
+            recordArtifact(runId, AgentStepName.PLANNER_SPRINT, "PLANNER_SPRINT_OUTPUT",
+                    indexedPlanContext(List.of(plan)), summarizePlans(List.of(plan)));
+        });
 
-        tracedStep(runId, AgentStepName.PLANNER_EXPLORE,
+        Optional<AiDtos.RecommendedPlan> explorePlan = tracedStep(runId, AgentStepName.PLANNER_EXPLORE,
                 "ExplorePlannerAgent generates an exploratory plan from retrieval evidence.",
                 () -> generatePlannerPlan(evidence, "探索型", "ExplorePlannerAgent",
                         "先通过活动和小挑战探索方向，再根据反馈安排学习和复盘。"),
                 this::summarizeOptionalPlan
-        ).ifPresent(generated::add);
+        );
+        explorePlan.ifPresent(plan -> {
+            generated.add(plan);
+            recordArtifact(runId, AgentStepName.PLANNER_EXPLORE, "PLANNER_EXPLORE_OUTPUT",
+                    indexedPlanContext(List.of(plan)), summarizePlans(List.of(plan)));
+        });
 
         if (generated.isEmpty()) {
             return Optional.empty();
@@ -488,12 +585,16 @@ public class AiService {
                 () -> checkAndFormatPlans(generated, retrievedEvents, schedule, toolContext),
                 this::summarizePlans
         );
+        recordArtifact(runId, AgentStepName.SCHEDULE_CHECK, "SCHEDULE_CHECK_OUTPUT",
+                indexedPlanContext(checked), summarizePlans(checked));
 
         List<AiDtos.RecommendedPlan> reviewed = tracedStep(runId, AgentStepName.CRITIC_REVIEW,
                 "Critic Agent reviews plan quality and keeps executable plans.",
                 () -> critiquePlans(checked, evidence),
                 this::summarizePlans
         );
+        recordArtifact(runId, AgentStepName.CRITIC_REVIEW, "PLAN_CRITIC_OUTPUT",
+                indexedPlanContext(reviewed), summarizePlans(reviewed));
 
         return Optional.of(reviewed.isEmpty() ? checked : reviewed);
     }
@@ -1631,6 +1732,93 @@ public class AiService {
                 nullToEmpty(event.getSkill()),
                 event.getBenefitType().label()
         );
+    }
+
+    private void recordArtifact(Long runId,
+                                AgentStepName stepName,
+                                String artifactType,
+                                Object content,
+                                String summary) {
+        traceArtifactService.record(runId, stepName, artifactType, content, summary);
+    }
+
+    private Map<String, Object> queryArtifact(RetrievalDtos.QueryRewrite query,
+                                              RetrievalDtos.SearchSessionContext previousContext,
+                                              RetrievalDtos.SearchSessionContext savedContext) {
+        Map<String, Object> data = new LinkedHashMap<>();
+        data.put("mode", query.mode());
+        data.put("originalQuery", query.originalQuery());
+        data.put("rewrittenQuery", query.rewrittenQuery());
+        data.put("goal", query.goal());
+        data.put("level", query.level());
+        data.put("intentTags", query.intentTags());
+        data.put("skills", query.skills());
+        data.put("preferredCategories", query.preferredCategories());
+        data.put("preferredLocation", query.preferredLocation());
+        data.put("benefitPreference", query.benefitPreference());
+        data.put("constraints", query.constraints());
+        data.put("contextDecision", query.contextDecision());
+        data.put("previousContext", previousContext);
+        data.put("savedContext", savedContext);
+        data.put("evidence", query.evidence());
+        return data;
+    }
+
+    private Map<String, Object> retrievalArtifact(List<RetrievedEvent> events) {
+        Map<String, Object> data = new LinkedHashMap<>();
+        data.put("candidateCount", events.size());
+        data.put("topCandidates", events.stream()
+                .limit(12)
+                .map(item -> eventContext(item.event(), item))
+                .toList());
+        return data;
+    }
+
+    private List<Map<String, Object>> recommendationArtifact(List<AiDtos.RecommendedEvent> recommendations) {
+        return recommendations.stream()
+                .limit(MAX_RECOMMENDATIONS)
+                .map(item -> {
+                    Map<String, Object> data = new LinkedHashMap<>();
+                    data.put("eventId", item.event().id());
+                    data.put("title", item.event().title());
+                    data.put("score", item.score());
+                    data.put("confidence", item.confidence());
+                    data.put("reason", compact(item.reason(), 500));
+                    data.put("evidence", item.evidence());
+                    return data;
+                })
+                .toList();
+    }
+
+    private Map<String, Object> planGoalArtifact(AiDtos.PlanGoalUnderstanding goal) {
+        Map<String, Object> data = new LinkedHashMap<>();
+        data.put("goal", goal.goal());
+        data.put("level", goal.level());
+        data.put("horizonDays", goal.horizonDays());
+        data.put("intensity", goal.intensity());
+        data.put("preferredLocation", goal.preferredLocation());
+        data.put("constraints", goal.constraints());
+        data.put("successCriteria", goal.successCriteria());
+        data.put("searchQuery", goal.searchQuery());
+        return data;
+    }
+
+    private List<Map<String, Object>> scheduleArtifact(List<ScheduleDtos.ScheduleItemResponse> schedule) {
+        return schedule.stream()
+                .limit(12)
+                .map(item -> {
+                    Map<String, Object> data = new LinkedHashMap<>();
+                    data.put("id", item.id());
+                    data.put("title", item.title());
+                    data.put("itemType", item.itemType());
+                    data.put("startTime", item.startTime());
+                    data.put("endTime", item.endTime());
+                    data.put("sourceId", item.sourceId());
+                    data.put("location", item.location());
+                    data.put("status", item.status());
+                    return data;
+                })
+                .toList();
     }
 
     private String toJson(Object value) {

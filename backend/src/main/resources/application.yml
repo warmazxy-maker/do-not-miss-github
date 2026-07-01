@@ -82,15 +82,25 @@ app:
     snapshot-refresh-batch-size: ${USER_MEMORY_SNAPSHOT_REFRESH_BATCH_SIZE:10}
     snapshot-refresh-initial-delay-ms: ${USER_MEMORY_SNAPSHOT_REFRESH_INITIAL_DELAY_MS:60000}
     snapshot-refresh-delay-ms: ${USER_MEMORY_SNAPSHOT_REFRESH_DELAY_MS:300000}
+  ability-clustering:
+    # HAC average-linkage threshold. Higher values create more conservative clusters.
+    merge-threshold: ${ABILITY_CLUSTER_MERGE_THRESHOLD:0.62}
+    dynamic-anchor-enabled: ${ABILITY_DYNAMIC_ANCHOR_ENABLED:true}
+    dynamic-anchor-min-members: ${ABILITY_DYNAMIC_ANCHOR_MIN_MEMBERS:3}
+    dynamic-anchor-auto-approve-threshold: ${ABILITY_DYNAMIC_ANCHOR_AUTO_APPROVE_THRESHOLD:0.66}
   mq:
     exchange: ${APP_MQ_EXCHANGE:do-not-miss.events}
     queues:
       event-index: ${APP_MQ_QUEUE_EVENT_INDEX:do-not-miss.event-index}
+      event-quality: ${APP_MQ_QUEUE_EVENT_QUALITY:do-not-miss.event-quality}
       growth-tag: ${APP_MQ_QUEUE_GROWTH_TAG:do-not-miss.growth-tag}
+      ability-evidence: ${APP_MQ_QUEUE_ABILITY_EVIDENCE:do-not-miss.ability-evidence}
       user-profile: ${APP_MQ_QUEUE_USER_PROFILE:do-not-miss.user-profile}
     routing-keys:
       event-index: event.index
+      event-quality: event.quality
       growth-tag: growth-tag.extract
+      ability-evidence: ability-evidence.assess
       user-profile: user-profile.refresh
     outbox:
       enabled: ${APP_MQ_OUTBOX_ENABLED:true}

@@ -62,7 +62,34 @@ public class AgentLogDtos {
 
     public record RunDetail(
             RunSummary run,
-            List<StepResponse> steps
+            List<StepResponse> steps,
+            List<ArtifactResponse> artifacts
     ) {
+    }
+
+    public record ArtifactResponse(
+            Long id,
+            Long runId,
+            AgentStepName stepName,
+            String artifactType,
+            String contentSummary,
+            String contentJson,
+            String contentHash,
+            boolean redacted,
+            Instant createdAt
+    ) {
+        static ArtifactResponse from(AgentTraceArtifactEntity entity) {
+            return new ArtifactResponse(
+                    entity.getId(),
+                    entity.getRunId(),
+                    entity.getStepName(),
+                    entity.getArtifactType(),
+                    entity.getContentSummary(),
+                    entity.getContentJson(),
+                    entity.getContentHash(),
+                    entity.isRedacted(),
+                    entity.getCreatedAt()
+            );
+        }
     }
 }

@@ -13,11 +13,14 @@ import java.util.List;
 public class AgentRunService {
     private final AgentRunRepository agentRunRepository;
     private final AgentRunStepRepository agentRunStepRepository;
+    private final AgentTraceArtifactService artifactService;
 
     public AgentRunService(AgentRunRepository agentRunRepository,
-                           AgentRunStepRepository agentRunStepRepository) {
+                           AgentRunStepRepository agentRunStepRepository,
+                           AgentTraceArtifactService artifactService) {
         this.agentRunRepository = agentRunRepository;
         this.agentRunStepRepository = agentRunStepRepository;
+        this.artifactService = artifactService;
     }
 
     @Transactional(propagation = Propagation.REQUIRES_NEW)
@@ -109,7 +112,7 @@ public class AgentRunService {
         List<AgentLogDtos.StepResponse> steps = agentRunStepRepository.findByRunIdOrderBySequenceNoAsc(runId).stream()
                 .map(AgentLogDtos.StepResponse::from)
                 .toList();
-        return new AgentLogDtos.RunDetail(AgentLogDtos.RunSummary.from(run), steps);
+        return new AgentLogDtos.RunDetail(AgentLogDtos.RunSummary.from(run), steps, artifactService.list(runId));
     }
 
     private String errorMessage(Throwable error) {

@@ -1290,6 +1290,199 @@ textarea:focus {
   box-shadow: 0 24px 70px rgba(31, 41, 51, 0.28);
 }
 
+.judge-modal-panel {
+  width: min(860px, 100%);
+}
+
+.judge-modal-body {
+  min-height: 0;
+  display: grid;
+  align-content: start;
+  gap: 18px;
+  padding: 24px;
+  overflow: auto;
+}
+
+.judge-overview {
+  display: grid;
+  gap: 10px;
+  padding-bottom: 18px;
+  border-bottom: 1px solid var(--line);
+}
+
+.judge-overview h3 {
+  margin: 0;
+  font-size: 26px;
+}
+
+.judge-overview p,
+.judge-result > p {
+  margin: 0;
+  color: var(--muted);
+  line-height: 1.7;
+}
+
+.judge-overview-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.judge-overview-meta span,
+.judge-decision {
+  padding: 6px 10px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: var(--surface-soft);
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 850;
+}
+
+.judge-decision {
+  width: fit-content;
+  color: var(--teal);
+  border-color: rgba(22, 117, 111, 0.28);
+  background: #eef8f5;
+}
+
+.judge-decision.decision-fail {
+  color: #9a4038;
+  border-color: rgba(181, 76, 65, 0.28);
+  background: #fff3f1;
+}
+
+.judge-decision.decision-manual_review {
+  color: #8a6218;
+  border-color: rgba(195, 138, 32, 0.34);
+  background: #fff8e8;
+}
+
+.judge-loading {
+  padding: 14px;
+  border: 1px dashed var(--line);
+  border-radius: 8px;
+  color: var(--muted);
+  background: var(--surface-soft);
+  line-height: 1.6;
+}
+
+.judge-answer-form,
+.judge-result,
+.judge-rubric-list {
+  display: grid;
+  gap: 14px;
+}
+
+.judge-form-intro {
+  margin: 0;
+  color: var(--muted);
+  line-height: 1.7;
+}
+
+.judge-question {
+  display: grid;
+  grid-template-columns: 38px minmax(0, 1fr);
+  gap: 8px 12px;
+  padding: 16px 0;
+  border-top: 1px solid var(--line);
+}
+
+.judge-question > span {
+  grid-row: 1 / 3;
+  display: grid;
+  place-items: center;
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  background: var(--ink);
+  color: #fff;
+  font-size: 12px;
+  font-weight: 900;
+}
+
+.judge-question strong {
+  line-height: 1.6;
+}
+
+.judge-question small {
+  color: var(--teal);
+  font-weight: 800;
+}
+
+.judge-question textarea {
+  grid-column: 2;
+  min-height: 126px;
+}
+
+.judge-submit {
+  justify-self: end;
+  min-width: 140px;
+}
+
+.judge-result {
+  grid-template-columns: 116px minmax(0, 1fr);
+  align-items: center;
+}
+
+.judge-result-score {
+  grid-row: 1 / 3;
+  display: grid;
+  place-items: center;
+  align-content: center;
+  width: 104px;
+  height: 104px;
+  border: 8px solid #dff3ef;
+  border-radius: 50%;
+  color: var(--teal);
+}
+
+.judge-result-score strong {
+  font-size: 31px;
+  line-height: 1;
+}
+
+.judge-result-score span {
+  margin-top: 6px;
+  color: var(--muted);
+  font-size: 11px;
+  font-weight: 850;
+}
+
+.judge-confidence-change {
+  color: var(--teal) !important;
+  font-weight: 850;
+}
+
+.judge-rubric-list {
+  grid-column: 1 / -1;
+}
+
+.judge-rubric-card {
+  display: grid;
+  gap: 8px;
+  padding: 14px 0;
+  border-top: 1px solid var(--line);
+}
+
+.judge-rubric-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.judge-rubric-top span {
+  color: var(--teal);
+  font-weight: 900;
+}
+
+.judge-rubric-card p {
+  margin: 0;
+  color: var(--muted);
+  line-height: 1.6;
+}
+
 .plan-modal-header {
   display: flex;
   align-items: center;
@@ -1622,6 +1815,21 @@ textarea:focus {
   border-color: rgba(195, 138, 32, 0.42);
 }
 
+.ability-tag.is-review {
+  border-color: rgba(195, 138, 32, 0.58);
+  box-shadow: 0 12px 28px rgba(195, 138, 32, 0.12);
+}
+
+.ability-review-badge {
+  padding: 3px 7px;
+  border-radius: 999px;
+  background: #fff0c9;
+  color: #80580e;
+  font-size: 9px;
+  font-style: normal;
+  font-weight: 900;
+}
+
 .ability-tag span {
   overflow: hidden;
   text-overflow: ellipsis;
@@ -1680,8 +1888,8 @@ textarea:focus {
 
 .ability-map-detail {
   display: grid;
-  gap: 8px;
-  padding: 12px 0 4px;
+  gap: 18px;
+  padding: 18px 0 4px;
   border-top: 1px solid var(--line);
 }
 
@@ -1694,6 +1902,82 @@ textarea:focus {
   margin: 0;
   color: var(--muted);
   line-height: 1.6;
+}
+
+.ability-detail-header {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 18px;
+}
+
+.ability-detail-heading {
+  display: grid;
+  justify-items: start;
+  gap: 8px;
+}
+
+.ability-detail-heading > strong {
+  font-size: 24px;
+}
+
+.ability-rank {
+  padding: 5px 9px;
+  border: 1px solid rgba(49, 94, 134, 0.24);
+  border-radius: 999px;
+  background: #eef7fb;
+  color: var(--blue);
+  font-size: 11px;
+  font-weight: 900;
+}
+
+.ability-rank-advanced,
+.ability-rank-expert {
+  border-color: rgba(195, 138, 32, 0.35);
+  background: #fff8e8;
+  color: #80580e;
+}
+
+.ability-score-panel {
+  display: grid;
+  place-items: center;
+}
+
+.ability-score-gauge {
+  position: relative;
+  display: grid;
+  place-items: center;
+  align-content: center;
+  width: 112px;
+  height: 112px;
+  border-radius: 50%;
+  background: conic-gradient(var(--teal) var(--ability-progress, 0%), #e8e3da 0);
+}
+
+.ability-score-gauge::before {
+  content: "";
+  position: absolute;
+  inset: 9px;
+  border-radius: 50%;
+  background: #fff;
+}
+
+.ability-score-gauge strong,
+.ability-score-gauge span {
+  position: relative;
+  z-index: 1;
+}
+
+.ability-score-gauge strong {
+  font-size: 30px;
+  line-height: 1;
+}
+
+.ability-score-gauge span {
+  margin-top: 5px;
+  color: var(--muted);
+  font-size: 10px;
+  font-weight: 850;
 }
 
 .ability-map-metrics {
@@ -1710,6 +1994,124 @@ textarea:focus {
   color: #3d464d;
   font-size: 12px;
   font-weight: 800;
+}
+
+.ability-judge-notice {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 18px;
+  padding: 16px;
+  border: 1px solid rgba(195, 138, 32, 0.38);
+  border-left: 4px solid var(--gold);
+  border-radius: 8px;
+  background: #fffaf0;
+}
+
+.ability-judge-copy {
+  display: grid;
+  gap: 6px;
+}
+
+.ability-judge-label {
+  color: #8a6218;
+  font-size: 11px;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+
+.ability-result-section,
+.ability-evidence-section {
+  display: grid;
+  gap: 12px;
+  padding-top: 4px;
+}
+
+.ability-result-heading {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.ability-result-heading span {
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.ability-result-list {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.ability-result-card {
+  display: grid;
+  align-content: start;
+  gap: 8px;
+  padding: 14px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: #fff;
+}
+
+.ability-result-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.ability-result-top > strong {
+  color: var(--teal);
+  font-size: 13px;
+}
+
+.ability-result-status {
+  padding: 4px 7px;
+  border-radius: 999px;
+  background: var(--surface-soft);
+  color: var(--muted);
+  font-size: 10px;
+  font-weight: 900;
+}
+
+.ability-result-status.status-verified {
+  background: #e8f6f1;
+  color: var(--teal);
+}
+
+.ability-result-status.status-review_required {
+  background: #fff0c9;
+  color: #80580e;
+}
+
+.ability-result-card > p {
+  font-size: 13px;
+}
+
+.ability-appeal {
+  margin-top: 4px;
+  border-top: 1px solid var(--line);
+  padding-top: 8px;
+}
+
+.ability-appeal summary {
+  color: var(--blue);
+  font-size: 12px;
+  font-weight: 850;
+  cursor: pointer;
+}
+
+.ability-appeal textarea {
+  width: 100%;
+  min-height: 82px;
+  margin-top: 10px;
+}
+
+.ability-appeal button {
+  min-height: 38px;
+  margin-top: 8px;
 }
 
 @keyframes abilityBubbleIn {
@@ -2266,5 +2668,38 @@ textarea:focus {
 
   .plan-flow-step:not(:last-child)::after {
     left: 28px;
+  }
+
+  .ability-detail-header,
+  .ability-judge-notice,
+  .judge-result {
+    grid-template-columns: 1fr;
+  }
+
+  .ability-score-panel {
+    justify-content: start;
+  }
+
+  .ability-result-list {
+    grid-template-columns: 1fr;
+  }
+
+  .judge-modal-body {
+    padding: 16px;
+  }
+
+  .judge-question {
+    grid-template-columns: 32px minmax(0, 1fr);
+  }
+
+  .judge-result-score,
+  .judge-rubric-list {
+    grid-row: auto;
+    grid-column: auto;
+  }
+
+  .judge-result-score {
+    width: 92px;
+    height: 92px;
   }
 }

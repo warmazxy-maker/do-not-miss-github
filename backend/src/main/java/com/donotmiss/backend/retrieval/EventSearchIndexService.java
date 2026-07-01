@@ -5,6 +5,9 @@ import com.donotmiss.backend.event.EventEntity;
 import com.donotmiss.backend.event.BenefitType;
 import com.donotmiss.backend.event.EventCategory;
 import com.donotmiss.backend.event.EventRepository;
+import com.donotmiss.backend.event.EventReviewStatus;
+import com.donotmiss.backend.eventquality.EventQualityReportEntity;
+import com.donotmiss.backend.eventquality.EventQualityReportRepository;
 import com.fasterxml.jackson.databind.JsonNode;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -26,6 +29,7 @@ public class EventSearchIndexService {
     private static final Logger log = LoggerFactory.getLogger(EventSearchIndexService.class);
 
     private final EventRepository eventRepository;
+    private final EventQualityReportRepository qualityReportRepository;
     private final OpenAiCompatibleLlmClient llmClient;
     private final RestClient restClient;
     private final boolean enabled;
@@ -34,6 +38,7 @@ public class EventSearchIndexService {
     private final String indexName;
 
     public EventSearchIndexService(EventRepository eventRepository,
+                                   EventQualityReportRepository qualityReportRepository,
                                    OpenAiCompatibleLlmClient llmClient,
                                    @Value("${app.search.enabled:false}") boolean enabled,
                                    @Value("${app.search.vector-enabled:false}") boolean vectorEnabled,
@@ -41,6 +46,7 @@ public class EventSearchIndexService {
                                    @Value("${app.search.base-url:http://localhost:9200}") String baseUrl,
                                    @Value("${app.search.index-name:do_not_miss_events}") String indexName) {
         this.eventRepository = eventRepository;
+        this.qualityReportRepository = qualityReportRepository;
         this.llmClient = llmClient;
         this.enabled = enabled;
         this.vectorEnabled = vectorEnabled;
@@ -63,11 +69,12 @@ public class EventSearchIndexService {
         if (!enabled) {
             return 0;
         }
-        ensureIndex();
-        List<EventEntity> events = eventRepository.findByExpiredFalse();
+        recreateIndex();
+        List<EventEntity> events = eventRepository.findByExpiredFalseAndReviewStatus(EventReviewStatus.APPROVED);
         for (EventEntity event : events) {
-            index(event);
+            indexOrThrow(event);
         }
+        refreshIndex();
         return events.size();
     }
 
@@ -87,7 +94,7 @@ public class EventSearchIndexService {
             return;
         }
         EventEntity event = eventRepository.findById(eventId).orElse(null);
-        if (event == null || event.isExpired()) {
+        if (event == null || event.isExpired() || event.getReviewStatus() != EventReviewStatus.APPROVED) {
             deleteOrThrow(eventId);
             return;
         }
@@ -98,7 +105,7 @@ public class EventSearchIndexService {
         if (!enabled || event == null || event.getId() == null) {
             return;
         }
-        if (event.isExpired()) {
+        if (event.isExpired() || event.getReviewStatus() != EventReviewStatus.APPROVED) {
             deleteOrThrow(event.getId());
             return;
         }
@@ -142,20 +149,47 @@ public class EventSearchIndexService {
         if (!enabled) {
             return List.of();
         }
+        String lexicalQuery = Bm25QueryCompactor.compact(query);
         try {
-            ensureIndex();
-            JsonNode response = restClient.post()
-                    .uri("/{index}/_search", indexName)
-                    .contentType(MediaType.APPLICATION_JSON)
-                    .body(searchBody(query, category, benefitType, location, limit))
-                    .retrieve()
-                    .body(JsonNode.class);
-
-            return hitsFromResponse(response);
+            return executeBm25Search(lexicalQuery, category, benefitType, location, limit, false);
         } catch (RestClientException ex) {
-            log.warn("Search engine query failed, falling back to local retrieval: {}", ex.getMessage());
-            return List.of();
+            String fallbackQuery = Bm25QueryCompactor.fallback(query);
+            log.warn(
+                    "BM25 query failed. originalLength={}, compactLength={}, retryLength={}, reason={}",
+                    lengthOf(query),
+                    lexicalQuery.length(),
+                    fallbackQuery.length(),
+                    ex.getMessage()
+            );
+            if (fallbackQuery.isBlank() || fallbackQuery.equals(lexicalQuery)) {
+                return List.of();
+            }
+            try {
+                return executeBm25Search(fallbackQuery, category, benefitType, location, limit, true);
+            } catch (RestClientException fallbackEx) {
+                log.warn(
+                        "BM25 fallback query failed; local/vector retrieval will continue. reason={}",
+                        fallbackEx.getMessage()
+                );
+                return List.of();
+            }
         }
+    }
+
+    private List<SearchHit> executeBm25Search(String query,
+                                              String category,
+                                              String benefitType,
+                                              String location,
+                                              int limit,
+                                              boolean fallback) {
+        ensureIndex();
+        JsonNode response = restClient.post()
+                .uri("/{index}/_search", indexName)
+                .contentType(MediaType.APPLICATION_JSON)
+                .body(searchBody(query, category, benefitType, location, limit, fallback))
+                .retrieve()
+                .body(JsonNode.class);
+        return hitsFromResponse(response);
     }
 
     public List<Long> vectorSearchIds(String query, int limit) {
@@ -215,6 +249,17 @@ public class EventSearchIndexService {
         properties.put("benefitTypeCode", Map.of("type", "keyword"));
         properties.put("skill", textField());
         properties.put("allText", textField());
+        properties.put("semanticText", textField());
+        properties.put("qualityScore", Map.of("type", "integer"));
+        properties.put("qualityLevel", Map.of("type", "keyword"));
+        properties.put("difficulty", Map.of("type", "keyword"));
+        properties.put("qualitySummary", textField());
+        properties.put("targetStudents", textField());
+        properties.put("prerequisites", textField());
+        properties.put("learningOutcomes", textField());
+        properties.put("extractedTags", textField());
+        properties.put("abilityImpacts", textField());
+        properties.put("riskFlags", textField());
         properties.put("moneyAmount", Map.of("type", "double"));
         properties.put("startTime", Map.of("type", "date"));
         properties.put("endTime", Map.of("type", "date"));
@@ -266,7 +311,31 @@ public class EventSearchIndexService {
                 .toBodilessEntity();
     }
 
-    private Map<String, Object> searchBody(String query, String category, String benefitType, String location, int limit) {
+    private void recreateIndex() {
+        try {
+            restClient.delete()
+                    .uri("/{index}", indexName)
+                    .retrieve()
+                    .toBodilessEntity();
+        } catch (RestClientException ex) {
+            log.info("Search index {} did not exist or could not be deleted before rebuild: {}", indexName, ex.getMessage());
+        }
+        createIndex();
+    }
+
+    private void refreshIndex() {
+        restClient.post()
+                .uri("/{index}/_refresh", indexName)
+                .retrieve()
+                .toBodilessEntity();
+    }
+
+    private Map<String, Object> searchBody(String query,
+                                           String category,
+                                           String benefitType,
+                                           String location,
+                                           int limit,
+                                           boolean fallback) {
         List<Map<String, Object>> filters = new ArrayList<>();
         if (isPresent(category)) {
             filters.add(Map.of("term", Map.of("categoryCode", normalizeCategoryCode(category))));
@@ -281,11 +350,24 @@ public class EventSearchIndexService {
         Map<String, Object> bool = new LinkedHashMap<>();
         bool.put("filter", filters);
         if (isPresent(query)) {
+            List<String> fields = fallback
+                    ? List.of("title^5", "skill^4", "content^2", "semanticText^2")
+                    : List.of(
+                            "title^5",
+                            "skill^4",
+                            "learningOutcomes^3",
+                            "extractedTags^3",
+                            "qualitySummary^2",
+                            "content^2",
+                            "semanticText^2"
+                    );
             bool.put("must", List.of(Map.of(
                     "multi_match", Map.of(
                             "query", query.trim(),
-                            "fields", List.of("title^4", "skill^3", "content^2", "organizationName", "location", "category", "benefitType", "allText"),
-                            "type", "best_fields"
+                            "fields", fields,
+                            "type", "best_fields",
+                            "operator", "or",
+                            "minimum_should_match", "20%"
                     )
             )));
         } else {
@@ -314,6 +396,7 @@ public class EventSearchIndexService {
     }
 
     private Map<String, Object> documentOf(EventEntity event) {
+        EventQualityReportEntity qualityReport = qualityReportRepository.findByEventId(event.getId()).orElse(null);
         Map<String, Object> data = new LinkedHashMap<>();
         data.put("eventId", event.getId());
         data.put("title", event.getTitle());
@@ -328,30 +411,85 @@ public class EventSearchIndexService {
         data.put("moneyAmount", event.getMoneyAmount() == null ? null : asDouble(event.getMoneyAmount()));
         data.put("startTime", event.getStartTime());
         data.put("endTime", event.getEndTime());
-        String allText = allTextOf(event);
+        if (qualityReport != null) {
+            data.put("qualityScore", qualityReport.getQualityScore());
+            data.put("qualityLevel", qualityReport.getQualityLevel());
+            data.put("difficulty", qualityReport.getDifficulty());
+            data.put("qualitySummary", qualityReport.getSummary());
+            data.put("targetStudents", qualityReport.getTargetStudentsJson());
+            data.put("prerequisites", qualityReport.getPrerequisitesJson());
+            data.put("learningOutcomes", qualityReport.getLearningOutcomesJson());
+            data.put("extractedTags", qualityReport.getExtractedTagsJson());
+            data.put("abilityImpacts", qualityReport.getAbilityImpactsJson());
+            data.put("riskFlags", qualityReport.getRiskFlagsJson());
+        }
+        String allText = allTextOf(event, qualityReport);
+        String semanticText = semanticTextOf(event, qualityReport);
         data.put("allText", allText);
+        data.put("semanticText", semanticText);
         if (isVectorEnabled()) {
-            llmClient.embedding(allText)
+            llmClient.embedding(semanticText)
                     .filter(this::hasExpectedDimensions)
                     .ifPresent(vector -> data.put("embedding", vector));
         }
         return data;
     }
 
-    private String allTextOf(EventEntity event) {
+    private String allTextOf(EventEntity event, EventQualityReportEntity qualityReport) {
+        List<String> parts = new ArrayList<>();
+        parts.add(event.getTitle());
+        parts.add(event.getOrganizationName());
+        parts.add(event.getCategory().label());
+        parts.add(event.getLocation());
+        parts.add(event.getContent());
+        parts.add(event.getBenefitType().label());
+        parts.add(event.getSkill() == null ? "" : event.getSkill());
+        if (qualityReport != null) {
+            parts.add(qualityReport.getSummary());
+            parts.add(qualityReport.getTargetStudentsJson());
+            parts.add(qualityReport.getPrerequisitesJson());
+            parts.add(qualityReport.getLearningOutcomesJson());
+            parts.add(qualityReport.getExtractedTagsJson());
+            parts.add(qualityReport.getAbilityImpactsJson());
+        }
         return String.join(" ",
-                event.getTitle(),
-                event.getOrganizationName(),
-                event.getCategory().label(),
-                event.getLocation(),
-                event.getContent(),
-                event.getBenefitType().label(),
-                event.getSkill() == null ? "" : event.getSkill()
+                parts.stream().map(value -> value == null ? "" : value).toList()
         );
     }
 
+    private String semanticTextOf(EventEntity event, EventQualityReportEntity qualityReport) {
+        List<String> parts = new ArrayList<>();
+        parts.add("标题：" + nullToEmpty(event.getTitle()));
+        parts.add("核心分类：" + event.getCategory().label());
+        parts.add("核心技能：" + nullToEmpty(event.getSkill()));
+        if (qualityReport != null) {
+            parts.add("活动摘要：" + nullToEmpty(qualityReport.getSummary()));
+            parts.add("学习产出：" + jsonishToText(qualityReport.getLearningOutcomesJson()));
+            parts.add("核心标签：" + jsonishToText(qualityReport.getExtractedTagsJson()));
+            parts.add("能力影响：" + jsonishToText(qualityReport.getAbilityImpactsJson()));
+        } else {
+            parts.add("活动内容：" + compact(nullToEmpty(event.getContent()), 180));
+        }
+        return compact(String.join("。", parts.stream()
+                .filter(value -> value != null && !value.isBlank())
+                .toList()), 900);
+    }
+
+    private String jsonishToText(String value) {
+        if (!isPresent(value)) {
+            return "";
+        }
+        return value.replaceAll("[\\[\\]{}\"：:,，]", " ")
+                .replaceAll("\\s+", " ")
+                .trim();
+    }
+
     private Map<String, Object> textField() {
-        return Map.of("type", "text", "analyzer", "cjk_ngram", "search_analyzer", "cjk_ngram");
+        return Map.of("type", "text", "analyzer", "cjk_ngram", "search_analyzer", "cjk");
+    }
+
+    private int lengthOf(String value) {
+        return value == null ? 0 : value.length();
     }
 
     private double asDouble(BigDecimal value) {
@@ -360,6 +498,18 @@ public class EventSearchIndexService {
 
     private boolean isPresent(String value) {
         return value != null && !value.isBlank();
+    }
+
+    private String nullToEmpty(String value) {
+        return value == null ? "" : value;
+    }
+
+    private String compact(String value, int maxLength) {
+        if (value == null) {
+            return "";
+        }
+        String trimmed = value.trim();
+        return trimmed.length() <= maxLength ? trimmed : trimmed.substring(0, maxLength);
     }
 
     private boolean hasExpectedDimensions(List<Double> vector) {
