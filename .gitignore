@@ -7,11 +7,13 @@
 # Java / Maven
 target/
 *.class
+.m2/
 
 # Frontend / Node
 node_modules/
 dist/
 build/
+.npm-cache/
 
 # Logs
 *.log
