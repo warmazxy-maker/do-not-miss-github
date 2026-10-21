@@ -14,6 +14,8 @@ import com.donotmiss.backend.agentlog.AgentTraceArtifactService;
 import com.donotmiss.backend.event.EventDtos;
 import com.donotmiss.backend.event.EventEntity;
 import com.donotmiss.backend.event.EventService;
+import com.donotmiss.backend.eventquality.EventQualityReportEntity;
+import com.donotmiss.backend.eventquality.EventQualityReportRepository;
 import com.donotmiss.backend.memory.UserMemoryDtos;
 import com.donotmiss.backend.memory.UserMemoryService;
 import com.donotmiss.backend.mcp.McpDtos;
@@ -47,7 +49,7 @@ import java.util.stream.Collectors;
 
 @Service
 public class AiService {
-    private static final int MAX_MODEL_EVENTS = 20;
+    private static final int MAX_MODEL_EVENTS = 15;
     private static final int MAX_RECOMMENDATIONS = 5;
     private static final int MIN_MODEL_SCORE = 55;
     private static final int MIN_RULE_SCORE = 50;
@@ -61,6 +63,7 @@ public class AiService {
     private final QueryRewriteService queryRewriteService;
     private final SearchSessionContextService searchSessionContextService;
     private final ScheduleService scheduleService;
+    private final EventQualityReportRepository eventQualityReportRepository;
     private final McpToolContextService mcpToolContextService;
     private final AgentRunService agentRunService;
     private final AgentTraceArtifactService traceArtifactService;
@@ -77,6 +80,7 @@ public class AiService {
                      QueryRewriteService queryRewriteService,
                      SearchSessionContextService searchSessionContextService,
                      ScheduleService scheduleService,
+                     EventQualityReportRepository eventQualityReportRepository,
                      McpToolContextService mcpToolContextService,
                      AgentRunService agentRunService,
                      AgentTraceArtifactService traceArtifactService,
@@ -92,6 +96,7 @@ public class AiService {
         this.queryRewriteService = queryRewriteService;
         this.searchSessionContextService = searchSessionContextService;
         this.scheduleService = scheduleService;
+        this.eventQualityReportRepository = eventQualityReportRepository;
         this.mcpToolContextService = mcpToolContextService;
         this.agentRunService = agentRunService;
         this.traceArtifactService = traceArtifactService;
@@ -1095,8 +1100,9 @@ public class AiService {
                 你是 do not miss 的学生成长机会推荐 Agent。
                 你可以参考 mcpToolContext 中的 currentTime 和 location 来判断当前时间、周几、学生大致位置和活动时效性。
                 你只能基于后端给出的 candidateEvents 推荐，不能编造新的活动、组织、时间或地点。
-                请优先保留与学生目标存在明确关键词、技能、类别或 semanticScore 语义证据的候选；不要只返回最完美的一两个。
-                中等相关但能帮助学生探索方向的活动可以返回，并在理由里说明适合点和可能的边界。
+                RAG 召回分只表示“候选长得像”，不是最终适配分；不要机械照抄 finalScore 排序。
+                你需要结合 queryUnderstanding、studentMemory、studentHistory、mcpToolContext、活动质量报告 eventQualityReport 和召回证据，判断候选是否真的适合这个学生。
+                中等相关但能帮助学生探索方向的活动可以返回，但必须说明适合点、边界和不确定性。
                 输出严格 JSON，不要输出 Markdown 或解释性前后缀。
                 JSON 格式：
                 {
@@ -1112,9 +1118,10 @@ public class AiService {
                 1. 最多返回 5 个推荐。
                 2. eventId 必须来自 candidateEvents。
                 3. score 使用 1-100 的整数，低于 55 的活动不要返回。
-                4. reason 用中文，控制在 100 字以内，说明为什么适合该学生。
-                5. evidence 必须引用候选事件或学生画像中的具体字段，例如技能、地点、收益、类别、历史经历。
-                6. 如果 semanticScore、bm25Score 或 finalScore 较高，即使不是完全命中，也可以作为探索型推荐保留。
+                4. score 表示“该活动对当前学生的适配度”，不是 RAG 召回分。
+                5. reason 用中文，控制在 100 字以内，说明为什么适合该学生，也可以说明边界。
+                6. evidence 必须引用候选事件、活动质量报告、召回证据、学生画像或历史经历中的具体字段。
+                7. semanticScore、bm25Score 和 finalScore 只能作为召回证据；最终排序要由你判断目标、能力阶段、活动质量和个人画像是否匹配。
 
                 后端数据 JSON：
                 %s
@@ -1191,7 +1198,7 @@ public class AiService {
                         score,
                         confidenceLabel(score),
                         evidence,
-                        "混合检索认为该活动与需求存在较强关键词或语义证据，作为补充推荐保留。"
+                        "RAG 召回认为该活动与需求存在关键词或语义证据，作为模型返回不足时的补充候选。"
                 ));
                 if (recommendations.size() >= MAX_RECOMMENDATIONS) {
                     break;
@@ -1229,8 +1236,9 @@ public class AiService {
         String systemPrompt = """
                 你是推荐结果 Critic Agent，负责过滤牵强推荐。
                 你只审查已有推荐，不添加新活动。
-                只有活动与学生需求明显无关、已过期导致 finalScore 为 0、或缺乏任何关键词/语义/结构化证据时，才 keep=false。
-                对于存在 semanticScore、bm25Score 或明确技能匹配的中等相关活动，应倾向 keep=true。
+                RAG finalScore 只是召回置信度，不是最终适配分；不要因为分数低但理由充分就直接删除。
+                只有活动与学生需求明显无关、已过期、活动质量报告风险明显、或缺乏任何关键词/语义/结构化证据时，才 keep=false。
+                对于存在 semanticScore、bm25Score、活动质量报告或明确技能匹配的中等相关活动，应倾向 keep=true。
                 输出严格 JSON，不要输出 Markdown。
                 JSON 格式：
                 {"reviews":[{"eventId":1,"keep":true,"adjustedScore":82,"critique":"审核理由"}]}
@@ -1664,6 +1672,8 @@ public class AiService {
         data.put("skill", compact(event.getSkill(), 180));
         data.put("moneyAmount", event.getMoneyAmount());
         data.put("compressedContext", compressedEventContext(event, retrievedEvent));
+        eventQualityReportRepository.findByEventId(event.getId())
+                .ifPresent(report -> data.put("eventQualityReport", eventQualityReportContext(report)));
         if (retrievedEvent != null) {
             data.put("retrieval", Map.of(
                     "keywordScore", retrievedEvent.keywordScore(),
@@ -1680,6 +1690,24 @@ public class AiService {
         return data;
     }
 
+    private Map<String, Object> eventQualityReportContext(EventQualityReportEntity report) {
+        Map<String, Object> data = new LinkedHashMap<>();
+        data.put("qualityScore", report.getQualityScore());
+        data.put("qualityLevel", report.getQualityLevel());
+        data.put("reviewSuggestion", report.getReviewSuggestion());
+        data.put("difficulty", report.getDifficulty());
+        data.put("summary", compact(report.getSummary(), 260));
+        data.put("targetStudents", compactJson(report.getTargetStudentsJson(), 220));
+        data.put("prerequisites", compactJson(report.getPrerequisitesJson(), 220));
+        data.put("learningOutcomes", compactJson(report.getLearningOutcomesJson(), 260));
+        data.put("extractedTags", compactJson(report.getExtractedTagsJson(), 220));
+        data.put("abilityImpacts", compactJson(report.getAbilityImpactsJson(), 260));
+        data.put("riskFlags", compactJson(report.getRiskFlagsJson(), 220));
+        data.put("missingFields", compactJson(report.getMissingFieldsJson(), 180));
+        data.put("confidence", report.getConfidence());
+        return data;
+    }
+
     private Map<String, Object> compressedEventContext(EventEntity event, RetrievedEvent retrievedEvent) {
         Map<String, Object> data = new LinkedHashMap<>();
         data.put("summary", compact(String.join(" ",
@@ -1693,6 +1721,10 @@ public class AiService {
         data.put("keptFields", List.of("title", "organizationName", "category", "startTime", "location", "benefitType", "skill", "retrievalEvidence"));
         data.put("evidence", retrievedEvent == null ? List.of() : retrievedEvent.evidence().stream().limit(4).toList());
         return data;
+    }
+
+    private String compactJson(String value, int maxLength) {
+        return compact(value == null ? "" : value.replace("\\\"", "\""), maxLength);
     }
 
     private Map<String, Object> historyContext(AchievementRecordEntity record) {

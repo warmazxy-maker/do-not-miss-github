@@ -128,7 +128,9 @@ public class AbilityScoringService {
                 continue;
             }
 
-            var existingRecordScore = resultRepository
+            var existingRecordScore = job.getAchievementRecordId() == null
+                    ? java.util.Optional.<AbilityScoreResultEntity>empty()
+                    : resultRepository
                     .findTopByAchievementRecordIdAndNormalizedDimensionAndScoringRuleVersionAndStatusNotOrderByCreatedAtDesc(
                             job.getAchievementRecordId(),
                             dimension.getNormalizedDimension(),
@@ -198,11 +200,12 @@ public class AbilityScoringService {
                     evidenceQuality,
                     extractionConfidence,
                     novelty,
-                    sourceType
+                sourceType
             ));
+            List<String> judgeFlags = mergedJudgeFlags(output.judgeFlags(), assessment, output);
 
             AbilityScoreResultStatus status;
-            if (output.requiresJudgeReview()) {
+            if (!judgeFlags.isEmpty()) {
                 status = AbilityScoreResultStatus.REVIEW_REQUIRED;
             } else if (output.verificationStrength()
                     .compareTo(AbilityScoringPolicyV2.VERIFIED_STATUS_THRESHOLD) >= 0) {
@@ -223,7 +226,8 @@ public class AbilityScoringService {
                     novelty,
                     dimension.getRelevance(),
                     dimensionBudget.multiplier(),
-                    priorResult == null ? null : priorResult.getId()
+                    priorResult == null ? null : priorResult.getId(),
+                    judgeFlags
             );
 
             if (priorResult != null) {
@@ -233,16 +237,16 @@ public class AbilityScoringService {
             state.setExperienceScore(output.newExperienceScore());
             state.setAbilityScore(output.newAbilityScore());
             state.setAbilityUncertainty(output.newAbilityUncertainty());
-            if (!output.requiresJudgeReview() || output.oldRank().equals(output.proposedRank())) {
+            if (judgeFlags.isEmpty() || output.oldRank().equals(output.proposedRank())) {
                 state.setRankName(output.proposedRank());
             }
             stateRepository.save(state);
             if (result.getStatus() == AbilityScoreResultStatus.REVIEW_REQUIRED) {
-                judgeAssessmentService.createIfRequired(result, output.judgeFlags());
+                judgeAssessmentService.createIfRequired(result, judgeFlags);
             }
 
             executionResults.add(toExecutionResult(result, false, false));
-            reviewRequired |= output.requiresJudgeReview();
+            reviewRequired |= !judgeFlags.isEmpty();
         }
 
         job.setStatus(reviewRequired
@@ -290,7 +294,8 @@ public class AbilityScoringService {
                                                    BigDecimal novelty,
                                                    BigDecimal originalDimensionRelevance,
                                                    BigDecimal dimensionBudgetMultiplier,
-                                                   Long supersedesResultId) {
+                                                   Long supersedesResultId,
+                                                   List<String> judgeFlags) {
         Map<String, Object> snapshot = new LinkedHashMap<>(output.factorSnapshot());
         snapshot.put("assessmentId", assessment.getId());
         snapshot.put("assessmentEvidenceHash", assessment.getEvidenceHash());
@@ -328,7 +333,7 @@ public class AbilityScoringService {
         result.setProfileConfidenceMultiplier(output.profileConfidenceMultiplier());
         result.setDifficultyMatchMultiplier(output.difficultyMatchMultiplier());
         result.setFactorSnapshotJson(toJson(snapshot));
-        result.setJudgeFlagsJson(toJson(output.judgeFlags()));
+        result.setJudgeFlagsJson(toJson(judgeFlags == null ? List.of() : judgeFlags));
         result.setScoringRuleVersion(output.scoringRuleVersion());
         result.setHistorySnapshotVersion(historyVersion);
         result.setSupersedesResultId(supersedesResultId);
@@ -356,6 +361,43 @@ public class AbilityScoringService {
                 reused,
                 correctionPending
         );
+    }
+
+    private List<String> mergedJudgeFlags(List<String> calculatorFlags,
+                                          AbilityEvidenceAssessmentEntity assessment,
+                                          AbilityScoringModels.ScoreOutput output) {
+        List<String> flags = new ArrayList<>();
+        if (calculatorFlags != null) {
+            flags.addAll(calculatorFlags);
+        }
+        if (evaluatorSuggestsJudge(assessment)) {
+            flags.add("EVALUATOR_SUGGESTED_JUDGE");
+        }
+        if (output.newAbilityScore().compareTo(new BigDecimal("30.0000")) >= 0
+                && output.verificationStrength().compareTo(new BigDecimal("0.5500")) < 0) {
+            flags.add("HIGH_SCORE_LOW_VERIFICATION_STRENGTH");
+        }
+        if (output.newAbilityScore().compareTo(new BigDecimal("30.0000")) >= 0
+                && assessment.getAssessmentConfidence()
+                .compareTo(AbilityScoringPolicyV2.LOW_ASSESSMENT_CONFIDENCE_THRESHOLD) < 0) {
+            flags.add("HIGH_SCORE_LOW_ASSESSMENT_CONFIDENCE");
+        }
+        return flags.stream()
+                .filter(flag -> flag != null && !flag.isBlank())
+                .distinct()
+                .toList();
+    }
+
+    private boolean evaluatorSuggestsJudge(AbilityEvidenceAssessmentEntity assessment) {
+        if (assessment == null || assessment.getJudgeRecommendationJson() == null) {
+            return false;
+        }
+        try {
+            var node = objectMapper.readTree(assessment.getJudgeRecommendationJson());
+            return node.path("suggestReview").asBoolean(false);
+        } catch (JsonProcessingException ex) {
+            return false;
+        }
     }
 
     private BigDecimal minimum(BigDecimal... values) {

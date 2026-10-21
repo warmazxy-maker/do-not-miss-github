@@ -1,0 +1,4 @@
+﻿interface:
+  display_name: "Do Not Miss 面试官"
+  short_description: "围绕 Do Not Miss 项目生成项目追问、八股联动题和模拟面试反馈。"
+  default_prompt: "围绕 Do Not Miss 项目给我来一轮 Agent 后端实习模拟面试。"

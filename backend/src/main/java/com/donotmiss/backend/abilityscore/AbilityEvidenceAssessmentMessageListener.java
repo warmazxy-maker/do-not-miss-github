@@ -1,6 +1,7 @@
 package com.donotmiss.backend.abilityscore;
 
 import com.donotmiss.backend.mq.DomainEventMessages;
+import com.donotmiss.backend.mq.DomainEventPublisher;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.amqp.rabbit.annotation.RabbitListener;
@@ -11,9 +12,12 @@ public class AbilityEvidenceAssessmentMessageListener {
     private static final Logger log = LoggerFactory.getLogger(AbilityEvidenceAssessmentMessageListener.class);
 
     private final EvidenceAssessmentAgentService assessmentAgentService;
+    private final DomainEventPublisher domainEventPublisher;
 
-    public AbilityEvidenceAssessmentMessageListener(EvidenceAssessmentAgentService assessmentAgentService) {
+    public AbilityEvidenceAssessmentMessageListener(EvidenceAssessmentAgentService assessmentAgentService,
+                                                    DomainEventPublisher domainEventPublisher) {
         this.assessmentAgentService = assessmentAgentService;
+        this.domainEventPublisher = domainEventPublisher;
     }
 
     @RabbitListener(queues = "${app.mq.queues.ability-evidence}")
@@ -24,6 +28,17 @@ public class AbilityEvidenceAssessmentMessageListener {
         }
         EvidenceAssessmentDtos.AssessmentResponse result =
                 assessmentAgentService.assessRecord(message.recordId(), message.userId());
+        if (result.assessmentId() != null) {
+            // If this write fails the Rabbit listener is retried. Reassessment is idempotent,
+            // so the later V2 message can be safely emitted again.
+            domainEventPublisher.publishCapabilityV2Scoring(
+                    result.achievementRecordId(),
+                    result.userId(),
+                    result.assessmentId(),
+                    result.evidenceQuality(),
+                    result.novelty()
+            );
+        }
         log.info(
                 "Completed ability evidence assessment. recordId={}, assessmentId={}, dimensions={}, mode={}",
                 message.recordId(),

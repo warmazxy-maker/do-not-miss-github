@@ -1,0 +1,20 @@
+{
+  "recordedAt": "2026-10-21",
+  "notes": "Baseline of the unreviewed draft labels. Raise it after improving the gate; re-record after label review. Knowledge F1 fell from 0.951 (2026-10-20) to 0.928 mainly because G14 was a gateway failure (excluded) in the earlier recording and is a real, persistent miss; on the 36 cases evaluated in both runs the difference is 1 case, within run-to-run noise.",
+  "deterministic": {
+    "caseCount": 38,
+    "gate": "coach logs only (keyword gate removed 2026-10-21)",
+    "gateFalseBlock": 0,
+    "recallAt10": 0.56
+  },
+  "replay": {
+    "recordedAt": "2026-10-21, keyword gate removed",
+    "knowledgePromptVersion": "knowledge-bucket-normalizer-v1.3",
+    "functionPromptVersion": "function-capability-attribution-v1.2",
+    "recall": "semantic-first, text-embedding-3-small",
+    "knowledgeF1": 0.893,
+    "knowledgeF1Note": "Knowledge code and prompt are unchanged from the 0.928 recording; the drop is run-to-run model variance.",
+    "primaryHitRate": 0.8,
+    "misattributionRate": 0.105
+  }
+}

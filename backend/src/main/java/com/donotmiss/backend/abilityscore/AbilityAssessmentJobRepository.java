@@ -24,6 +24,13 @@ public interface AbilityAssessmentJobRepository extends JpaRepository<AbilityAss
             String rubricVersion
     );
 
+    Optional<AbilityAssessmentJobEntity> findFirstByUserIdAndEvidenceHashAndPromptVersionAndRubricVersionOrderByCreatedAtDesc(
+            String userId,
+            String evidenceHash,
+            String promptVersion,
+            String rubricVersion
+    );
+
     Optional<AbilityAssessmentJobEntity> findFirstByUserIdAndContentFingerprintAndAchievementRecordIdNotOrderByCreatedAtDesc(
             String userId,
             String contentFingerprint,

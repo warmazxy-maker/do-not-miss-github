@@ -6,6 +6,7 @@ import {
   Heart,
   MessagesSquare,
   TicketCheck,
+  UserRoundCheck,
   type LucideIcon
 } from "@lucide/vue";
 
@@ -41,7 +42,8 @@ export const studentNavigationGroups: StudentNavigationGroup[] = [
     label: "成长",
     items: [
       { to: "/student/coach", label: "教练", icon: MessagesSquare },
-      { to: "/student/achievements", label: "个人成就", shortLabel: "成就", icon: Award }
+      { to: "/student/achievements", label: "个人成就", shortLabel: "成就", icon: Award },
+      { to: "/student/resume-interview", label: "简历定段", icon: UserRoundCheck }
     ]
   }
 ];

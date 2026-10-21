@@ -35,7 +35,7 @@ public class AbilityScoreResultEntity {
     @Column(name = "user_id", nullable = false, length = 80)
     private String userId;
 
-    @Column(name = "achievement_record_id", nullable = false)
+    @Column(name = "achievement_record_id")
     private Long achievementRecordId;
 
     @Column(name = "assessment_id", nullable = false)

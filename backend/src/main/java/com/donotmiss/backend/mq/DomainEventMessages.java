@@ -1,6 +1,7 @@
 package com.donotmiss.backend.mq;
 
 import java.time.Instant;
+import java.math.BigDecimal;
 
 public final class DomainEventMessages {
     public static final String EVENT_INDEX_UPSERT = "UPSERT";
@@ -25,19 +26,41 @@ public final class DomainEventMessages {
         }
     }
 
-    public record GrowthTagExtractionMessage(Long recordId, String userId, String sourceType, Instant occurredAt) {
-        public GrowthTagExtractionMessage {
+    public record AbilityEvidenceAssessmentMessage(Long recordId, String userId, Instant occurredAt) {
+        public AbilityEvidenceAssessmentMessage {
             if (occurredAt == null) {
                 occurredAt = Instant.now();
             }
         }
     }
 
-    public record AbilityEvidenceAssessmentMessage(Long recordId, String userId, Instant occurredAt) {
-        public AbilityEvidenceAssessmentMessage {
+    /**
+     * Carries the evaluator output into the dual-label pipeline. Numeric values are
+     * captured in the message so a retry uses the exact same assessed evidence.
+     * {@code deferralCount} counts how often the message was postponed because the model was
+     * unavailable; it is absent (null) in messages written before Stage 17.
+     */
+    public record CapabilityV2ScoringMessage(
+            Long recordId,
+            String userId,
+            Long assessmentId,
+            BigDecimal evidenceQuality,
+            BigDecimal novelty,
+            Instant occurredAt,
+            Integer deferralCount
+    ) {
+        public CapabilityV2ScoringMessage {
             if (occurredAt == null) {
                 occurredAt = Instant.now();
             }
+            if (deferralCount == null) {
+                deferralCount = 0;
+            }
+        }
+
+        public CapabilityV2ScoringMessage deferredOnce() {
+            return new CapabilityV2ScoringMessage(recordId, userId, assessmentId, evidenceQuality, novelty,
+                    occurredAt, deferralCount + 1);
         }
     }
 

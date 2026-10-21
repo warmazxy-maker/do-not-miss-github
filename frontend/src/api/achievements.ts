@@ -7,9 +7,9 @@ import type {
   AbilityState,
   AchievementRecord,
   AchievementSummary,
-  GrowthEvidence,
-  GrowthTag,
-  GrowthTagDetail,
+  CapabilityBucketDetail,
+  CapabilityPromotionReview,
+  CapabilityV2Profile,
   JudgeAnswer,
   JudgeAssessment,
   PageResponse
@@ -19,28 +19,33 @@ export const achievementsApi = {
   summary() {
     return api.get<AchievementSummary>("/api/achievements/summary");
   },
+  capabilityProfile() {
+    return api.get<CapabilityV2Profile>("/api/capability-v2/profile");
+  },
+  capabilityBucketDetail(bucketId: number) {
+    return api.get<CapabilityBucketDetail>(`/api/capability-v2/buckets/${bucketId}`);
+  },
+  startPromotionReview(bucketId: number) {
+    return api.post<CapabilityPromotionReview>(`/api/capability-v2/buckets/${bucketId}/promotion-review`);
+  },
+  submitPromotionReview(reviewId: number, answers: JudgeAnswer[]) {
+    return api.post<CapabilityPromotionReview>(`/api/capability-v2/promotion-reviews/${reviewId}/submit`, {
+      answers
+    });
+  },
   history(page = 0, size = 5) {
     return api.get<PageResponse<AchievementRecord>>(
       `/api/achievements/history/page?page=${page}&size=${size}`
     );
+  },
+  historyAll() {
+    return api.get<AchievementRecord[]>("/api/achievements/history");
   },
   updateReflection(recordId: number, did: string, learned: string) {
     return api.put<AchievementRecord>(`/api/achievements/history/${recordId}/reflection`, {
       did,
       learned
     });
-  },
-  growthTags() {
-    return api.get<GrowthTag[]>("/api/achievements/growth-tags");
-  },
-  growthTagDetail(tagId: number) {
-    return api.get<GrowthTagDetail>(`/api/achievements/growth-tags/${tagId}`);
-  },
-  markMilestone(evidenceId: number, milestone: boolean, reason: string) {
-    return api.put<GrowthEvidence>(
-      `/api/achievements/growth-tags/evidences/${evidenceId}/milestone`,
-      { milestone, reason }
-    );
   },
   abilityStates() {
     return api.get<AbilityState[]>("/api/ability-scoring/states");

@@ -15,16 +15,11 @@ import org.springframework.transaction.annotation.Transactional;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.Instant;
-import java.util.ArrayList;
 import java.util.LinkedHashMap;
-import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import java.util.Set;
 import java.util.UUID;
-import java.util.function.Function;
-import java.util.stream.Collectors;
 
 @Service
 public class JudgeAssessmentService {
@@ -326,101 +321,16 @@ public class JudgeAssessmentService {
 
     private List<JudgeDtos.Answer> validateAnswers(List<JudgeDtos.Question> questions,
                                                    List<JudgeDtos.Answer> submitted) {
-        if (questions.isEmpty()) {
-            throw ApiException.badRequest("考核题目尚未生成");
-        }
-        Map<String, JudgeDtos.Answer> byId = submitted == null ? Map.of() : submitted.stream()
-                .filter(answer -> answer != null && answer.questionId() != null)
-                .collect(Collectors.toMap(
-                        answer -> answer.questionId().trim(),
-                        Function.identity(),
-                        (left, right) -> right,
-                        LinkedHashMap::new
-                ));
-        Set<String> expectedIds = questions.stream()
-                .map(JudgeDtos.Question::id)
-                .collect(Collectors.toCollection(LinkedHashSet::new));
-        if (!expectedIds.equals(byId.keySet())) {
-            throw ApiException.badRequest("必须完整回答当前考核的全部题目，且不能提交未知题目");
-        }
-        return questions.stream()
-                .map(question -> {
-                    JudgeDtos.Answer answer = byId.get(question.id());
-                    String text = answer.answer() == null ? "" : answer.answer().trim();
-                    if (text.length() < 8) {
-                        throw ApiException.badRequest("答案过短：" + question.id());
-                    }
-                    return new JudgeDtos.Answer(question.id(), text);
-                })
-                .toList();
+        return JudgeRubricSupport.validateAnswers(questions, submitted);
     }
 
     private JudgeDtos.RubricResult sanitizeRubric(List<JudgeDtos.Question> questions,
                                                    JudgeDtos.EvaluationModelResponse response) {
-        Map<String, JudgeDtos.RubricItem> modelItems = response.items() == null ? Map.of() : response.items().stream()
-                .filter(item -> item != null && item.questionId() != null)
-                .collect(Collectors.toMap(
-                        item -> item.questionId().trim(),
-                        Function.identity(),
-                        (left, right) -> left,
-                        LinkedHashMap::new
-                ));
-        List<JudgeDtos.RubricItem> items = new ArrayList<>();
-        int earned = 0;
-        int maximum = 0;
-        for (JudgeDtos.Question question : questions) {
-            JudgeDtos.RubricItem raw = modelItems.get(question.id());
-            int maxScore = Math.min(Math.max(question.maxScore(), 1), 20);
-            int score = raw == null || raw.score() == null
-                    ? 0
-                    : Math.min(Math.max(raw.score(), 0), maxScore);
-            earned += score;
-            maximum += maxScore;
-            items.add(new JudgeDtos.RubricItem(
-                    question.id(),
-                    score,
-                    maxScore,
-                    compact(raw == null ? "模型未返回该题判分" : raw.feedback(), 500),
-                    raw == null || raw.evidence() == null
-                            ? List.of()
-                            : raw.evidence().stream()
-                            .filter(value -> value != null && !value.isBlank())
-                            .map(value -> compact(value, 240))
-                            .limit(5)
-                            .toList()
-            ));
-        }
-        int total = maximum == 0 ? 0 : (int) Math.round(earned * 100.0 / maximum);
-        return new JudgeDtos.RubricResult(
-                total,
-                earned,
-                maximum,
-                compact(response.overallFeedback(), 1000),
-                List.copyOf(items)
-        );
+        return JudgeRubricSupport.sanitizeRubric(questions, response);
     }
 
     private List<JudgeDtos.Question> sanitizeQuestions(List<JudgeDtos.Question> values) {
-        if (values == null) {
-            return List.of();
-        }
-        List<JudgeDtos.Question> questions = new ArrayList<>();
-        for (JudgeDtos.Question value : values) {
-            if (value == null || value.prompt() == null || value.prompt().isBlank()) {
-                continue;
-            }
-            String id = "q" + (questions.size() + 1);
-            questions.add(new JudgeDtos.Question(
-                    id,
-                    compact(value.prompt(), 600),
-                    compact(value.focus(), 180),
-                    10
-            ));
-            if (questions.size() >= 3) {
-                break;
-            }
-        }
-        return List.copyOf(questions);
+        return JudgeRubricSupport.sanitizeQuestions(values);
     }
 
     private List<JudgeDtos.Question> fallbackQuestions(AbilityScoreResultEntity result) {
@@ -597,14 +507,6 @@ public class JudgeAssessmentService {
 
     private BigDecimal clamp(BigDecimal value, BigDecimal min, BigDecimal max) {
         return value.max(min).min(max).setScale(4, RoundingMode.HALF_UP);
-    }
-
-    private String compact(String value, int maxLength) {
-        if (value == null || value.isBlank()) {
-            return "";
-        }
-        String trimmed = value.trim();
-        return trimmed.length() <= maxLength ? trimmed : trimmed.substring(0, maxLength);
     }
 
     private String nullToEmpty(String value) {

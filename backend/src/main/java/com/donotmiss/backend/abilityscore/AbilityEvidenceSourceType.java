@@ -13,6 +13,7 @@ public enum AbilityEvidenceSourceType {
     KNOWN_CONTEST_PLATFORM("0.9000"),
     OFFICIAL_CERTIFICATE_AUTHORITY("0.9000"),
     VERIFIED_THIRD_PARTY_RECORD("0.9500"),
+    RESUME_INTERVIEW("0.7000"),
     OTHER("0.5000");
 
     private final BigDecimal credibilityPrior;

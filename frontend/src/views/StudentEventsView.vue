@@ -25,6 +25,8 @@ import PlanDialog from "@/components/events/PlanDialog.vue";
 import { ApiError } from "@/api/client";
 import type {
   EventItem,
+  GuideAction,
+  GuideSessionView,
   RecommendedEvent,
   RecommendedPlan,
   ToolContextRequest
@@ -37,6 +39,16 @@ interface AiMessage {
   id: number;
   role: "user" | "assistant";
   text: string;
+  trace?: string;
+}
+
+interface GuideTraceState {
+  action: GuideAction | "";
+  usedRag: boolean;
+  sessionId: string;
+  currentGoal: string;
+  compressed: boolean;
+  lastRagNeed: string;
 }
 
 const router = useRouter();
@@ -74,6 +86,15 @@ const aiMessages = ref<AiMessage[]>([
     text: "告诉我你现在想学什么、可用时间或地点偏好。我会保留同一轮对话中的补充条件。"
   }
 ]);
+const guideSessionId = ref("");
+const guideTrace = ref<GuideTraceState>({
+  action: "",
+  usedRag: false,
+  sessionId: "",
+  currentGoal: "",
+  compressed: false,
+  lastRagNeed: ""
+});
 const recommendedEvents = ref<RecommendedEvent[]>([]);
 const recommendedPlans = ref<RecommendedPlan[]>([]);
 const planDialogOpen = ref(false);
@@ -98,6 +119,15 @@ const resultRange = computed(() => {
 const hasActiveFilters = computed(
   () => Boolean(appliedKeyword.value || category.value !== "全部" || benefitType.value || location.value)
 );
+const guideTraceLabel = computed(() => {
+  if (!guideTrace.value.action) {
+    return "Guide 尚未运行";
+  }
+  const actionText = actionLabel(guideTrace.value.action);
+  const ragText = guideTrace.value.usedRag ? "已调用 RAG" : "未调用 RAG";
+  const memoryText = guideTrace.value.compressed ? "上下文已压缩" : "短期上下文";
+  return `${actionText} · ${ragText} · ${memoryText}`;
+});
 
 onMounted(async () => {
   await Promise.all([loadEvents(), loadRelationshipState()]);
@@ -225,22 +255,22 @@ async function submitAi() {
 
   try {
     if (aiMode.value === "events") {
-      const response = await eventsApi.recommendEvents({
-        need,
-        category: category.value === "全部" ? "" : category.value,
-        benefitType: benefitType.value,
-        location: location.value,
+      const response = await eventsApi.guideChat({
+        message: need,
+        sessionId: guideSessionId.value || undefined,
         toolContext: buildToolContext()
       });
-      recommendedEvents.value = response.recommendations ?? [];
-      aiMessage.value = response.message || `找到 ${recommendedEvents.value.length} 个匹配事件`;
+      guideSessionId.value = response.sessionId;
+      updateGuideTrace(response.action, response.usedRag, response.session);
+      if (response.usedRag) {
+        recommendedEvents.value = response.recommendations ?? [];
+      }
+      aiMessage.value = response.reply || `找到 ${recommendedEvents.value.length} 个匹配事件`;
       aiMessages.value.push({
         id: messageSequence++,
         role: "assistant",
-        text:
-          recommendedEvents.value.length > 0
-            ? `我结合当前需求筛出了 ${recommendedEvents.value.length} 个高相关活动，已经按适合程度排序。`
-            : "这一轮没有足够匹配的活动。你可以补充时间、地点或技能方向，我会继续沿用当前对话。"
+        text: response.reply || fallbackGuideReply(response.action, recommendedEvents.value.length),
+        trace: guideTraceLabel.value
       });
     } else {
       const response = await eventsApi.recommendPlans({
@@ -271,6 +301,44 @@ async function submitAi() {
     });
   } finally {
     aiLoading.value = false;
+  }
+}
+
+function updateGuideTrace(action: GuideAction, usedRag: boolean, session: GuideSessionView) {
+  guideTrace.value = {
+    action,
+    usedRag,
+    sessionId: session.sessionId,
+    currentGoal: session.currentGoal,
+    compressed: Boolean(session.sessionSummary),
+    lastRagNeed: session.lastRagNeed
+  };
+}
+
+function fallbackGuideReply(action: GuideAction, count: number) {
+  if (action === "ASK_CLARIFY") {
+    return "你可以补充想提升的方向、地点、线上线下或难度偏好。";
+  }
+  if (action === "CHAT_ONLY") {
+    return "我会基于上一轮推荐继续聊，不重新检索。";
+  }
+  return count > 0
+    ? `我结合当前需求筛出了 ${count} 个高相关活动，已经按适合程度排序。`
+    : "这一轮没有足够匹配的活动。你可以补充时间、地点或技能方向，我会继续沿用当前对话。";
+}
+
+function actionLabel(action: GuideAction | "") {
+  switch (action) {
+    case "CALL_RAG_NEW":
+      return "新目标检索";
+    case "CALL_RAG_REFINE":
+      return "补充条件检索";
+    case "CHAT_ONLY":
+      return "继续对话";
+    case "ASK_CLARIFY":
+      return "先追问";
+    default:
+      return "未运行";
   }
 }
 
@@ -482,12 +550,22 @@ function errorMessage(error: unknown, fallback: string) {
           :class="`is-${message.role}`"
         >
           <MessageSquareText v-if="message.role === 'assistant'" :size="16" />
-          <p>{{ message.text }}</p>
+          <div class="ai-message-body">
+            <p>{{ message.text }}</p>
+            <small v-if="message.trace">{{ message.trace }}</small>
+          </div>
         </div>
         <div v-if="aiLoading" class="ai-message is-assistant is-loading">
           <LoaderCircle class="spin" :size="17" />
-          <p>{{ aiMode === "events" ? "正在理解需求并检索活动…" : "多个 Agent 正在协作规划…" }}</p>
+          <div class="ai-message-body">
+            <p>{{ aiMode === "events" ? "正在理解需求并检索活动…" : "多个 Agent 正在协作规划…" }}</p>
+          </div>
         </div>
+      </div>
+
+      <div v-if="aiMode === 'events'" class="ai-guide-trace">
+        <span>{{ guideTraceLabel }}</span>
+        <small v-if="guideTrace.currentGoal">目标：{{ guideTrace.currentGoal }}</small>
       </div>
 
       <div v-if="aiMessages.length === 1" class="ai-quick-needs">

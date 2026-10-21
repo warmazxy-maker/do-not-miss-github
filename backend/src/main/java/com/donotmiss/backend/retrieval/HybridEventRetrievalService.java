@@ -24,38 +24,23 @@ import java.util.Set;
 
 @Service
 public class HybridEventRetrievalService {
-    private static final int DEFAULT_LIMIT = 20;
+    private static final int DEFAULT_LIMIT = 15;
     private static final List<String> INTENT_WORDS = List.of(
             "日语", "英语", "翻译", "沟通", "运营", "现场", "执行", "协作", "研究", "调研",
             "访谈", "问卷", "数据", "文案", "写作", "线上", "报酬", "兼职", "健身", "运动",
             "java", "spring", "后端", "编程", "程序设计", "开发", "项目", "外卖", "微信"
     );
 
-    private static final List<String> SPECIFIC_QUERY_WORDS = List.of(
-            "ai", "agent", "llm", "rag", "java", "spring", "python", "go",
-            "日语", "英语", "翻译", "研究", "调研", "问卷", "访谈", "健身", "运动",
-            "报酬", "兼职", "线上", "项目", "开发", "大模型", "人工智能"
-    );
-    private static final List<String> VAGUE_QUERY_WORDS = List.of(
-            "推荐", "活动", "机会", "都行", "随便", "不知道", "找点", "看看", "有啥"
-    );
-    private static final List<String> GENERIC_QUERY_TERMS = List.of(
-            "unknown", "skill", "money", "both", "活动", "机会", "推荐", "学习", "提升", "成长", "经验", "适合", "参与"
-    );
-
     private final EventService eventService;
     private final EventExpirationService eventExpirationService;
     private final EventSearchIndexService eventSearchIndexService;
-    private final EventRerankerService eventRerankerService;
 
     public HybridEventRetrievalService(EventService eventService,
                                        EventExpirationService eventExpirationService,
-                                       EventSearchIndexService eventSearchIndexService,
-                                       EventRerankerService eventRerankerService) {
+                                       EventSearchIndexService eventSearchIndexService) {
         this.eventService = eventService;
         this.eventExpirationService = eventExpirationService;
         this.eventSearchIndexService = eventSearchIndexService;
-        this.eventRerankerService = eventRerankerService;
     }
 
     @Transactional(readOnly = true)
@@ -94,11 +79,13 @@ public class HybridEventRetrievalService {
         Map<Long, Double> bm25Scores = candidatePool.bm25Scores();
         Map<Long, Double> semanticScores = candidatePool.semanticScores();
         Map<Long, Double> recallScores = candidatePool.recallScores();
+        boolean searchBacked = !candidates.isEmpty();
         if (candidates.isEmpty()) {
             candidates = databaseCandidates(category, benefitType, location);
             bm25Scores = Map.of();
             semanticScores = Map.of();
             recallScores = Map.of();
+            searchBacked = false;
         }
 
         if (candidates.isEmpty() && !hasHardFilter(category, benefitType, location)) {
@@ -106,30 +93,27 @@ public class HybridEventRetrievalService {
             bm25Scores = Map.of();
             semanticScores = Map.of();
             recallScores = Map.of();
+            searchBacked = false;
         }
 
-        List<String> queryTerms = tokenize(query);
-        List<String> memoryTerms = memoryTerms(memory);
-        ScoringWeights scoringWeights = adaptiveWeights(query, queryTerms);
-        Map<String, Integer> documentFrequency = documentFrequency(candidates);
-        int documentCount = candidates.size();
         Map<Long, Double> candidateBm25Scores = bm25Scores;
         Map<Long, Double> candidateSemanticScores = semanticScores;
         Map<Long, Double> candidateRecallScores = recallScores;
+        boolean candidateSearchBacked = searchBacked;
 
         List<RetrievedEvent> scoredEvents = candidates.stream()
-                .map(event -> score(event, queryTerms, memoryTerms, memory, documentFrequency, documentCount,
+                .map(event -> scoreFromRecall(event,
                         candidateBm25Scores.getOrDefault(event.getId(), 0.0),
                         candidateSemanticScores.getOrDefault(event.getId(), 0.0),
-                        candidateRecallScores.getOrDefault(event.getId(), 0.0), toolContext, scoringWeights))
+                        candidateRecallScores.getOrDefault(event.getId(), 0.0),
+                        toolContext,
+                        candidateSearchBacked))
                 .sorted(Comparator.comparingDouble(RetrievedEvent::finalScore).reversed()
                         .thenComparing(item -> item.event().getStartTime()))
-                .limit(Math.max(limit * 2, limit))
-                .toList();
-
-        return eventRerankerService.rerank(query, memory, scoredEvents).stream()
                 .limit(Math.max(limit, 1))
                 .toList();
+
+        return scoredEvents;
     }
 
     @Transactional(readOnly = true)
@@ -293,36 +277,75 @@ public class HybridEventRetrievalService {
         }
     }
 
-    private RetrievedEvent score(EventEntity event,
-                                 List<String> queryTerms,
-                                 List<String> memoryTerms,
-                                 UserMemoryDtos.Profile memory,
-                                 Map<String, Integer> documentFrequency,
-                                 int documentCount,
-                                 double bm25Score,
-                                 double semanticScore,
-                                 double recallScore,
-                                 McpDtos.ToolContextResponse toolContext,
-                                 ScoringWeights weights) {
-        String text = textOf(event).toLowerCase(Locale.ROOT);
-        double keywordScore = bm25LikeScore(text, queryTerms, documentFrequency, documentCount);
-        double intentScore = intentScore(text, queryTerms);
-        double memoryScore = memoryScore(event, text, memoryTerms, memory);
-        double metadataScore = metadataScore(event, memory, toolContext);
+    private RetrievedEvent scoreFromRecall(EventEntity event,
+                                           double bm25Score,
+                                           double semanticScore,
+                                           double recallScore,
+                                           McpDtos.ToolContextResponse toolContext,
+                                           boolean searchBacked) {
         boolean expired = isExpired(event, toolContext);
-        double finalScore = keywordScore * weights.keywordWeight()
-                + bm25Score * weights.bm25Weight()
-                + semanticScore * weights.semanticWeight()
-                + intentScore * weights.intentWeight()
-                + memoryScore * weights.memoryWeight()
-                + metadataScore * weights.metadataWeight()
-                + recallScore * weights.recallWeight();
+        double finalScore = recallConfidenceScore(bm25Score, semanticScore, recallScore, searchBacked);
         if (expired) {
             finalScore = 0;
         }
 
-        List<String> evidence = buildEvidence(event, queryTerms, memoryTerms, memory, keywordScore, bm25Score, semanticScore, intentScore, metadataScore, recallScore, expired, toolContext, weights);
-        return new RetrievedEvent(event, round(keywordScore), round(bm25Score), round(semanticScore), round(intentScore), round(memoryScore), round(metadataScore), round(recallScore), round(finalScore), evidence);
+        List<String> evidence = buildRecallEvidence(event, bm25Score, semanticScore, recallScore, finalScore, expired, toolContext, searchBacked);
+        return new RetrievedEvent(
+                event,
+                0,
+                round(bm25Score),
+                round(semanticScore),
+                0,
+                0,
+                0,
+                round(recallScore),
+                round(finalScore),
+                evidence
+        );
+    }
+
+    private double recallConfidenceScore(double bm25Score, double semanticScore, double recallScore, boolean searchBacked) {
+        if (!searchBacked && bm25Score <= 0 && semanticScore <= 0 && recallScore <= 0) {
+            return 55;
+        }
+        return semanticScore * 0.50
+                + bm25Score * 0.35
+                + recallScore * 0.15;
+    }
+
+    private List<String> buildRecallEvidence(EventEntity event,
+                                             double bm25Score,
+                                             double semanticScore,
+                                             double recallScore,
+                                             double finalScore,
+                                             boolean expired,
+                                             McpDtos.ToolContextResponse toolContext,
+                                             boolean searchBacked) {
+        List<String> evidence = new ArrayList<>();
+        if (expired) {
+            evidence.add("活动已过期，RAG 召回置信度置为 0");
+        }
+        if (searchBacked) {
+            evidence.add("RAG候选：OpenSearch BM25/向量融合召回");
+        } else {
+            evidence.add("数据库硬过滤兜底候选，交由 LLM 判断适配性");
+        }
+        if (bm25Score > 0) {
+            evidence.add("OpenSearch BM25 关键词分：" + round(bm25Score));
+        }
+        if (semanticScore > 0) {
+            evidence.add("OpenSearch 向量语义分：" + round(semanticScore));
+        }
+        if (recallScore > 0) {
+            evidence.add("融合召回排序分：" + round(recallScore));
+        }
+        if (!expired && finalScore > 0) {
+            evidence.add("RAG召回置信度：" + round(finalScore));
+        }
+        if (toolContext != null && toolContext.currentTime() != null) {
+            evidence.add("MCP时间工具：当前日期 " + toolContext.currentTime().localDate());
+        }
+        return evidence.stream().distinct().limit(6).toList();
     }
 
     private RetrievedEvent scoreBaseline(EventEntity event,
@@ -533,76 +556,6 @@ public class HybridEventRetrievalService {
         return df;
     }
 
-    private ScoringWeights adaptiveWeights(String query, List<String> queryTerms) {
-        QueryClarity clarity = queryClarity(query, queryTerms);
-        return switch (clarity) {
-            case HIGH -> new ScoringWeights(
-                    0.25,
-                    0.16,
-                    0.27,
-                    0.14,
-                    0.03,
-                    0.10,
-                    0.05,
-                    "明确需求：提高 OpenSearch 语义分占比，降低历史画像干扰",
-                    false
-            );
-            case MEDIUM -> new ScoringWeights(
-                    0.23,
-                    0.14,
-                    0.25,
-                    0.13,
-                    0.10,
-                    0.10,
-                    0.05,
-                    "中等明确：平衡语义召回、关键词和用户画像",
-                    false
-            );
-            case LOW -> new ScoringWeights(
-                    0.16,
-                    0.10,
-                    0.20,
-                    0.10,
-                    0.22,
-                    0.14,
-                    0.08,
-                    "模糊需求：保留用户画像，但仍让语义召回参与排序",
-                    false
-            );
-        };
-    }
-
-    private QueryClarity queryClarity(String query, List<String> queryTerms) {
-        String normalized = nullToEmpty(query).toLowerCase(Locale.ROOT);
-        long meaningfulTermCount = queryTerms.stream()
-                .filter(this::isMeaningfulQueryTerm)
-                .count();
-        boolean hasSpecificSignal = SPECIFIC_QUERY_WORDS.stream()
-                .anyMatch(word -> normalized.contains(word.toLowerCase(Locale.ROOT)));
-        boolean hasVagueSignal = VAGUE_QUERY_WORDS.stream()
-                .anyMatch(word -> normalized.contains(word.toLowerCase(Locale.ROOT)));
-
-        if (hasVagueSignal && !hasSpecificSignal && meaningfulTermCount <= 4) {
-            return QueryClarity.LOW;
-        }
-        if (hasSpecificSignal || meaningfulTermCount >= 8) {
-            return QueryClarity.HIGH;
-        }
-        return QueryClarity.MEDIUM;
-    }
-
-    private boolean isMeaningfulQueryTerm(String term) {
-        if (term == null || term.isBlank()) {
-            return false;
-        }
-        String normalized = term.trim().toLowerCase(Locale.ROOT);
-        if (normalized.length() < 2) {
-            return false;
-        }
-        return GENERIC_QUERY_TERMS.stream()
-                .noneMatch(generic -> normalized.equals(generic.toLowerCase(Locale.ROOT)));
-    }
-
     private List<String> memoryTerms(UserMemoryDtos.Profile memory) {
         LinkedHashSet<String> terms = new LinkedHashSet<>();
         terms.addAll(memory.evidenceKeywords());
@@ -684,12 +637,6 @@ public class HybridEventRetrievalService {
 
     private double round(double value) {
         return Math.round(value * 100.0) / 100.0;
-    }
-
-    private enum QueryClarity {
-        HIGH,
-        MEDIUM,
-        LOW
     }
 
     private record ScoringWeights(

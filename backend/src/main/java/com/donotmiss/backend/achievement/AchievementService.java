@@ -95,8 +95,6 @@ public class AchievementService {
         if (record == null || record.getId() == null) {
             return;
         }
-        String sourceType = record.getSourceType() == null ? null : record.getSourceType().name();
-        domainEventPublisher.publishGrowthTagExtraction(record.getId(), record.getUserId(), sourceType);
         domainEventPublisher.publishAbilityEvidenceAssessment(record.getId(), record.getUserId());
     }
 

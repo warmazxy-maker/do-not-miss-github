@@ -7,7 +7,7 @@ spring:
   application:
     name: do-not-miss-backend
   datasource:
-    url: ${DB_URL:jdbc:mysql://localhost:3306/do_not_miss?useUnicode=true&characterEncoding=utf8&serverTimezone=Asia/Tokyo}
+    url: ${DB_URL:jdbc:mysql://localhost:3307/do_not_miss?useUnicode=true&characterEncoding=utf8&serverTimezone=Asia/Tokyo}
     username: ${DB_USERNAME:donotmiss}
     password: ${DB_PASSWORD:donotmiss123}
   jpa:
@@ -52,6 +52,13 @@ app:
       - http://localhost:5500
   qr:
     token-ttl-hours: ${QR_TOKEN_TTL_HOURS:168}
+  capability-v2:
+    recall:
+      # Hybrid keyword + embedding recall for job-function candidates; falls back to keywords when off or unavailable.
+      semantic-enabled: ${CAPABILITY_V2_SEMANTIC_RECALL_ENABLED:true}
+    eval:
+      # Golden-set endpoint (/api/capability-v2/eval/golden-set). LIVE mode spends model quota; keep off in production.
+      enabled: ${CAPABILITY_V2_EVAL_ENABLED:false}
   ai:
     # mock uses local rule-based AI. qwen/dashscope calls a real OpenAI-compatible model.
     provider: ${AI_PROVIDER:mock}
@@ -60,6 +67,12 @@ app:
     embedding-dimensions: ${AI_EMBEDDING_DIMENSIONS:1024}
     base-url: ${AI_BASE_URL:https://dashscope.aliyuncs.com/compatible-mode/v1}
     api-key: ${DASHSCOPE_API_KEY:${AI_API_KEY:}}
+    # Optional separate gateway/key for embeddings; blank = reuse the chat base-url/api-key.
+    embedding-base-url: ${AI_EMBEDDING_BASE_URL:}
+    embedding-api-key: ${AI_EMBEDDING_API_KEY:}
+    # Qwen 3.8 defaults to high-intensity reasoning. Agent JSON contracts are
+    # latency-sensitive and do not need exposed chain-of-thought.
+    qwen-thinking-enabled: ${AI_QWEN_THINKING_ENABLED:false}
     timeout-seconds: ${AI_TIMEOUT_SECONDS:30}
   mcp:
     default-timezone: ${MCP_DEFAULT_TIMEZONE:Asia/Tokyo}
@@ -95,12 +108,14 @@ app:
       event-quality: ${APP_MQ_QUEUE_EVENT_QUALITY:do-not-miss.event-quality}
       growth-tag: ${APP_MQ_QUEUE_GROWTH_TAG:do-not-miss.growth-tag}
       ability-evidence: ${APP_MQ_QUEUE_ABILITY_EVIDENCE:do-not-miss.ability-evidence}
+      capability-v2-scoring: ${APP_MQ_QUEUE_CAPABILITY_V2_SCORING:do-not-miss.capability-v2-scoring}
       user-profile: ${APP_MQ_QUEUE_USER_PROFILE:do-not-miss.user-profile}
     routing-keys:
       event-index: event.index
       event-quality: event.quality
       growth-tag: growth-tag.extract
       ability-evidence: ability-evidence.assess
+      capability-v2-scoring: capability-v2.score
       user-profile: user-profile.refresh
     outbox:
       enabled: ${APP_MQ_OUTBOX_ENABLED:true}

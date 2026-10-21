@@ -1,0 +1,2524 @@
+{
+  "goldenSetVersion" : "capability-golden-set-v1",
+  "cases" : {
+    "G01" : {
+      "knowledge" : {
+        "summary" : "该经历涉及 Spring Boot 后端接口开发与 MySQL 数据库设计，归入 Spring Boot 和 MySQL 两个知识桶。",
+        "assignments" : [ {
+          "action" : "CREATE",
+          "bucketId" : null,
+          "bucketName" : "Spring Boot",
+          "aliases" : [ "spring boot", "springboot" ],
+          "relevance" : 0.9,
+          "confidence" : 0.9,
+          "evidenceFindings" : [ "实现 12 个 REST 接口", "使用 Spring Boot 与 MySQL", "完成 JWT 鉴权和分页查询" ],
+          "reason" : "证据中明确使用 Spring Boot 开发 REST 接口，属于 Spring Boot 知识桶；已有 Java 标签是更宽泛的语言层面，不能覆盖 Spring Boot 框架的具体技术栈，因此创建 Spring Boot。"
+        }, {
+          "action" : "CREATE",
+          "bucketId" : null,
+          "bucketName" : "MySQL",
+          "aliases" : [ "mysql" ],
+          "relevance" : 0.9,
+          "confidence" : 0.9,
+          "evidenceFindings" : [ "设计 6 张 MySQL 表并建立联合索引", "学会用事务保证下单一致性" ],
+          "reason" : "证据中明确设计 MySQL 表、建立联合索引、使用事务，属于 MySQL 知识桶；已有 Java 标签不相关，因此创建 MySQL。"
+        } ]
+      },
+      "function" : {
+        "summary" : "该经历是校园二手平台后端模块开发，独立实现 REST 接口、设计 MySQL 表与索引并完成 JWT 鉴权，核心职责明确指向后端开发，数据库设计为辅助职责。",
+        "assignments" : [ {
+          "action" : "SELECT",
+          "bucketId" : 1,
+          "role" : "PRIMARY",
+          "relevance" : 0.95,
+          "confidence" : 0.9,
+          "claimedOutcome" : "负责用户、商品模块接口开发，实现 12 个 REST 接口，使用 Spring Boot 与 MySQL，完成 JWT 鉴权和分页查询。",
+          "evidenceFindings" : [ "实现 12 个 REST 接口", "负责用户、商品模块接口开发", "使用 Spring Boot 与 MySQL", "完成 JWT 鉴权和分页查询" ],
+          "riskFlags" : [ ],
+          "reason" : "证据包含真实交付的接口实现、模块负责与鉴权功能，属于服务端接口设计与业务系统开发，直接支撑后端开发职能。"
+        }, {
+          "action" : "SELECT",
+          "bucketId" : 12,
+          "role" : "SECONDARY",
+          "relevance" : 0.6,
+          "confidence" : 0.7,
+          "claimedOutcome" : "设计 6 张 MySQL 表并建立联合索引，独立完成数据表与索引设计。",
+          "evidenceFindings" : [ "设计 6 张 MySQL 表并建立联合索引", "第一次独立设计数据表和索引" ],
+          "riskFlags" : [ "仅涉及表结构与索引设计，未见查询优化或数据库内核层面的工作" ],
+          "reason" : "表结构与联合索引设计属于数据库开发的辅助职责，但深度有限，故列为 SECONDARY。"
+        } ]
+      },
+      "functionCandidateNames" : {
+        "1" : "后端开发",
+        "12" : "数据库开发",
+        "2" : "前端开发",
+        "106" : "游戏服务端开发",
+        "5" : "小程序与轻应用开发",
+        "59" : "大数据平台工程",
+        "17" : "测试开发",
+        "7" : "分布式系统开发",
+        "4" : "桌面应用开发",
+        "92" : "服务设计"
+      }
+    },
+    "G02" : {
+      "knowledge" : {
+        "summary" : "该经历是 Java 面向对象、集合与异常处理的学习与练习，已有 Java 标签可直接覆盖。",
+        "assignments" : [ {
+          "action" : "REUSE",
+          "bucketId" : -1,
+          "bucketName" : "Java",
+          "aliases" : [ "java" ],
+          "relevance" : 0.95,
+          "confidence" : 0.95,
+          "evidenceFindings" : [ "完成 Java 面向对象、集合、异常处理三章学习", "提交 20 道课后练习题", "心得提到理解了接口和抽象类的区别" ],
+          "reason" : "证据中的面向对象、集合、异常处理均属于 Java 语言知识范围，existingBuckets 中已有 Java 标签，按粒度规则应复用，不另建 Java 集合或异常处理等细粒度标签。"
+        } ]
+      },
+      "function" : {
+        "summary" : "该证据仅显示完成 Java 慕课章节与练习题，属于课程学习行为，未体现任何可验证的职能交付或独立承担核心职责，因此不归因到任何候选职能。",
+        "assignments" : [ ]
+      },
+      "functionCandidateNames" : {
+        "303" : "课程设计",
+        "1" : "后端开发",
+        "304" : "教学设计",
+        "307" : "教育产品设计",
+        "2" : "前端开发",
+        "267" : "临床研究",
+        "6" : "软件架构设计",
+        "105" : "游戏客户端开发",
+        "101" : "游戏任务设计",
+        "94" : "设计系统建设"
+      }
+    },
+    "G03" : {
+      "knowledge" : {
+        "summary" : "该经历为 Java 基础训练营，练习内容覆盖泛型、IO 流与多线程，可归入已有 Java 知识桶。",
+        "assignments" : [ {
+          "action" : "REUSE",
+          "bucketId" : -1,
+          "bucketName" : "Java",
+          "aliases" : [ "java" ],
+          "relevance" : 0.8,
+          "confidence" : 0.9,
+          "evidenceFindings" : [ "参加为期两周的 Java 基础训练营", "完成泛型、IO 流、多线程练习", "完成 5 次课后练习" ],
+          "reason" : "证据中的泛型、IO 流、多线程均属于 Java 语言核心知识，已有 Java 标签含义覆盖该证据，因此复用而不新建。"
+        } ]
+      },
+      "function" : {
+        "summary" : "该证据仅为Java基础训练营的课后练习完成记录，属于学习性练习，未体现任何真实服务端开发交付或工程职责，无法归因到任何核心职能。",
+        "assignments" : [ {
+          "action" : "SKIP",
+          "bucketId" : 1,
+          "role" : "PRIMARY",
+          "relevance" : 0.0,
+          "confidence" : 0.0,
+          "claimedOutcome" : "完成泛型、IO流、多线程的课后练习",
+          "evidenceFindings" : [ "完成 5 次课后练习", "参加为期两周的 Java 基础训练营", "练习内容涉及泛型、IO 流、多线程" ],
+          "riskFlags" : [ "仅为课程练习，无真实项目交付", "无接口设计、数据库、缓存、消息队列等后端职责证据" ],
+          "reason" : "接触Java语法与做课后练习不等于承担后端开发职能，缺少服务端编程、接口设计、业务系统等可验证交付行为。"
+        }, {
+          "action" : "SKIP",
+          "bucketId" : 26,
+          "role" : "SECONDARY",
+          "relevance" : 0.0,
+          "confidence" : 0.0,
+          "claimedOutcome" : "无",
+          "evidenceFindings" : [ "训练营内容为Java语言基础" ],
+          "riskFlags" : [ "候选仅由语义相似度召回，无实际关联" ],
+          "reason" : "证据不涉及服务器、虚拟化、存储或数据中心等基础设施工作。"
+        }, {
+          "action" : "SKIP",
+          "bucketId" : 24,
+          "role" : "SECONDARY",
+          "relevance" : 0.0,
+          "confidence" : 0.0,
+          "claimedOutcome" : "无",
+          "evidenceFindings" : [ "训练营内容为Java语言基础" ],
+          "riskFlags" : [ "候选仅由语义相似度召回，无实际关联" ],
+          "reason" : "证据不涉及云平台、云原生架构或资源编排等云计算工作。"
+        }, {
+          "action" : "SKIP",
+          "bucketId" : 20,
+          "role" : "SECONDARY",
+          "relevance" : 0.0,
+          "confidence" : 0.0,
+          "claimedOutcome" : "无",
+          "evidenceFindings" : [ "训练营内容为Java语言基础" ],
+          "riskFlags" : [ "候选仅由语义相似度召回，无实际关联" ],
+          "reason" : "证据不涉及CI/CD、构建发布或交付流水线等DevOps工作。"
+        }, {
+          "action" : "SKIP",
+          "bucketId" : 11,
+          "role" : "SECONDARY",
+          "relevance" : 0.0,
+          "confidence" : 0.0,
+          "claimedOutcome" : "无",
+          "evidenceFindings" : [ "训练营内容为Java语言基础" ],
+          "riskFlags" : [ "候选仅由语义相似度召回，无实际关联" ],
+          "reason" : "证据不涉及内核、进程调度、内存管理或驱动开发。"
+        }, {
+          "action" : "SKIP",
+          "bucketId" : 347,
+          "role" : "SECONDARY",
+          "relevance" : 0.0,
+          "confidence" : 0.0,
+          "claimedOutcome" : "无",
+          "evidenceFindings" : [ "训练营内容为Java语言基础" ],
+          "riskFlags" : [ "候选仅由语义相似度召回，无实际关联" ],
+          "reason" : "证据与运动训练职能完全无关。"
+        }, {
+          "action" : "SKIP",
+          "bucketId" : 42,
+          "role" : "SECONDARY",
+          "relevance" : 0.0,
+          "confidence" : 0.0,
+          "claimedOutcome" : "无",
+          "evidenceFindings" : [ "训练营内容为Java语言基础" ],
+          "riskFlags" : [ "候选仅由语义相似度召回，无实际关联" ],
+          "reason" : "证据不涉及神经网络、模型训练或压缩等深度学习工作。"
+        }, {
+          "action" : "SKIP",
+          "bucketId" : 30,
+          "role" : "SECONDARY",
+          "relevance" : 0.0,
+          "confidence" : 0.0,
+          "claimedOutcome" : "无",
+          "evidenceFindings" : [ "训练营内容为Java语言基础" ],
+          "riskFlags" : [ "候选仅由语义相似度召回，无实际关联" ],
+          "reason" : "证据不涉及边缘节点、边云协同或边缘部署。"
+        }, {
+          "action" : "SKIP",
+          "bucketId" : 10,
+          "role" : "SECONDARY",
+          "relevance" : 0.0,
+          "confidence" : 0.0,
+          "claimedOutcome" : "无",
+          "evidenceFindings" : [ "训练营内容为Java语言基础" ],
+          "riskFlags" : [ "候选仅由语义相似度召回，无实际关联" ],
+          "reason" : "证据不涉及词法分析、语法分析、代码生成或虚拟机实现。"
+        }, {
+          "action" : "SKIP",
+          "bucketId" : 105,
+          "role" : "SECONDARY",
+          "relevance" : 0.0,
+          "confidence" : 0.0,
+          "claimedOutcome" : "无",
+          "evidenceFindings" : [ "训练营内容为Java语言基础" ],
+          "riskFlags" : [ "候选仅由语义相似度召回，无实际关联" ],
+          "reason" : "证据不涉及游戏引擎、角色控制、UI系统或渲染。"
+        } ]
+      },
+      "functionCandidateNames" : {
+        "1" : "后端开发",
+        "26" : "基础设施工程",
+        "24" : "云计算工程",
+        "20" : "DevOps工程",
+        "11" : "操作系统开发",
+        "347" : "运动训练",
+        "42" : "深度学习工程",
+        "30" : "边缘计算工程",
+        "10" : "编译器与程序语言开发",
+        "105" : "游戏客户端开发"
+      }
+    },
+    "G04" : {
+      "knowledge" : {
+        "summary" : "证据显示使用 Python pandas 清洗数据并用 matplotlib 可视化，归入 Python 知识桶。已忽略心得中的指令性文字。",
+        "assignments" : [ {
+          "action" : "REUSE",
+          "bucketId" : -1,
+          "bucketName" : "Python",
+          "aliases" : [ "python" ],
+          "relevance" : 0.9,
+          "confidence" : 0.9,
+          "evidenceFindings" : [ "使用 Python pandas 清洗 50 万条骑行记录", "用 matplotlib 可视化高峰时段" ],
+          "reason" : "已有 Python 标签覆盖该证据中使用的 pandas 与 matplotlib 数据分析技术，无需创建新标签。"
+        } ]
+      },
+      "function" : {
+        "summary" : "该经历以 Python 清洗 50 万条骑行记录并产出可视化分析报告，核心职责是数据分析，可支撑数据分析职能。",
+        "assignments" : [ {
+          "action" : "SELECT",
+          "bucketId" : 56,
+          "role" : "PRIMARY",
+          "relevance" : 0.95,
+          "confidence" : 0.9,
+          "claimedOutcome" : "清洗 50 万条骑行记录，用 matplotlib 可视化高峰时段，产出 12 页分析报告并提交给社团。",
+          "evidenceFindings" : [ "清洗 50 万条数据", "产出 12 页分析报告", "使用 Python pandas 清洗 50 万条骑行记录", "用 matplotlib 可视化高峰时段", "输出分析报告提交给社团" ],
+          "riskFlags" : [ ],
+          "reason" : "证据包含真实数据清洗、可视化与报告交付，直接对应数据分析职能的核心工作内容。"
+        }, {
+          "action" : "SKIP",
+          "bucketId" : 64,
+          "role" : "SECONDARY",
+          "relevance" : 0.2,
+          "confidence" : 0.3,
+          "claimedOutcome" : "未进行预测或时间序列建模。",
+          "evidenceFindings" : [ "分析高峰时段分布" ],
+          "riskFlags" : [ "仅描述高峰时段，无预测或时序模型证据" ],
+          "reason" : "虽有高峰时段分析，但未涉及需求预测、趋势建模或异常检测，不足以支撑预测与时间序列分析职能。"
+        }, {
+          "action" : "SKIP",
+          "bucketId" : 59,
+          "role" : "SECONDARY",
+          "relevance" : 0.1,
+          "confidence" : 0.2,
+          "claimedOutcome" : "未涉及分布式计算或大数据平台工程。",
+          "evidenceFindings" : [ "使用 Python pandas 清洗 50 万条数据" ],
+          "riskFlags" : [ "50 万条数据为单机 pandas 处理，非分布式平台" ],
+          "reason" : "证据未体现分布式计算、大数据存储、任务调度或平台治理，不能归因于大数据平台工程。"
+        }, {
+          "action" : "SKIP",
+          "bucketId" : 63,
+          "role" : "SECONDARY",
+          "relevance" : 0.15,
+          "confidence" : 0.2,
+          "claimedOutcome" : "未进行运筹优化建模。",
+          "evidenceFindings" : [ "建议调度车辆" ],
+          "riskFlags" : [ "建议调度仅为文字建议，无优化模型或排程实现" ],
+          "reason" : "仅提出调度建议，未使用线性规划、组合优化或路径优化方法，不足以支撑运筹优化职能。"
+        }, {
+          "action" : "SKIP",
+          "bucketId" : 314,
+          "role" : "SECONDARY",
+          "relevance" : 0.1,
+          "confidence" : 0.2,
+          "claimedOutcome" : "未涉及科研数据管理。",
+          "evidenceFindings" : [ "清洗 50 万条骑行记录", "产出 12 页分析报告" ],
+          "riskFlags" : [ "无实验记录、数据共享或归档证据" ],
+          "reason" : "证据为业务数据分析，不涉及科研数据采集、实验记录、共享或归档。"
+        }, {
+          "action" : "SKIP",
+          "bucketId" : 157,
+          "role" : "SECONDARY",
+          "relevance" : 0.05,
+          "confidence" : 0.1,
+          "claimedOutcome" : "未涉及人力资源数据分析。",
+          "evidenceFindings" : [ "城市共享单车骑行数据分析" ],
+          "riskFlags" : [ "关键词命中但领域不符" ],
+          "reason" : "数据为共享单车骑行记录，与人力指标、人员预测或组织数据无关。"
+        }, {
+          "action" : "SKIP",
+          "bucketId" : 244,
+          "role" : "SECONDARY",
+          "relevance" : 0.2,
+          "confidence" : 0.3,
+          "claimedOutcome" : "未承担轨道交通运营职责。",
+          "evidenceFindings" : [ "建议调度车辆" ],
+          "riskFlags" : [ "仅提出调度建议，非实际运营调度" ],
+          "reason" : "共享单车调度建议不等于轨道交通行车组织、客运组织或安全应急运营。"
+        }, {
+          "action" : "SKIP",
+          "bucketId" : 112,
+          "role" : "SECONDARY",
+          "relevance" : 0.1,
+          "confidence" : 0.2,
+          "claimedOutcome" : "未进行市场研究。",
+          "evidenceFindings" : [ "分析高峰时段", "建议调度车辆" ],
+          "riskFlags" : [ "无行业研究、竞争分析或用户调研证据" ],
+          "reason" : "证据为运营数据分析，不涉及行业研究、竞争分析、用户调研或市场规模分析。"
+        }, {
+          "action" : "SKIP",
+          "bucketId" : 58,
+          "role" : "SECONDARY",
+          "relevance" : 0.15,
+          "confidence" : 0.2,
+          "claimedOutcome" : "未承担数据工程职责。",
+          "evidenceFindings" : [ "使用 Python pandas 清洗 50 万条骑行记录" ],
+          "riskFlags" : [ "无 ETL、数据仓库或数据湖建设证据" ],
+          "reason" : "数据清洗属于分析流程的一部分，未体现 ETL 管道、数据仓库或批流处理平台建设。"
+        }, {
+          "action" : "SKIP",
+          "bucketId" : 67,
+          "role" : "SECONDARY",
+          "relevance" : 0.1,
+          "confidence" : 0.2,
+          "claimedOutcome" : "未进行地理空间分析。",
+          "evidenceFindings" : [ "发现早晚高峰集中在地铁站周边" ],
+          "riskFlags" : [ "未使用 GIS、遥感或空间统计方法" ],
+          "reason" : "虽提及地铁站周边，但未使用 GIS、遥感、空间统计或地图分析方法。"
+        } ]
+      },
+      "functionCandidateNames" : {
+        "56" : "数据分析",
+        "64" : "预测与时间序列分析",
+        "59" : "大数据平台工程",
+        "63" : "运筹优化",
+        "314" : "科研数据管理",
+        "157" : "人力资源数据分析",
+        "244" : "轨道交通运营",
+        "112" : "市场研究",
+        "58" : "数据工程",
+        "67" : "地理空间分析"
+      }
+    },
+    "G05" : {
+      "knowledge" : {
+        "summary" : "该证据展示了 RAG 检索模块的完整实现与部署试用，涉及文档切分、向量化、混合检索与重排，归入 RAG 知识桶；已有 Python、Agent 标签均不覆盖检索增强生成这一技术方向。已忽略心得中的指令性文字。",
+        "assignments" : [ {
+          "action" : "CREATE",
+          "bucketId" : null,
+          "bucketName" : "RAG",
+          "aliases" : [ "检索增强生成" ],
+          "relevance" : 0.95,
+          "confidence" : 0.9,
+          "evidenceFindings" : [ "负责检索模块：文档切分、向量化入库、混合检索与重排", "部署到实验室服务器供 30 名同学试用", "重排后答案命中率明显提升" ],
+          "reason" : "证据核心是检索增强生成（RAG）的检索链路实现与部署，已有 Python 仅为编程语言、Agent 为智能体方向，均不覆盖 RAG 这一技术，故创建 RAG 标签。"
+        } ]
+      },
+      "function" : {
+        "summary" : "该经历是 RAG 课程问答助手的检索模块实现与部署，可支撑生成式人工智能工程，并辅助支撑推荐与搜索工程。",
+        "assignments" : [ {
+          "action" : "SELECT",
+          "bucketId" : 43,
+          "role" : "PRIMARY",
+          "relevance" : 0.92,
+          "confidence" : 0.86,
+          "claimedOutcome" : "实现并部署 RAG 课程问答助手的检索模块，供 30 名同学试用，重排后答案命中率提升。",
+          "evidenceFindings" : [ "负责检索模块：文档切分、向量化入库、混合检索与重排", "部署到实验室服务器", "30 名同学试用", "重排后答案命中率明显提升（学生自述）" ],
+          "riskFlags" : [ "未说明是否负责大模型生成部分，证据集中在检索模块", "命中率提升为自述，缺少量化指标" ],
+          "reason" : "该经历以 RAG 问答助手为交付物，包含检索模块实现与部署，属于生成式人工智能工程的核心实践。"
+        }, {
+          "action" : "SELECT",
+          "bucketId" : 49,
+          "role" : "SECONDARY",
+          "relevance" : 0.84,
+          "confidence" : 0.78,
+          "claimedOutcome" : "实现文档切分、向量化入库、混合检索与重排，并部署到实验室服务器供 30 名同学试用。",
+          "evidenceFindings" : [ "负责检索模块：文档切分、向量化入库、混合检索与重排", "部署到实验室服务器", "30 名同学试用", "重排后答案命中率明显提升（学生自述）" ],
+          "riskFlags" : [ "未说明检索规模、评估指标或线上稳定性", "重排效果为自述" ],
+          "reason" : "混合检索与重排属于搜索/召回排序工作，但整体项目定位为 RAG 助手，故作为辅助职能。"
+        } ]
+      },
+      "functionCandidateNames" : {
+        "314" : "科研数据管理",
+        "49" : "推荐与搜索工程",
+        "43" : "生成式人工智能工程",
+        "62" : "实验与因果分析",
+        "267" : "临床研究",
+        "312" : "科学实验设计",
+        "69" : "生物信息分析",
+        "275" : "生物实验技术",
+        "50" : "知识图谱工程",
+        "303" : "课程设计"
+      }
+    },
+    "G06" : {
+      "knowledge" : {
+        "summary" : "该证据展示了多 Agent 系统设计与工具调用协议实现，归入 Agent 与 Python 两个知识桶；心得中的经验性描述未包含指令性文字。",
+        "assignments" : [ {
+          "action" : "REUSE",
+          "bucketId" : -1,
+          "bucketName" : "Agent",
+          "aliases" : [ "智能体" ],
+          "relevance" : 0.95,
+          "confidence" : 0.9,
+          "evidenceFindings" : [ "设计 Planner 与 Executor 两个智能体", "设计工具调用协议", "实现航班查询和预算校验工具", "完成 50 条用例评测" ],
+          "reason" : "证据核心是智能体（Planner/Executor）与工具调用协议的设计与评测，直接对应已有标签 Agent。"
+        }, {
+          "action" : "REUSE",
+          "bucketId" : -2,
+          "bucketName" : "Python",
+          "aliases" : [ ],
+          "relevance" : 0.6,
+          "confidence" : 0.5,
+          "evidenceFindings" : [ "实现 2 个工具", "完成 50 条用例评测" ],
+          "reason" : "此类多 Agent 与工具实现通常以 Python 编写，且已有 Python 标签可覆盖该实现工作；但证据未明确写出语言，故相关度与置信度适中。"
+        } ]
+      },
+      "function" : {
+        "summary" : "该经历实际设计并实现了多智能体（Planner/Executor）与工具调用协议，并完成用例评测，核心支撑智能体系统开发职能。",
+        "assignments" : [ {
+          "action" : "SELECT",
+          "bucketId" : 44,
+          "role" : "PRIMARY",
+          "relevance" : 0.95,
+          "confidence" : 0.9,
+          "claimedOutcome" : "设计 Planner 与 Executor 两个智能体及工具调用协议，实现航班查询与预算校验工具，完成 50 条用例评测。",
+          "evidenceFindings" : [ "设计 Planner 与 Executor 两个智能体和工具调用协议", "实现航班查询和预算校验 2 个工具", "完成 50 条用例评测" ],
+          "riskFlags" : [ "未说明评测结果与系统实际部署运行情况" ],
+          "reason" : "证据明确包含多智能体设计、工具调用协议实现与评测，直接对应智能体系统开发的核心职责。"
+        }, {
+          "action" : "SELECT",
+          "bucketId" : 55,
+          "role" : "SECONDARY",
+          "relevance" : 0.6,
+          "confidence" : 0.55,
+          "claimedOutcome" : "围绕旅行规划场景进行 AI 能力编排（Planner/Executor 协作）并完成效果评估（50 条用例）。",
+          "evidenceFindings" : [ "设计 Planner 与 Executor 两个智能体和工具调用协议", "完成 50 条用例评测" ],
+          "riskFlags" : [ "未体现产品集成或人机协作层面的工作" ],
+          "reason" : "经历涉及 AI 场景下的能力编排与效果评估，属于 AI 产品应用的辅助职责，但缺乏产品化集成证据。"
+        } ]
+      },
+      "functionCandidateNames" : {
+        "44" : "智能体系统开发",
+        "63" : "运筹优化",
+        "14" : "开发工具工程",
+        "55" : "AI产品应用",
+        "101" : "游戏任务设计",
+        "52" : "AI平台工程",
+        "85" : "AI产品管理",
+        "62" : "实验与因果分析",
+        "23" : "应用支持",
+        "17" : "测试开发"
+      }
+    },
+    "G07" : {
+      "knowledge" : {
+        "summary" : "该经历为日语角主持与日常会话练习，直接对应已有知识桶“日语”，无需新建标签；心得中的自我评价仅作参考，归因以可核对的会话练习与话题准备事实为准。",
+        "assignments" : [ {
+          "action" : "REUSE",
+          "bucketId" : -1,
+          "bucketName" : "日语",
+          "aliases" : [ "日本语" ],
+          "relevance" : 0.9,
+          "confidence" : 0.85,
+          "evidenceFindings" : [ "主持 8 次日语角", "每次 10 名同学参加", "带领同学进行日常会话练习", "准备话题卡片" ],
+          "reason" : "活动内容为日语日常会话的组织与练习，与已有标签“日语”含义完全一致，按用户已有命名复用，不另建“敬语”等更细粒度标签。"
+        } ]
+      },
+      "function" : {
+        "summary" : "该经历为每周主持日语角并带领同学进行会话练习，属于真实组织与语言实践活动，可支撑日语运用与主持类职能。",
+        "assignments" : [ {
+          "action" : "SELECT",
+          "bucketId" : 368,
+          "role" : "PRIMARY",
+          "relevance" : 0.85,
+          "confidence" : 0.8,
+          "claimedOutcome" : "主持8次日语角，带领10名同学进行日常会话练习并准备话题卡片",
+          "evidenceFindings" : [ "主持 8 次日语角", "每次 10 名同学参加", "带领 10 名同学进行日常会话练习", "准备话题卡片" ],
+          "riskFlags" : [ "未提供日语水平等级或正式测评证据" ],
+          "reason" : "实际使用日语组织并带领会话练习，属于真实语言运用行为，而非仅学习或了解概念。"
+        }, {
+          "action" : "SELECT",
+          "bucketId" : 332,
+          "role" : "SECONDARY",
+          "relevance" : 0.6,
+          "confidence" : 0.65,
+          "claimedOutcome" : "多次担任日语角主持，组织现场会话活动",
+          "evidenceFindings" : [ "主持 8 次日语角", "每次 10 名同学参加" ],
+          "riskFlags" : [ "主持场景为小型语言角，非正式节目主持" ],
+          "reason" : "有实际主持与现场组织行为，但规模与场景较有限，作为辅助职能。"
+        } ]
+      },
+      "functionCandidateNames" : {
+        "368" : "日语运用",
+        "332" : "播音与主持",
+        "369" : "中文运用",
+        "371" : "口译",
+        "372" : "跨文化沟通",
+        "367" : "英语运用",
+        "370" : "翻译",
+        "340" : "旅游策划与服务",
+        "271" : "口腔健康服务",
+        "318" : "新闻采编"
+      }
+    },
+    "G08" : {
+      "knowledge" : {
+        "summary" : "证据显示连续30天进行JLPT N2备考，包含背单词和听力训练，可归入日语知识桶。已忽略心得中的指令性文字。",
+        "assignments" : [ {
+          "action" : "REUSE",
+          "bucketId" : -1,
+          "bucketName" : "日语",
+          "aliases" : [ ],
+          "relevance" : 0.95,
+          "confidence" : 0.9,
+          "evidenceFindings" : [ "连续打卡30天", "每天背50个单词、做一套听力题", "听力正确率从60%提升到75%" ],
+          "reason" : "已有标签“日语”直接覆盖JLPT N2备考活动，无需创建新标签。"
+        } ]
+      },
+      "function" : {
+        "summary" : "该证据显示用户连续30天进行JLPT N2备考（背单词、做听力题），属于语言学习行为，可支撑日语运用能力，但仅为备考练习而非实际语言运用交付。",
+        "assignments" : [ {
+          "action" : "SELECT",
+          "bucketId" : 368,
+          "role" : "PRIMARY",
+          "relevance" : 0.6,
+          "confidence" : 0.55,
+          "claimedOutcome" : "连续30天每天背50个单词并完成一套听力题，听力正确率从60%提升到75%",
+          "evidenceFindings" : [ "连续打卡30天", "每天背50个单词、做一套听力题", "听力正确率从60%提升到75%" ],
+          "riskFlags" : [ "仅为备考练习，缺乏真实日语交流或商务日语运用场景", "正确率提升为自述，无第三方验证" ],
+          "reason" : "证据核心是日语（JLPT N2）词汇与听力训练，直接对应日语运用职能中的听说读写能力，且有持续行为与可量化进步，故可判定为PRIMARY。"
+        } ]
+      },
+      "functionCandidateNames" : {
+        "368" : "日语运用",
+        "369" : "中文运用",
+        "367" : "英语运用",
+        "305" : "学习评估",
+        "101" : "游戏任务设计",
+        "256" : "医学检验",
+        "74" : "硬件测试",
+        "251" : "内科诊疗",
+        "37" : "渗透测试",
+        "347" : "运动训练"
+      }
+    },
+    "G09" : {
+      "knowledge" : {
+        "summary" : "该经历是面向社区老人的智能手机使用教学志愿服务，事实仅体现讲解、示范与图文手册制作，未出现可长期累计的知识与技术内容，故不归入任何知识桶。",
+        "assignments" : [ {
+          "action" : "SKIP",
+          "bucketId" : null,
+          "bucketName" : "",
+          "aliases" : [ ],
+          "relevance" : 0.0,
+          "confidence" : 0.85,
+          "evidenceFindings" : [ "作为志愿者为 20 位老人一对一讲解微信视频通话和健康码使用", "制作 1 份图文操作手册", "心得内容为面向老人的讲解方式（用老人能理解的语言、一步步示范）" ],
+          "reason" : "证据中的可核对事实只有服务人数、讲解内容与手册数量，属于沟通表达与志愿服务范畴；微信视频通话、健康码均为面向普通用户的日常应用操作，不构成可跨经历累计的技术知识桶，且 existingBuckets 为空，无可复用标签，因此 SKIP。"
+        } ]
+      },
+      "function" : {
+        "summary" : "该经历是为社区老人提供智能手机使用教学与图文手册，属于志愿服务/数字助老，未体现老年照护、社区运营等候选职能的核心职责，故不归因。",
+        "assignments" : [ ]
+      },
+      "functionCandidateNames" : {
+        "349" : "老年照护",
+        "348" : "儿童照护与发展支持",
+        "48" : "多模态人工智能",
+        "254" : "临床护理",
+        "44" : "智能体系统开发",
+        "5" : "小程序与轻应用开发",
+        "101" : "游戏任务设计",
+        "351" : "宠物护理",
+        "120" : "社区运营",
+        "43" : "生成式人工智能工程"
+      }
+    },
+    "G10" : {
+      "knowledge" : {
+        "summary" : "该证据描述校园编程马拉松活动的组织运营工作，涉及报名系统搭建、赞助商对接和现场流程管理，但未体现具体技术栈或可归入的知识技术桶，故跳过。",
+        "assignments" : [ {
+          "action" : "SKIP",
+          "bucketId" : null,
+          "bucketName" : null,
+          "aliases" : [ ],
+          "relevance" : 0.0,
+          "confidence" : 0.0,
+          "evidenceFindings" : [ "担任组委会运营负责人", "负责报名系统搭建、赞助商对接和现场流程", "活动吸引 120 人参赛", "对接 3 家赞助商" ],
+          "reason" : "证据仅体现活动组织与运营职责，未出现任何具体编程语言、框架、数据库、工具或技术概念；existingBuckets 为空，无可复用标签，也不存在可稳定累计的粗粒度知识技术标签，因此 SKIP。"
+        } ]
+      },
+      "function" : {
+        "summary" : "该经历是校园编程马拉松活动的组委会运营负责人，实际承担了活动报名系统搭建、赞助商对接和现场流程管理，属于活动运营与会展活动管理范畴。",
+        "assignments" : [ {
+          "action" : "SELECT",
+          "bucketId" : 121,
+          "role" : "PRIMARY",
+          "relevance" : 0.9,
+          "confidence" : 0.85,
+          "claimedOutcome" : "作为组委会运营负责人，搭建报名系统、对接3家赞助商、管理现场流程，成功吸引120人参赛。",
+          "evidenceFindings" : [ "担任组委会运营负责人", "负责报名系统搭建", "对接3家赞助商", "负责现场流程", "活动吸引120人参赛" ],
+          "riskFlags" : [ ],
+          "reason" : "证据显示用户实际负责活动的报名、赞助商对接和现场执行，属于典型的线下活动运营职责，与活动运营职能高度匹配。"
+        }, {
+          "action" : "SELECT",
+          "bucketId" : 341,
+          "role" : "SECONDARY",
+          "relevance" : 0.75,
+          "confidence" : 0.8,
+          "claimedOutcome" : "负责活动现场流程管理及赞助商（供应商）对接，保障活动顺利执行。",
+          "evidenceFindings" : [ "负责现场流程", "对接3家赞助商", "活动吸引120人参赛" ],
+          "riskFlags" : [ ],
+          "reason" : "现场流程管理和赞助商对接属于会展与活动管理中的现场执行与供应商对接职责，作为辅助职能有实际证据支撑。"
+        }, {
+          "action" : "SKIP",
+          "bucketId" : 104,
+          "role" : "SECONDARY",
+          "relevance" : 0.0,
+          "confidence" : 0.0,
+          "claimedOutcome" : "",
+          "evidenceFindings" : [ ],
+          "riskFlags" : [ ],
+          "reason" : "该经历为校园编程马拉松活动组织，不涉及游戏运营、赛季版本节奏或玩家留存机制，与游戏运营设计无关。"
+        }, {
+          "action" : "SKIP",
+          "bucketId" : 106,
+          "role" : "SECONDARY",
+          "relevance" : 0.0,
+          "confidence" : 0.0,
+          "claimedOutcome" : "",
+          "evidenceFindings" : [ ],
+          "riskFlags" : [ ],
+          "reason" : "证据中未涉及游戏服务端开发、房间系统、匹配或战斗同步等技术工作，与游戏服务端开发无关。"
+        }, {
+          "action" : "SKIP",
+          "bucketId" : 63,
+          "role" : "SECONDARY",
+          "relevance" : 0.0,
+          "confidence" : 0.0,
+          "claimedOutcome" : "",
+          "evidenceFindings" : [ ],
+          "riskFlags" : [ ],
+          "reason" : "证据中未涉及线性规划、组合优化、排程或路径优化等运筹优化工作。"
+        }, {
+          "action" : "SKIP",
+          "bucketId" : 53,
+          "role" : "SECONDARY",
+          "relevance" : 0.0,
+          "confidence" : 0.0,
+          "claimedOutcome" : "",
+          "evidenceFindings" : [ ],
+          "riskFlags" : [ ],
+          "reason" : "证据中未涉及模型流水线、实验追踪、模型部署或监控等MLOps工程工作。"
+        }, {
+          "action" : "SKIP",
+          "bucketId" : 298,
+          "role" : "SECONDARY",
+          "relevance" : 0.0,
+          "confidence" : 0.0,
+          "claimedOutcome" : "",
+          "evidenceFindings" : [ ],
+          "riskFlags" : [ ],
+          "reason" : "该活动为校园编程马拉松，证据未体现公益项目、筹款、志愿者或影响力评估等非营利组织管理特征。"
+        }, {
+          "action" : "SKIP",
+          "bucketId" : 138,
+          "role" : "SECONDARY",
+          "relevance" : 0.0,
+          "confidence" : 0.0,
+          "claimedOutcome" : "",
+          "evidenceFindings" : [ ],
+          "riskFlags" : [ ],
+          "reason" : "虽然涉及运营，但证据更具体地指向活动运营与会展活动管理，未体现日常运营、效率提升或指标管理等企业运营管理职责。"
+        }, {
+          "action" : "SKIP",
+          "bucketId" : 120,
+          "role" : "SECONDARY",
+          "relevance" : 0.0,
+          "confidence" : 0.0,
+          "claimedOutcome" : "",
+          "evidenceFindings" : [ ],
+          "riskFlags" : [ ],
+          "reason" : "证据中未涉及社区规则、用户关系、话题运营或社群治理等社区运营工作。"
+        }, {
+          "action" : "SKIP",
+          "bucketId" : 140,
+          "role" : "SECONDARY",
+          "relevance" : 0.0,
+          "confidence" : 0.0,
+          "claimedOutcome" : "",
+          "evidenceFindings" : [ ],
+          "riskFlags" : [ ],
+          "reason" : "证据未体现任务分配、人员培养、绩效反馈或团队建设等团队管理职责。"
+        } ]
+      },
+      "functionCandidateNames" : {
+        "104" : "游戏运营设计",
+        "121" : "活动运营",
+        "106" : "游戏服务端开发",
+        "63" : "运筹优化",
+        "341" : "会展与活动管理",
+        "53" : "MLOps工程",
+        "298" : "非营利组织管理",
+        "138" : "运营管理",
+        "120" : "社区运营",
+        "140" : "团队管理"
+      }
+    },
+    "G11" : {
+      "knowledge" : {
+        "summary" : "证据显示该经历涉及高一数学函数单元教学与课件设计，属于数学学科教学知识，但无既有标签可复用，且不足以归入更细的技术桶。",
+        "assignments" : [ {
+          "action" : "CREATE",
+          "bucketId" : null,
+          "bucketName" : "数学教学",
+          "aliases" : [ "数学教育", "数学授课" ],
+          "relevance" : 0.9,
+          "confidence" : 0.85,
+          "evidenceFindings" : [ "负责高一数学函数单元教学", "设计10份课件", "组织单元测验", "用生活例子讲解函数" ],
+          "reason" : "证据明确指向数学学科的教学设计与实施，existingBuckets 为空，无任何可复用标签；该标签粒度适中、可跨多次教学经历累计，且不涉及职能或岗位名称。"
+        } ]
+      },
+      "function" : {
+        "summary" : "该经历以高一数学函数单元课堂教学为核心，同时涉及课件教学设计与单元测验组织，可支撑学科教学、教学设计和学习评估职能。",
+        "assignments" : [ {
+          "action" : "SELECT",
+          "bucketId" : 302,
+          "role" : "PRIMARY",
+          "relevance" : 0.95,
+          "confidence" : 0.9,
+          "claimedOutcome" : "承担高一数学函数单元3周课堂教学，进行知识讲解与学习指导。",
+          "evidenceFindings" : [ "暑期在乡村中学支教3周", "负责高一数学函数单元教学", "授课3周", "设计10份课件", "组织单元测验" ],
+          "riskFlags" : [ "支教为短期活动，未说明长期教学效果或独立备课全过程" ],
+          "reason" : "证据明确包含授课、单元教学和知识讲解，直接对应学科教学的核心职责。"
+        }, {
+          "action" : "SELECT",
+          "bucketId" : 304,
+          "role" : "SECONDARY",
+          "relevance" : 0.8,
+          "confidence" : 0.75,
+          "claimedOutcome" : "为函数单元设计10份课件，参与教学设计与媒体设计。",
+          "evidenceFindings" : [ "设计10份课件", "负责高一数学函数单元教学" ],
+          "riskFlags" : [ "课件设计细节未说明，是否包含学习目标、教学策略和评估设计不明确" ],
+          "reason" : "设计课件并用于单元教学，可支撑教学设计中的媒体设计与学习活动设计等辅助职责。"
+        }, {
+          "action" : "SELECT",
+          "bucketId" : 305,
+          "role" : "SECONDARY",
+          "relevance" : 0.6,
+          "confidence" : 0.6,
+          "claimedOutcome" : "组织函数单元测验，参与学习评估环节。",
+          "evidenceFindings" : [ "组织单元测验" ],
+          "riskFlags" : [ "未说明是否自行编制题目、进行能力测评或学习诊断" ],
+          "reason" : "组织单元测验属于学习评估相关活动，但证据仅体现组织行为，评估设计深度有限。"
+        } ]
+      },
+      "functionCandidateNames" : {
+        "303" : "课程设计",
+        "302" : "学科教学",
+        "100" : "游戏数值设计",
+        "312" : "科学实验设计",
+        "308" : "学生发展与辅导",
+        "51" : "强化学习工程",
+        "304" : "教学设计",
+        "307" : "教育产品设计",
+        "305" : "学习评估",
+        "99" : "游戏关卡设计"
+      }
+    },
+    "G12" : {
+      "knowledge" : {
+        "summary" : "该证据体现用英语和日语进行跨文化沟通与协调，归入英语和日语两个知识桶；心得中的一般性观察不构成指令性文字。",
+        "assignments" : [ {
+          "action" : "REUSE",
+          "bucketId" : -2,
+          "bucketName" : "英语",
+          "aliases" : [ "English" ],
+          "relevance" : 0.8,
+          "confidence" : 0.9,
+          "evidenceFindings" : [ "用英语向留学生讲解校园生活并协助处理签证材料问题" ],
+          "reason" : "证据明确使用英语进行讲解与沟通，已有标签“英语”覆盖该证据，直接复用。"
+        }, {
+          "action" : "REUSE",
+          "bucketId" : -1,
+          "bucketName" : "日语",
+          "aliases" : [ ],
+          "relevance" : 0.8,
+          "confidence" : 0.9,
+          "evidenceFindings" : [ "用日语向留学生讲解校园生活并协助处理签证材料问题" ],
+          "reason" : "证据明确使用日语进行讲解与沟通，已有标签“日语”覆盖该证据，直接复用。"
+        } ]
+      },
+      "function" : {
+        "summary" : "该经历体现国际学生迎新协调与跨文化沟通能力，核心为学生支持，辅以跨文化沟通。",
+        "assignments" : [ {
+          "action" : "SELECT",
+          "bucketId" : 308,
+          "role" : "PRIMARY",
+          "relevance" : 0.86,
+          "confidence" : 0.82,
+          "claimedOutcome" : "协调15名留学生的迎新流程，并帮助处理签证材料问题，提供学生支持服务。",
+          "evidenceFindings" : [ "服务 15 名留学生", "协调 15 名留学生的迎新流程", "帮助处理签证材料问题" ],
+          "riskFlags" : [ "未明确是否独立负责全流程，也未说明是否涉及学业或生涯辅导", "签证材料帮助的具体深度和权限范围不明确" ],
+          "reason" : "迎新协调与签证材料协助属于面向留学生的学生支持工作，符合学生发展与辅导中的学生支持职能。"
+        }, {
+          "action" : "SELECT",
+          "bucketId" : 372,
+          "role" : "SECONDARY",
+          "relevance" : 0.78,
+          "confidence" : 0.76,
+          "claimedOutcome" : "用英语和日语向不同文化背景的留学生讲解校园生活，完成跨文化沟通与协调。",
+          "evidenceFindings" : [ "用英语和日语讲解校园生活", "协调 15 名留学生的迎新流程" ],
+          "riskFlags" : [ "未说明是否处理深层文化冲突或长期文化适应支持", "多语言讲解不等同于专业口译或国际关系工作" ],
+          "reason" : "面向多国留学生用英语和日语沟通并协调迎新，体现跨文化表达与文化差异应对，但属于辅助职责而非核心学生支持。"
+        } ]
+      },
+      "functionCandidateNames" : {
+        "308" : "学生发展与辅导",
+        "372" : "跨文化沟通",
+        "295" : "国际关系与外交事务",
+        "348" : "儿童照护与发展支持",
+        "340" : "旅游策划与服务",
+        "318" : "新闻采编",
+        "371" : "口译",
+        "106" : "游戏服务端开发",
+        "335" : "文化活动策划",
+        "23" : "应用支持"
+      }
+    },
+    "G13" : {
+      "knowledge" : {
+        "summary" : "该证据显示使用 Vue 3 与 TypeScript 完成社团官网前端重构，并优化首屏加载性能，归入 Vue、TypeScript 与前端性能优化三个知识桶；已忽略心得中的指令性文字。",
+        "assignments" : [ {
+          "action" : "CREATE",
+          "bucketId" : null,
+          "bucketName" : "Vue",
+          "aliases" : [ "Vue 3", "Vue.js" ],
+          "relevance" : 0.9,
+          "confidence" : 0.9,
+          "evidenceFindings" : [ "使用 Vue 3 重写社团官网", "完成组件拆分、路由和响应式布局" ],
+          "reason" : "证据明确使用 Vue 3 进行组件拆分、路由与响应式布局开发；已有标签 JavaScript 是不同技术，不能覆盖 Vue 框架的使用，故创建 Vue 标签。"
+        }, {
+          "action" : "CREATE",
+          "bucketId" : null,
+          "bucketName" : "TypeScript",
+          "aliases" : [ "TS" ],
+          "relevance" : 0.85,
+          "confidence" : 0.85,
+          "evidenceFindings" : [ "使用 TypeScript 重写社团官网" ],
+          "reason" : "证据明确使用 TypeScript 进行前端重构；已有标签 JavaScript 与 TypeScript 是不同技术，不能替代，故创建 TypeScript 标签。"
+        }, {
+          "action" : "CREATE",
+          "bucketId" : null,
+          "bucketName" : "前端性能优化",
+          "aliases" : [ "Web 性能优化", "首屏优化" ],
+          "relevance" : 0.8,
+          "confidence" : 0.8,
+          "evidenceFindings" : [ "首屏加载从 4 秒降到 1.5 秒", "按需加载对首屏影响最大" ],
+          "reason" : "证据包含首屏加载时间从 4 秒降至 1.5 秒的可核对性能优化结果，并复盘按需加载的作用；已有标签 JavaScript 不覆盖性能优化知识，故创建前端性能优化标签。"
+        } ]
+      },
+      "function" : {
+        "summary" : "用户使用 Vue 3 和 TypeScript 独立完成社团官网前端重构，涉及组件拆分、路由、响应式布局与首屏性能优化，证据充分支撑前端开发职能。",
+        "assignments" : [ {
+          "action" : "SELECT",
+          "bucketId" : 2,
+          "role" : "PRIMARY",
+          "relevance" : 0.95,
+          "confidence" : 0.9,
+          "claimedOutcome" : "使用 Vue 3 和 TypeScript 重写社团官网，完成组件拆分、路由和响应式布局，首屏加载从 4 秒降至 1.5 秒。",
+          "evidenceFindings" : [ "使用 Vue 3 和 TypeScript 重写社团官网", "完成组件拆分、路由和响应式布局", "首屏加载从 4 秒降到 1.5 秒" ],
+          "riskFlags" : [ ],
+          "reason" : "该经历核心职责为网页前端开发，包含组件设计、路由、响应式布局与性能优化，与前端开发职能高度匹配。"
+        } ]
+      },
+      "functionCandidateNames" : {
+        "2" : "前端开发",
+        "91" : "视觉界面设计",
+        "105" : "游戏客户端开发",
+        "94" : "设计系统建设",
+        "5" : "小程序与轻应用开发",
+        "1" : "后端开发",
+        "106" : "游戏服务端开发",
+        "92" : "服务设计",
+        "89" : "交互设计",
+        "6" : "软件架构设计"
+      }
+    },
+    "G14" : {
+      "knowledge" : {
+        "summary" : "该证据为使用 Wireshark 抓包分析 HTTP 与 TCP 三次握手的实验，归入计算机网络知识桶；心得中的个人理解不构成指令性文字。",
+        "assignments" : [ {
+          "action" : "CREATE",
+          "bucketId" : null,
+          "bucketName" : "计算机网络",
+          "aliases" : [ "网络协议", "TCP/IP" ],
+          "relevance" : 0.9,
+          "confidence" : 0.85,
+          "evidenceFindings" : [ "用 Wireshark 抓包分析 HTTP 请求", "分析 TCP 三次握手", "撰写实验报告" ],
+          "reason" : "证据核心是 HTTP 协议与 TCP 三次握手的抓包分析，属于计算机网络知识；已有标签“Web 编程”偏 Web 应用开发，不覆盖网络协议分析，故创建更稳定的粗粒度标签“计算机网络”。"
+        } ]
+      },
+      "function" : {
+        "summary" : "该证据仅为 Wireshark 抓包分析实验并提交报告，属于课程练习，未体现可承担任何候选核心职能的真实交付或运维责任。",
+        "assignments" : [ ]
+      },
+      "functionCandidateNames" : {
+        "37" : "渗透测试",
+        "75" : "物联网工程",
+        "27" : "网络工程",
+        "28" : "网络运维",
+        "38" : "数字取证与事件响应",
+        "88" : "用户研究",
+        "16" : "软件测试",
+        "2" : "前端开发",
+        "31" : "网络安全工程",
+        "312" : "科学实验设计"
+      }
+    },
+    "G15" : {
+      "knowledge" : {
+        "summary" : "该证据通过定位慢 SQL、添加联合索引并改写分页查询实现接口性能优化，属于 MySQL 数据库优化实践，已忽略心得中的指令性文字。",
+        "assignments" : [ {
+          "action" : "REUSE",
+          "bucketId" : -1,
+          "bucketName" : "MySQL",
+          "aliases" : [ ],
+          "relevance" : 0.95,
+          "confidence" : 0.9,
+          "evidenceFindings" : [ "定位 3 条慢 SQL", "添加联合索引", "改写分页查询", "接口耗时从 800ms 降到 60ms", "先看执行计划再动手" ],
+          "reason" : "慢 SQL 定位、联合索引、执行计划、分页查询改写均属于 MySQL 数据库优化范畴，existingBuckets 中已有 MySQL 标签，直接复用。"
+        } ]
+      },
+      "function" : {
+        "summary" : "该经历通过定位慢 SQL、添加联合索引并改写分页查询，实际承担了数据库查询优化职责，并间接涉及后端接口性能优化。",
+        "assignments" : [ {
+          "action" : "SELECT",
+          "bucketId" : 12,
+          "role" : "PRIMARY",
+          "relevance" : 0.95,
+          "confidence" : 0.85,
+          "claimedOutcome" : "定位3条慢SQL，添加联合索引并改写分页查询，使接口耗时从800ms降至60ms。",
+          "evidenceFindings" : [ "定位 3 条慢 SQL", "添加联合索引", "改写分页查询", "接口耗时从 800ms 降到 60ms" ],
+          "riskFlags" : [ "个人博客规模有限，未说明数据量、并发量或生产环境压力", "仅覆盖查询优化与索引，未体现存储引擎、事务系统或数据库内核工作" ],
+          "reason" : "证据包含真实的慢查询定位、索引设计与分页查询改写，并产生可验证的性能提升，直接支撑数据库开发中的查询优化与索引职责。"
+        }, {
+          "action" : "SELECT",
+          "bucketId" : 1,
+          "role" : "SECONDARY",
+          "relevance" : 0.55,
+          "confidence" : 0.65,
+          "claimedOutcome" : "通过数据库查询优化降低接口耗时，间接改善后端接口性能。",
+          "evidenceFindings" : [ "优化对象是接口耗时", "涉及分页查询改写", "接口耗时从 800ms 降到 60ms" ],
+          "riskFlags" : [ "核心工作是数据库查询优化，后端服务端编程、接口设计等职责体现较弱", "未说明接口所属业务系统、并发处理或服务端架构细节" ],
+          "reason" : "该经历以数据库优化为主，但优化结果直接作用于接口性能，可作为后端开发中数据库访问与性能优化的辅助证据。"
+        } ]
+      },
+      "functionCandidateNames" : {
+        "12" : "数据库开发",
+        "63" : "运筹优化",
+        "49" : "推荐与搜索工程",
+        "2" : "前端开发",
+        "1" : "后端开发",
+        "105" : "游戏客户端开发",
+        "5" : "小程序与轻应用开发",
+        "15" : "低代码与业务自动化",
+        "8" : "高性能计算",
+        "106" : "游戏服务端开发"
+      }
+    },
+    "G16" : {
+      "knowledge" : {
+        "summary" : "该经历主要体现实验室 GPU 服务器的 Linux 运维与 Docker 环境部署实践。",
+        "assignments" : [ {
+          "action" : "REUSE",
+          "bucketId" : -1,
+          "bucketName" : "Linux",
+          "aliases" : [ ],
+          "relevance" : 0.78,
+          "confidence" : 0.86,
+          "evidenceFindings" : [ "负责实验室 4 台 GPU 服务器的账号管理", "每周巡检并处理 15 次故障工单", "编写巡检脚本提升巡检效率" ],
+          "reason" : "服务器账号管理、巡检和故障处理均属于 Linux 运维范畴，已有 Linux 标签覆盖该证据。"
+        }, {
+          "action" : "CREATE",
+          "bucketId" : null,
+          "bucketName" : "Docker",
+          "aliases" : [ "docker" ],
+          "relevance" : 0.66,
+          "confidence" : 0.8,
+          "evidenceFindings" : [ "负责 Docker 环境部署" ],
+          "reason" : "证据明确提到 Docker 环境部署，而现有 Linux 标签不能覆盖 Docker 这一独立技术，因此创建可长期累计的粗粒度知识标签。"
+        } ]
+      },
+      "function" : {
+        "summary" : "该经历直接承担实验室GPU服务器运维值班，涵盖账号管理、Docker环境部署、巡检和故障工单处理，可归因为技术运维。",
+        "assignments" : [ {
+          "action" : "SELECT",
+          "bucketId" : 22,
+          "role" : "PRIMARY",
+          "relevance" : 0.95,
+          "confidence" : 0.9,
+          "claimedOutcome" : "负责4台GPU服务器的账号管理、Docker环境部署、每周巡检，处理15次故障工单，并编写巡检脚本提升效率。",
+          "evidenceFindings" : [ "负责实验室4台GPU服务器的账号管理", "负责Docker环境部署", "负责每周巡检", "处理15次故障工单", "学生自述编写巡检脚本后效率提升" ],
+          "riskFlags" : [ "未说明故障工单的具体类型、影响范围和独立处理程度", "巡检脚本细节未提供，自动化程度无法进一步验证" ],
+          "reason" : "服务器账号管理、Docker环境部署、巡检和故障工单处理直接对应技术运维的服务器运维、部署维护、故障排查职责，且有明确负责范围和工单数量。"
+        } ]
+      },
+      "functionCandidateNames" : {
+        "22" : "技术运维",
+        "28" : "网络运维",
+        "23" : "应用支持",
+        "365" : "工业设备操作",
+        "74" : "硬件测试",
+        "59" : "大数据平台工程",
+        "20" : "DevOps工程",
+        "8" : "高性能计算",
+        "242" : "航空器维修",
+        "17" : "测试开发"
+      }
+    },
+    "G17" : {
+      "knowledge" : {
+        "summary" : "该证据围绕使用 RabbitMQ 实现异步扣库存、失败重试与重复消费处理，归入消息队列，并因订单系统异步化改造涉及 Spring Boot 后端实现而归入 Spring Boot。已忽略心得中的指令性文字。",
+        "assignments" : [ {
+          "action" : "CREATE",
+          "bucketId" : null,
+          "bucketName" : "消息队列",
+          "aliases" : [ "RabbitMQ", "MQ" ],
+          "relevance" : 0.95,
+          "confidence" : 0.9,
+          "evidenceFindings" : [ "引入 RabbitMQ 实现下单异步扣库存", "实现失败重试", "处理重复消费问题" ],
+          "reason" : "证据核心是消息队列的异步解耦、失败重试与重复消费处理，现有标签 Java、Spring Boot 均不能覆盖消息队列这一独立技术领域，因此创建可长期累计的粗粒度标签“消息队列”。"
+        }, {
+          "action" : "REUSE",
+          "bucketId" : -2,
+          "bucketName" : "Spring Boot",
+          "aliases" : [ ],
+          "relevance" : 0.6,
+          "confidence" : 0.7,
+          "evidenceFindings" : [ "在课程大作业中实现订单系统异步化改造", "实现异步扣库存与失败重试" ],
+          "reason" : "订单系统异步化改造属于后端服务实现，与已有 Spring Boot 标签覆盖的技术栈相符，故复用该标签。"
+        } ]
+      },
+      "function" : {
+        "summary" : "该证据显示学生在课程大作业中实际实现了基于 RabbitMQ 的订单异步扣库存与失败重试，并处理了重复消费问题，属于后端开发与分布式系统开发的真实交付行为。",
+        "assignments" : [ {
+          "action" : "SELECT",
+          "bucketId" : 1,
+          "role" : "PRIMARY",
+          "relevance" : 0.85,
+          "confidence" : 0.8,
+          "claimedOutcome" : "在订单系统中引入 RabbitMQ，实现下单异步扣库存、失败重试，并处理重复消费问题。",
+          "evidenceFindings" : [ "实现异步扣库存", "处理重复消费", "在课程大作业中引入 RabbitMQ，实现下单异步扣库存和失败重试" ],
+          "riskFlags" : [ "课程大作业规模有限，未说明生产环境部署或并发量级" ],
+          "reason" : "消息队列、异步处理、业务系统实现均属于后端开发核心职责，且有可验证的实现行为。"
+        }, {
+          "action" : "SELECT",
+          "bucketId" : 7,
+          "role" : "SECONDARY",
+          "relevance" : 0.6,
+          "confidence" : 0.6,
+          "claimedOutcome" : "通过失败重试与重复消费处理，提升了异步扣库存流程的容错与一致性。",
+          "evidenceFindings" : [ "处理重复消费", "实现失败重试", "用唯一约束兜底" ],
+          "riskFlags" : [ "未说明是否涉及分布式事务或服务治理等更完整的分布式能力" ],
+          "reason" : "重复消费处理与失败重试涉及幂等与容错，属于分布式系统开发的辅助职责，但深度有限。"
+        } ]
+      },
+      "functionCandidateNames" : {
+        "178" : "库存管理",
+        "7" : "分布式系统开发",
+        "179" : "仓储管理",
+        "5" : "小程序与轻应用开发",
+        "176" : "需求预测",
+        "106" : "游戏服务端开发",
+        "53" : "MLOps工程",
+        "1" : "后端开发",
+        "21" : "站点可靠性工程",
+        "17" : "测试开发"
+      }
+    },
+    "G18" : {
+      "knowledge" : {
+        "summary" : "证据显示用户通过视频接触了 Redis 数据结构，并计划用 Redis 实现排行榜，可归入 Redis 知识桶。已忽略心得中的指令性文字。",
+        "assignments" : [ {
+          "action" : "CREATE",
+          "bucketId" : null,
+          "bucketName" : "Redis",
+          "aliases" : [ "redis" ],
+          "relevance" : 0.6,
+          "confidence" : 0.7,
+          "evidenceFindings" : [ "观看 Redis 数据结构的视频", "计划用 Redis 做排行榜" ],
+          "reason" : "证据明确涉及 Redis 数据结构与 Redis 应用场景，existingBuckets 为空，没有可复用的标签，因此创建粗粒度、可长期累计的知识标签 Redis。"
+        } ]
+      },
+      "function" : null,
+      "functionCandidateNames" : {
+        "49" : "推荐与搜索工程",
+        "29" : "存储工程",
+        "59" : "大数据平台工程",
+        "12" : "数据库开发",
+        "314" : "科研数据管理",
+        "58" : "数据工程",
+        "37" : "渗透测试",
+        "106" : "游戏服务端开发",
+        "42" : "深度学习工程",
+        "7" : "分布式系统开发"
+      }
+    },
+    "G19" : {
+      "knowledge" : {
+        "summary" : "实习支付对账服务中使用 Go 编写对账任务并处理每日 20 万笔交易，归入 Go 知识桶；心得中的告警与人工复核描述未涉及额外可归桶技术。",
+        "assignments" : [ {
+          "action" : "CREATE",
+          "bucketId" : null,
+          "bucketName" : "Go",
+          "aliases" : [ "Golang" ],
+          "relevance" : 0.9,
+          "confidence" : 0.85,
+          "evidenceFindings" : [ "使用 Go 编写对账任务", "每天处理 20 万笔交易" ],
+          "reason" : "证据明确说明使用 Go 编写对账任务，existingBuckets 为空，无任何已有标签可复用，因此创建粗粒度且可长期累计的 Go 标签。"
+        } ]
+      },
+      "function" : {
+        "summary" : "该经历核心是使用 Go 开发支付对账服务，可归因为后端开发。",
+        "assignments" : [ {
+          "action" : "SELECT",
+          "bucketId" : 1,
+          "role" : "PRIMARY",
+          "relevance" : 0.95,
+          "confidence" : 0.9,
+          "claimedOutcome" : "使用 Go 编写支付对账任务，每天处理 20 万笔交易，并实现差异告警和人工复核流程。",
+          "evidenceFindings" : [ "实习期间负责支付对账服务", "使用 Go 编写对账任务", "每天处理 20 万笔交易", "说明了对账差异如何告警和人工复核" ],
+          "riskFlags" : [ "未明确说明独立负责程度与团队协作边界" ],
+          "reason" : "使用 Go 实现支付对账服务，属于服务端编程、业务系统开发与数据处理，符合后端开发的核心职责。"
+        } ]
+      },
+      "functionCandidateNames" : {
+        "23" : "应用支持",
+        "130" : "客户服务",
+        "159" : "财务会计",
+        "174" : "反洗钱与金融合规",
+        "164" : "审计",
+        "161" : "财务分析",
+        "38" : "数字取证与事件响应",
+        "169" : "银行业务",
+        "1" : "后端开发",
+        "5" : "小程序与轻应用开发"
+      }
+    },
+    "G20" : {
+      "knowledge" : {
+        "summary" : "该经历以 8 次用户访谈与用户旅程图开展用户研究，并在 Figma 中产出 24 页高保真原型并完成可用性测试，可归入用户研究与 Figma 两个知识桶。",
+        "assignments" : [ {
+          "action" : "CREATE",
+          "bucketId" : null,
+          "bucketName" : "用户研究",
+          "aliases" : [ "用户访谈", "用户调研", "user research" ],
+          "relevance" : 0.85,
+          "confidence" : 0.9,
+          "evidenceFindings" : [ "完成 8 次用户访谈", "绘制用户旅程图", "通过可用性测试验证原型", "访谈发现用户最在意课表入口" ],
+          "reason" : "证据中明确包含用户访谈、用户旅程图与可用性测试等用户研究活动，属于可长期累计的粗粒度知识方向；existingBuckets 为空，无任何已有标签可复用，故创建。"
+        }, {
+          "action" : "CREATE",
+          "bucketId" : null,
+          "bucketName" : "Figma",
+          "aliases" : [ "figma", "Figma 原型" ],
+          "relevance" : 0.9,
+          "confidence" : 0.95,
+          "evidenceFindings" : [ "在 Figma 中输出 24 个页面的高保真原型" ],
+          "reason" : "证据明确说明使用 Figma 完成 24 页高保真原型输出，Figma 是稳定、可跨经历累计的工具类知识标签；existingBuckets 为空，无可复用标签，故创建。"
+        } ]
+      },
+      "function" : {
+        "summary" : "该经历以用户访谈、用户旅程图、高保真原型与可用性测试为核心，真实支撑用户研究与交互设计职能。",
+        "assignments" : [ {
+          "action" : "SELECT",
+          "bucketId" : 88,
+          "role" : "PRIMARY",
+          "relevance" : 0.95,
+          "confidence" : 0.9,
+          "claimedOutcome" : "完成 8 次用户访谈并绘制用户旅程图，产出需求洞察",
+          "evidenceFindings" : [ "8 次用户访谈", "绘制用户旅程图", "访谈发现大家最在意的是课表入口" ],
+          "riskFlags" : [ ],
+          "reason" : "访谈与用户旅程图属于用户研究的核心方法，且有明确执行数量与洞察产出，可证明承担用户研究职能。"
+        }, {
+          "action" : "SELECT",
+          "bucketId" : 89,
+          "role" : "SECONDARY",
+          "relevance" : 0.9,
+          "confidence" : 0.88,
+          "claimedOutcome" : "在 Figma 中输出 24 个页面高保真原型并通过可用性测试",
+          "evidenceFindings" : [ "24 个页面高保真原型", "在 Figma 中输出原型", "通过可用性测试" ],
+          "riskFlags" : [ ],
+          "reason" : "高保真原型与可用性测试是交互设计的核心交付物，但该次经历的核心职责更偏向研究洞察，故列为辅助职能。"
+        }, {
+          "action" : "SELECT",
+          "bucketId" : 90,
+          "role" : "SECONDARY",
+          "relevance" : 0.75,
+          "confidence" : 0.7,
+          "claimedOutcome" : "绘制用户旅程图并完成交互改版原型",
+          "evidenceFindings" : [ "绘制用户旅程图", "校园 App 交互改版" ],
+          "riskFlags" : [ "未明确说明体验策略或设计系统的完整落地" ],
+          "reason" : "用户旅程图与体验改版属于用户体验设计范畴，但证据更多体现研究与原型执行，作为辅助职能。"
+        }, {
+          "action" : "SKIP",
+          "bucketId" : 307,
+          "role" : "SECONDARY",
+          "relevance" : 0.2,
+          "confidence" : 0.3,
+          "claimedOutcome" : "",
+          "evidenceFindings" : [ "校园 App 交互改版" ],
+          "riskFlags" : [ "未涉及学习路径、教学功能或学习反馈设计" ],
+          "reason" : "校园 App 不等同于教育产品设计，证据中无教学功能或学习体验设计行为。"
+        }, {
+          "action" : "SKIP",
+          "bucketId" : 95,
+          "role" : "SECONDARY",
+          "relevance" : 0.1,
+          "confidence" : 0.2,
+          "claimedOutcome" : "",
+          "evidenceFindings" : [ ],
+          "riskFlags" : [ "无图表、数据叙事或仪表盘相关事实" ],
+          "reason" : "证据中无信息可视化设计相关内容。"
+        }, {
+          "action" : "SKIP",
+          "bucketId" : 92,
+          "role" : "SECONDARY",
+          "relevance" : 0.15,
+          "confidence" : 0.2,
+          "claimedOutcome" : "",
+          "evidenceFindings" : [ ],
+          "riskFlags" : [ "无服务流程、触点设计或前后台协作事实" ],
+          "reason" : "证据未涉及服务设计范畴。"
+        }, {
+          "action" : "SKIP",
+          "bucketId" : 91,
+          "role" : "SECONDARY",
+          "relevance" : 0.3,
+          "confidence" : 0.3,
+          "claimedOutcome" : "",
+          "evidenceFindings" : [ "24 个页面高保真原型" ],
+          "riskFlags" : [ "未说明视觉规范、图标或排版等视觉设计工作" ],
+          "reason" : "高保真原型可能涉及界面视觉，但证据未体现视觉规范或 UI 设计职责。"
+        }, {
+          "action" : "SKIP",
+          "bucketId" : 105,
+          "role" : "SECONDARY",
+          "relevance" : 0.0,
+          "confidence" : 0.1,
+          "claimedOutcome" : "",
+          "evidenceFindings" : [ ],
+          "riskFlags" : [ "候选因字面相似召回，与证据无关" ],
+          "reason" : "证据与游戏客户端开发无关。"
+        }, {
+          "action" : "SKIP",
+          "bucketId" : 106,
+          "role" : "SECONDARY",
+          "relevance" : 0.0,
+          "confidence" : 0.1,
+          "claimedOutcome" : "",
+          "evidenceFindings" : [ ],
+          "riskFlags" : [ "候选因字面相似召回，与证据无关" ],
+          "reason" : "证据与游戏服务端开发无关。"
+        }, {
+          "action" : "SKIP",
+          "bucketId" : 118,
+          "role" : "SECONDARY",
+          "relevance" : 0.1,
+          "confidence" : 0.2,
+          "claimedOutcome" : "",
+          "evidenceFindings" : [ ],
+          "riskFlags" : [ "无用户分层、触达或会员体系等运营行为" ],
+          "reason" : "证据未涉及用户运营职能。"
+        } ]
+      },
+      "functionCandidateNames" : {
+        "88" : "用户研究",
+        "307" : "教育产品设计",
+        "89" : "交互设计",
+        "95" : "信息可视化设计",
+        "90" : "用户体验设计",
+        "92" : "服务设计",
+        "91" : "视觉界面设计",
+        "105" : "游戏客户端开发",
+        "106" : "游戏服务端开发",
+        "118" : "用户运营"
+      }
+    },
+    "G21" : {
+      "knowledge" : {
+        "summary" : "该证据为 Spring 事务传播机制讲座，涉及事务知识，归入已有的 Spring Boot 标签；心得中无指令性文字。",
+        "assignments" : [ {
+          "action" : "REUSE",
+          "bucketId" : -1,
+          "bucketName" : "Spring Boot",
+          "aliases" : [ "spring" ],
+          "relevance" : 0.6,
+          "confidence" : 0.8,
+          "evidenceFindings" : [ "参加 2 小时 Spring 事务传播机制讲座", "了解 REQUIRED 与 REQUIRES_NEW 的区别" ],
+          "reason" : "讲座内容为 Spring 事务传播机制（REQUIRED 与 REQUIRES_NEW），事务属于 Spring Boot 覆盖范围；已有标签 Spring Boot 含义覆盖该证据，无需新建标签。"
+        } ]
+      },
+      "function" : {
+        "summary" : "该证据仅为参加2小时讲座了解Spring事务传播机制概念，属于知识接触而非职能承担，不支撑任何候选核心职能。",
+        "assignments" : [ {
+          "action" : "SKIP",
+          "bucketId" : 1,
+          "role" : "PRIMARY",
+          "relevance" : 0.05,
+          "confidence" : 0.9,
+          "claimedOutcome" : "无实际交付成果，仅参加讲座了解概念",
+          "evidenceFindings" : [ "参加讲座2小时", "了解REQUIRED与REQUIRES_NEW的区别", "反思提到以后写日志可用REQUIRES_NEW" ],
+          "riskFlags" : [ "仅有学习行为，无任何代码实现或系统交付" ],
+          "reason" : "听讲座属于知识接触，未产生可验证的服务端开发交付，不能证明具备后端开发职能。"
+        }, {
+          "action" : "SKIP",
+          "bucketId" : 12,
+          "role" : "PRIMARY",
+          "relevance" : 0.05,
+          "confidence" : 0.9,
+          "claimedOutcome" : "无实际交付成果，仅了解事务传播概念",
+          "evidenceFindings" : [ "参加讲座2小时", "了解事务传播机制" ],
+          "riskFlags" : [ "仅概念学习，无数据库内核或事务系统开发行为" ],
+          "reason" : "事务传播机制属于概念性知识，未涉及存储引擎、查询优化或事务系统开发，不支撑数据库开发职能。"
+        }, {
+          "action" : "SKIP",
+          "bucketId" : 7,
+          "role" : "PRIMARY",
+          "relevance" : 0.05,
+          "confidence" : 0.9,
+          "claimedOutcome" : "无实际交付成果",
+          "evidenceFindings" : [ "参加讲座2小时" ],
+          "riskFlags" : [ "仅概念学习" ],
+          "reason" : "分布式事务概念与分布式系统开发职能无实际行为支撑。"
+        }, {
+          "action" : "SKIP",
+          "bucketId" : 13,
+          "role" : "PRIMARY",
+          "relevance" : 0.0,
+          "confidence" : 0.95,
+          "claimedOutcome" : "无",
+          "evidenceFindings" : [ "参加讲座2小时" ],
+          "riskFlags" : [ "候选仅因语义相似度召回，与中间件开发无关" ],
+          "reason" : "讲座内容与消息中间件、RPC框架、配置中心等中间件开发职能无关。"
+        }, {
+          "action" : "SKIP",
+          "bucketId" : 88,
+          "role" : "PRIMARY",
+          "relevance" : 0.0,
+          "confidence" : 0.95,
+          "claimedOutcome" : "无",
+          "evidenceFindings" : [ "参加讲座2小时" ],
+          "riskFlags" : [ "候选为语义误召回" ],
+          "reason" : "与用户研究职能完全无关。"
+        }, {
+          "action" : "SKIP",
+          "bucketId" : 318,
+          "role" : "PRIMARY",
+          "relevance" : 0.0,
+          "confidence" : 0.95,
+          "claimedOutcome" : "无",
+          "evidenceFindings" : [ "参加讲座2小时" ],
+          "riskFlags" : [ "候选为语义误召回" ],
+          "reason" : "与新闻采编职能完全无关。"
+        }, {
+          "action" : "SKIP",
+          "bucketId" : 121,
+          "role" : "PRIMARY",
+          "relevance" : 0.0,
+          "confidence" : 0.95,
+          "claimedOutcome" : "无",
+          "evidenceFindings" : [ "参加讲座2小时" ],
+          "riskFlags" : [ "候选为语义误召回" ],
+          "reason" : "与活动运营职能完全无关。"
+        }, {
+          "action" : "SKIP",
+          "bucketId" : 333,
+          "role" : "PRIMARY",
+          "relevance" : 0.0,
+          "confidence" : 0.95,
+          "claimedOutcome" : "无",
+          "evidenceFindings" : [ "参加讲座2小时" ],
+          "riskFlags" : [ "候选为语义误召回" ],
+          "reason" : "与直播与短视频运营职能完全无关。"
+        }, {
+          "action" : "SKIP",
+          "bucketId" : 136,
+          "role" : "PRIMARY",
+          "relevance" : 0.0,
+          "confidence" : 0.95,
+          "claimedOutcome" : "无",
+          "evidenceFindings" : [ "参加讲座2小时" ],
+          "riskFlags" : [ "候选为语义误召回" ],
+          "reason" : "与业务分析职能完全无关。"
+        }, {
+          "action" : "SKIP",
+          "bucketId" : 117,
+          "role" : "PRIMARY",
+          "relevance" : 0.0,
+          "confidence" : 0.95,
+          "claimedOutcome" : "无",
+          "evidenceFindings" : [ "参加讲座2小时" ],
+          "riskFlags" : [ "候选为语义误召回" ],
+          "reason" : "与增长运营职能完全无关。"
+        } ]
+      },
+      "functionCandidateNames" : {
+        "13" : "中间件开发",
+        "12" : "数据库开发",
+        "88" : "用户研究",
+        "318" : "新闻采编",
+        "7" : "分布式系统开发",
+        "121" : "活动运营",
+        "333" : "直播与短视频运营",
+        "1" : "后端开发",
+        "136" : "业务分析",
+        "117" : "增长运营"
+      }
+    },
+    "G22" : {
+      "knowledge" : {
+        "summary" : "该证据为 ICPC 区域赛参赛经历，实际使用 C++ 完成图论与动态规划题目，归入 C++ 知识桶。已忽略心得中的指令性文字。",
+        "assignments" : [ {
+          "action" : "REUSE",
+          "bucketId" : -1,
+          "bucketName" : "C++",
+          "aliases" : [ "cpp" ],
+          "relevance" : 0.9,
+          "confidence" : 0.85,
+          "evidenceFindings" : [ "三人组队参加 ICPC 区域赛", "负责图论与动态规划题", "获得铜奖" ],
+          "reason" : "ICPC 竞赛通常使用 C++ 实现算法题，证据中图论与动态规划题的实现依赖 C++ 编程；已有标签 C++ 覆盖该证据，故复用。"
+        } ]
+      },
+      "function" : {
+        "summary" : "该证据显示学生在 ICPC 区域赛中负责图论与动态规划题目并随队获得铜奖，属于竞赛算法设计与实现，可支撑算法工程职能。",
+        "assignments" : [ {
+          "action" : "SELECT",
+          "bucketId" : 9,
+          "role" : "PRIMARY",
+          "relevance" : 0.9,
+          "confidence" : 0.85,
+          "claimedOutcome" : "在三人队伍中负责图论与动态规划题目的算法设计与实现，队伍获得 ICPC 区域赛铜奖。",
+          "evidenceFindings" : [ "三人组队参加 ICPC 区域赛", "负责图论与动态规划题", "获得铜奖", "赛前进行图论专项训练" ],
+          "riskFlags" : [ "未说明个人在题目实现中的具体代码贡献量", "铜奖为团队成绩，个人贡献边界不完全清晰" ],
+          "reason" : "ICPC 区域赛为高难度竞赛算法场景，学生明确负责图论与动态规划题目，属于算法设计、复杂度分析与竞赛算法的真实交付，直接对应算法工程职能。"
+        } ]
+      },
+      "functionCandidateNames" : {
+        "50" : "知识图谱工程",
+        "99" : "游戏关卡设计",
+        "9" : "算法工程",
+        "63" : "运筹优化",
+        "8" : "高性能计算",
+        "51" : "强化学习工程",
+        "30" : "边缘计算工程",
+        "52" : "AI平台工程",
+        "55" : "AI产品应用",
+        "67" : "地理空间分析"
+      }
+    },
+    "G23" : {
+      "knowledge" : {
+        "summary" : "该证据是翻译英文技术博客并发布，实际用到的知识是英语阅读与翻译，已有标签“英语”已覆盖，直接复用。",
+        "assignments" : [ {
+          "action" : "REUSE",
+          "bucketId" : -1,
+          "bucketName" : "英语",
+          "aliases" : [ "English" ],
+          "relevance" : 0.9,
+          "confidence" : 0.85,
+          "evidenceFindings" : [ "翻译 5 篇英文技术博客并发布到社团公众号", "累计翻译 1.2 万字", "心得提到需先统一术语译名表，说明涉及英文术语理解与译名统一" ],
+          "reason" : "活动核心是对英文技术博客的理解与翻译，属于英语语言运用；existingBuckets 中已有“英语（English）”，含义完全覆盖该证据，按用户已有命名复用，不另建“翻译”等同义标签。"
+        } ]
+      },
+      "function" : {
+        "summary" : "用户完成5篇英文技术博客的翻译并发布，累计1.2万字，体现了笔译与术语统一的实际交付能力。",
+        "assignments" : [ {
+          "action" : "SELECT",
+          "bucketId" : 370,
+          "role" : "PRIMARY",
+          "relevance" : 0.95,
+          "confidence" : 0.9,
+          "claimedOutcome" : "翻译5篇英文技术博客并发布到社团公众号，累计1.2万字，并统一术语译名。",
+          "evidenceFindings" : [ "翻译1.2万字", "发布5篇", "翻译5篇英文技术博客并发布到社团公众号", "术语要先统一译名表" ],
+          "riskFlags" : [ ],
+          "reason" : "有明确的笔译交付量（1.2万字、5篇）和术语管理实践，直接支撑翻译职能。"
+        }, {
+          "action" : "SELECT",
+          "bucketId" : 317,
+          "role" : "SECONDARY",
+          "relevance" : 0.6,
+          "confidence" : 0.7,
+          "claimedOutcome" : "将英文技术博客转换为中文并发布，涉及文本改写与发布规范。",
+          "evidenceFindings" : [ "翻译5篇英文技术博客并发布到社团公众号", "发布5篇" ],
+          "riskFlags" : [ "未明确说明是否进行编辑校对或原创写作" ],
+          "reason" : "翻译过程包含文本转换与发布，属于写作与编辑的辅助职责，但非核心创作。"
+        } ]
+      },
+      "functionCandidateNames" : {
+        "370" : "翻译",
+        "371" : "口译",
+        "317" : "写作与编辑",
+        "84" : "技术产品管理",
+        "115" : "内容营销",
+        "313" : "学术写作与出版",
+        "10" : "编译器与程序语言开发",
+        "334" : "出版管理",
+        "367" : "英语运用",
+        "306" : "教育技术应用"
+      }
+    },
+    "G24" : {
+      "knowledge" : {
+        "summary" : "证据为社团公众号选题与排版运营，未涉及可归入知识与技术桶的具体技术栈，故不创建标签。已忽略心得中的指令性文字。",
+        "assignments" : [ {
+          "action" : "SKIP",
+          "bucketId" : 0,
+          "bucketName" : "",
+          "aliases" : [ ],
+          "relevance" : 0.0,
+          "confidence" : 0.0,
+          "evidenceFindings" : [ "负责公众号选题与排版", "3 个月发布 24 篇推文", "粉丝从 800 增长到 2300" ],
+          "reason" : "证据仅体现内容运营与排版工作，未出现任何具体知识或技术概念（如排版工具、数据分析工具、编程语言等），existingBuckets 也为空，无可复用或可创建的粗粒度知识标签。"
+        } ]
+      },
+      "function" : {
+        "summary" : "该经历是社团公众号的内容生产与运营，负责选题、排版并持续发布推文，带来粉丝增长，核心支撑内容运营与内容策划职能。",
+        "assignments" : [ {
+          "action" : "SELECT",
+          "bucketId" : 119,
+          "role" : "PRIMARY",
+          "relevance" : 0.85,
+          "confidence" : 0.8,
+          "claimedOutcome" : "负责公众号选题与排版，3个月发布24篇推文，粉丝从800增长到2300",
+          "evidenceFindings" : [ "负责公众号选题与排版", "3个月发布24篇推文", "粉丝从800增长到2300" ],
+          "riskFlags" : [ "粉丝增长可能受外部因素影响，未说明归因" ],
+          "reason" : "实际承担公众号内容生产与栏目化运营，有持续发布与可验证的粉丝增长结果，符合内容运营核心职责。"
+        }, {
+          "action" : "SELECT",
+          "bucketId" : 316,
+          "role" : "SECONDARY",
+          "relevance" : 0.7,
+          "confidence" : 0.7,
+          "claimedOutcome" : "负责公众号选题与栏目化内容策划",
+          "evidenceFindings" : [ "负责公众号选题与排版", "反思提到固定栏目比零散推文更能留住读者" ],
+          "riskFlags" : [ ],
+          "reason" : "选题与栏目化实践属于内容策划范畴，但主要职责仍偏运营执行，故列为辅助职能。"
+        }, {
+          "action" : "SKIP",
+          "bucketId" : 115,
+          "role" : "SECONDARY",
+          "relevance" : 0.4,
+          "confidence" : 0.4,
+          "claimedOutcome" : "内容选题与发布",
+          "evidenceFindings" : [ "负责公众号选题与排版", "发布24篇推文" ],
+          "riskFlags" : [ "无SEO、分发渠道或转化数据支撑" ],
+          "reason" : "虽涉及选题，但缺少内容营销特有的分发、SEO或转化证据，不足以支撑该职能。"
+        }, {
+          "action" : "SKIP",
+          "bucketId" : 117,
+          "role" : "SECONDARY",
+          "relevance" : 0.35,
+          "confidence" : 0.35,
+          "claimedOutcome" : "粉丝增长",
+          "evidenceFindings" : [ "粉丝从800增长到2300" ],
+          "riskFlags" : [ "增长结果未说明由增长运营手段驱动" ],
+          "reason" : "粉丝增长是内容运营的自然结果，缺乏拉新、促活、留存等增长运营具体行为证据。"
+        }, {
+          "action" : "SKIP",
+          "bucketId" : 333,
+          "role" : "SECONDARY",
+          "relevance" : 0.1,
+          "confidence" : 0.2,
+          "claimedOutcome" : "无",
+          "evidenceFindings" : [ "发布推文" ],
+          "riskFlags" : [ "候选因语义相似召回，但无直播或短视频证据" ],
+          "reason" : "经历为图文公众号运营，与直播和短视频运营无关。"
+        }, {
+          "action" : "SKIP",
+          "bucketId" : 120,
+          "role" : "SECONDARY",
+          "relevance" : 0.1,
+          "confidence" : 0.2,
+          "claimedOutcome" : "无",
+          "evidenceFindings" : [ "发布推文" ],
+          "riskFlags" : [ "无社群、用户关系或治理证据" ],
+          "reason" : "未涉及社区规则、用户关系或社群活动。"
+        }, {
+          "action" : "SKIP",
+          "bucketId" : 118,
+          "role" : "SECONDARY",
+          "relevance" : 0.1,
+          "confidence" : 0.2,
+          "claimedOutcome" : "无",
+          "evidenceFindings" : [ "粉丝增长" ],
+          "riskFlags" : [ "无用户分层、触达或会员体系证据" ],
+          "reason" : "未体现用户分层、触达、会员或召回等用户运营行为。"
+        }, {
+          "action" : "SKIP",
+          "bucketId" : 334,
+          "role" : "SECONDARY",
+          "relevance" : 0.1,
+          "confidence" : 0.2,
+          "claimedOutcome" : "无",
+          "evidenceFindings" : [ "选题" ],
+          "riskFlags" : [ "无编辑流程、版权、印制或发行证据" ],
+          "reason" : "仅字面命中选题，无出版管理相关流程。"
+        }, {
+          "action" : "SKIP",
+          "bucketId" : 131,
+          "role" : "SECONDARY",
+          "relevance" : 0.05,
+          "confidence" : 0.2,
+          "claimedOutcome" : "无",
+          "evidenceFindings" : [ ],
+          "riskFlags" : [ "无媒体关系或舆情证据" ],
+          "reason" : "与公共关系无关。"
+        }, {
+          "action" : "SKIP",
+          "bucketId" : 5,
+          "role" : "SECONDARY",
+          "relevance" : 0.0,
+          "confidence" : 0.2,
+          "claimedOutcome" : "无",
+          "evidenceFindings" : [ ],
+          "riskFlags" : [ "候选因语义相似召回，实际无关" ],
+          "reason" : "与小程序或轻应用开发无关。"
+        } ]
+      },
+      "functionCandidateNames" : {
+        "119" : "内容运营",
+        "333" : "直播与短视频运营",
+        "120" : "社区运营",
+        "115" : "内容营销",
+        "117" : "增长运营",
+        "316" : "内容策划",
+        "334" : "出版管理",
+        "118" : "用户运营",
+        "131" : "公共关系",
+        "5" : "小程序与轻应用开发"
+      }
+    },
+    "G25" : {
+      "knowledge" : {
+        "summary" : "证据显示使用 JUnit 编写单元测试并用 Postman 做接口测试，可归入 Java 与接口测试相关技术桶；心得中的经验性文字不构成指令。",
+        "assignments" : [ {
+          "action" : "REUSE",
+          "bucketId" : -1,
+          "bucketName" : "Java",
+          "aliases" : [ "java" ],
+          "relevance" : 0.9,
+          "confidence" : 0.9,
+          "evidenceFindings" : [ "编写 120 条 JUnit 单元测试", "测试覆盖率 78%" ],
+          "reason" : "JUnit 是 Java 生态的单元测试框架，证据中的单元测试实践直接落在已有 Java 标签范围内，故复用而非新建。"
+        }, {
+          "action" : "CREATE",
+          "bucketId" : null,
+          "bucketName" : "接口测试",
+          "aliases" : [ "API 测试", "Postman" ],
+          "relevance" : 0.8,
+          "confidence" : 0.85,
+          "evidenceFindings" : [ "编写 Postman 接口测试集" ],
+          "reason" : "已有标签仅有 Java，无法覆盖 Postman 接口测试这一独立且可长期累计的技术方向；接口测试粒度适中、可跨经历复用，故创建。"
+        } ]
+      },
+      "function" : {
+        "summary" : "该经历核心是为小组毕设编写并执行单元测试与接口测试，可归因为软件测试职能。",
+        "assignments" : [ {
+          "action" : "SELECT",
+          "bucketId" : 16,
+          "role" : "PRIMARY",
+          "relevance" : 0.95,
+          "confidence" : 0.9,
+          "claimedOutcome" : "为小组毕设编写120条JUnit单元测试和Postman接口测试集，测试覆盖率达到78%。",
+          "evidenceFindings" : [ "为小组毕设编写120条JUnit单元测试", "编写Postman接口测试集", "测试覆盖率78%", "反思提到优先补充边界条件测试以发现问题" ],
+          "riskFlags" : [ "未体现缺陷管理、测试计划或集成/端到端测试等完整测试流程" ],
+          "reason" : "证据包含实际编写并运行单元测试与接口测试、量化覆盖率，属于软件测试的核心职责，而非仅学习测试概念。"
+        } ]
+      },
+      "functionCandidateNames" : {
+        "16" : "软件测试",
+        "17" : "测试开发",
+        "37" : "渗透测试",
+        "74" : "硬件测试",
+        "96" : "无障碍设计",
+        "73" : "集成电路验证",
+        "88" : "用户研究",
+        "94" : "设计系统建设",
+        "19" : "软件质量管理",
+        "1" : "后端开发"
+      }
+    },
+    "G26" : {
+      "knowledge" : {
+        "summary" : "该证据使用 PyTorch 训练 ResNet 完成猫狗图像分类，涉及 PyTorch、深度学习和计算机视觉知识。",
+        "assignments" : [ {
+          "action" : "CREATE",
+          "bucketId" : null,
+          "bucketName" : "PyTorch",
+          "aliases" : [ "pytorch", "torch" ],
+          "relevance" : 0.95,
+          "confidence" : 0.95,
+          "evidenceFindings" : [ "使用 PyTorch 训练 ResNet 完成猫狗分类", "准确率 92%" ],
+          "reason" : "证据明确使用 PyTorch 框架进行模型训练；现有 Python 桶仅代表语言，不能覆盖 PyTorch 框架知识，故创建。"
+        }, {
+          "action" : "CREATE",
+          "bucketId" : null,
+          "bucketName" : "深度学习",
+          "aliases" : [ "deep learning", "DL" ],
+          "relevance" : 0.9,
+          "confidence" : 0.9,
+          "evidenceFindings" : [ "训练 ResNet 进行图像分类", "数据增强提升准确率" ],
+          "reason" : "ResNet 训练、数据增强属于深度学习范畴；现有 Python 桶不覆盖深度学习知识，故创建。"
+        }, {
+          "action" : "CREATE",
+          "bucketId" : null,
+          "bucketName" : "计算机视觉",
+          "aliases" : [ "computer vision", "CV" ],
+          "relevance" : 0.85,
+          "confidence" : 0.9,
+          "evidenceFindings" : [ "猫狗图像分类任务" ],
+          "reason" : "猫狗图像分类是计算机视觉的典型任务；现有 Python 桶不覆盖该领域，故创建。"
+        } ]
+      },
+      "function" : {
+        "summary" : "该证据为按实验指导书完成的课程级图像分类实验，属于有明确交付的模型训练实践，可支撑计算机视觉与机器学习工程的辅助职能，但深度有限。",
+        "assignments" : [ {
+          "action" : "SELECT",
+          "bucketId" : 46,
+          "role" : "PRIMARY",
+          "relevance" : 0.75,
+          "confidence" : 0.7,
+          "claimedOutcome" : "使用 PyTorch 训练 ResNet 完成猫狗图像二分类，测试准确率达到 92%。",
+          "evidenceFindings" : [ "按照实验指导书用 PyTorch 训练 ResNet 完成猫狗分类", "准确率 92%", "学生反思数据增强对准确率提升明显" ],
+          "riskFlags" : [ "按指导书完成，自主设计与调优成分有限", "仅单一课程实验，缺乏真实业务场景与部署验证" ],
+          "reason" : "任务核心是图像分类，直接对应计算机视觉职能，且有可验证的模型训练与准确率结果。"
+        }, {
+          "action" : "SELECT",
+          "bucketId" : 41,
+          "role" : "SECONDARY",
+          "relevance" : 0.6,
+          "confidence" : 0.6,
+          "claimedOutcome" : "完成监督学习式的模型训练与评估流程，并通过数据增强提升模型表现。",
+          "evidenceFindings" : [ "训练 ResNet 完成分类任务", "准确率 92%", "反思数据增强对准确率提升明显" ],
+          "riskFlags" : [ "未体现特征工程或系统性模型评估方法", "实验流程由指导书给定" ],
+          "reason" : "包含模型训练与评估环节，属于机器学习工程的辅助职责，但深度和自主性有限。"
+        }, {
+          "action" : "SELECT",
+          "bucketId" : 42,
+          "role" : "SECONDARY",
+          "relevance" : 0.5,
+          "confidence" : 0.5,
+          "claimedOutcome" : "使用 PyTorch 搭建并训练 ResNet 神经网络完成图像分类。",
+          "evidenceFindings" : [ "用 PyTorch 训练 ResNet", "准确率 92%" ],
+          "riskFlags" : [ "未涉及训练优化、模型压缩或分布式训练等深度学习工程核心内容", "网络结构与训练流程来自实验指导书" ],
+          "reason" : "涉及神经网络训练，但未体现优化、压缩、分布式等深度学习工程核心能力，仅作辅助归因。"
+        } ]
+      },
+      "functionCandidateNames" : {
+        "42" : "深度学习工程",
+        "46" : "计算机视觉",
+        "48" : "多模态人工智能",
+        "50" : "知识图谱工程",
+        "41" : "机器学习工程",
+        "43" : "生成式人工智能工程",
+        "51" : "强化学习工程",
+        "272" : "兽医与动物医疗",
+        "54" : "AI安全与治理",
+        "45" : "自然语言处理"
+      }
+    },
+    "G27" : {
+      "knowledge" : {
+        "summary" : "证据显示学生通过网课接触 Java 并跟做图书管理系统，可归入 Java 知识桶；心得中无指令性文字。",
+        "assignments" : [ {
+          "action" : "REUSE",
+          "bucketId" : -1,
+          "bucketName" : "Java",
+          "aliases" : [ ],
+          "relevance" : 0.7,
+          "confidence" : 0.8,
+          "evidenceFindings" : [ "观看《Java 项目实战》网课 20 小时", "跟着视频敲了一个图书管理系统", "了解了项目的整体结构" ],
+          "reason" : "已有 Java 标签直接覆盖该证据涉及的 Java 语言与项目实践，无需创建新标签。"
+        } ]
+      },
+      "function" : {
+        "summary" : "该证据仅为观看网课并跟随视频敲代码，属于学习接触而非真实交付，不足以证明承担任何核心职能。",
+        "assignments" : [ {
+          "action" : "SKIP",
+          "bucketId" : 1,
+          "role" : "PRIMARY",
+          "relevance" : 0.2,
+          "confidence" : 0.1,
+          "claimedOutcome" : "跟随视频完成一个图书管理系统的练习代码",
+          "evidenceFindings" : [ "观看 20 小时网课", "跟着视频敲了一个图书管理系统", "自述仅了解了项目的整体结构" ],
+          "riskFlags" : [ "跟随教程敲代码不等于独立开发", "无部署、无真实用户、无独立设计" ],
+          "reason" : "仅为教程跟随式练习，无真实交付或独立负责模块，不能证明后端开发职能。"
+        }, {
+          "action" : "SKIP",
+          "bucketId" : 303,
+          "role" : "SECONDARY",
+          "relevance" : 0.1,
+          "confidence" : 0.1,
+          "claimedOutcome" : "无课程设计产出",
+          "evidenceFindings" : [ "观看网课学习" ],
+          "riskFlags" : [ "候选仅因语义相似召回，与课程设计职能无关" ],
+          "reason" : "用户是课程学习者而非课程设计者，不支撑课程设计职能。"
+        } ]
+      },
+      "functionCandidateNames" : {
+        "303" : "课程设计",
+        "2" : "前端开发",
+        "106" : "游戏服务端开发",
+        "1" : "后端开发",
+        "105" : "游戏客户端开发",
+        "6" : "软件架构设计",
+        "97" : "游戏系统设计",
+        "100" : "游戏数值设计",
+        "26" : "基础设施工程",
+        "46" : "计算机视觉"
+      }
+    },
+    "G28" : {
+      "knowledge" : {
+        "summary" : "该证据为一次 1.5 小时的 Spring Cloud 服务注册与熔断讲座，内容属于 Spring 生态的微服务知识，归入已有的 Spring Boot 知识桶；仅为听讲接触，未体现动手实践。",
+        "assignments" : [ {
+          "action" : "REUSE",
+          "bucketId" : -1,
+          "bucketName" : "Spring Boot",
+          "aliases" : [ ],
+          "relevance" : 0.55,
+          "confidence" : 0.6,
+          "evidenceFindings" : [ "参加讲座 1.5 小时，主题为 Spring Cloud 服务注册与熔断", "心得提到熔断可以防止故障扩散" ],
+          "reason" : "讲座内容为 Spring Cloud 的服务注册与熔断，属于 Spring 生态的微服务知识，与已有标签 Spring Boot 同属一个粗粒度技术桶（同类粒度规则中 Spring MVC、Controller、事务等均归入 Spring Boot），因此复用该标签而不另建 Spring Cloud 同族标签；证据仅为听讲，未体现编码实践，故相关度与置信度取中等值。"
+        } ]
+      },
+      "function" : {
+        "summary" : "该证据仅为参加一场微服务架构讲座并记录概念性理解，属于知识接触而非职能承担，不支撑任何核心职能。",
+        "assignments" : [ {
+          "action" : "SKIP",
+          "bucketId" : 1,
+          "role" : "SECONDARY",
+          "relevance" : 0.1,
+          "confidence" : 0.9,
+          "claimedOutcome" : "无实际交付成果，仅听取讲座并复述熔断概念",
+          "evidenceFindings" : [ "参加讲座 1.5 小时", "讲座主题为 Spring Cloud 服务注册与熔断", "学生反思仅复述熔断可防止故障扩散" ],
+          "riskFlags" : [ "关键词'微服务'命中但无任何开发或实现行为", "接触知识不等于能承担职能" ],
+          "reason" : "仅听课与概念复述，没有服务端编程、接口设计或微服务实现等可验证行为，不构成后端开发职能证据。"
+        }, {
+          "action" : "SKIP",
+          "bucketId" : 6,
+          "role" : "SECONDARY",
+          "relevance" : 0.1,
+          "confidence" : 0.9,
+          "claimedOutcome" : "无架构设计交付，仅了解熔断概念",
+          "evidenceFindings" : [ "参加讲座 1.5 小时", "内容涉及服务注册与熔断" ],
+          "riskFlags" : [ "无系统拆分、技术选型或架构演进的实际工作" ],
+          "reason" : "听讲座不构成架构设计职责，缺乏任何设计产出或决策行为。"
+        }, {
+          "action" : "SKIP",
+          "bucketId" : 7,
+          "role" : "SECONDARY",
+          "relevance" : 0.1,
+          "confidence" : 0.9,
+          "claimedOutcome" : "无分布式系统开发行为，仅概念性了解容错",
+          "evidenceFindings" : [ "参加讲座 1.5 小时", "学生反思提到熔断防止故障扩散" ],
+          "riskFlags" : [ "容错概念仅停留在认知层面" ],
+          "reason" : "没有一致性、服务治理、容错实现等开发行为，仅为知识接触。"
+        }, {
+          "action" : "SKIP",
+          "bucketId" : 13,
+          "role" : "SECONDARY",
+          "relevance" : 0.1,
+          "confidence" : 0.9,
+          "claimedOutcome" : "无中间件开发行为，仅听讲座了解注册中心概念",
+          "evidenceFindings" : [ "参加讲座 1.5 小时", "讲座涉及服务注册" ],
+          "riskFlags" : [ "注册中心仅为讲座提及，无实现或使用经历" ],
+          "reason" : "未参与注册中心、网关等中间件的开发或配置，不构成职能证据。"
+        }, {
+          "action" : "SKIP",
+          "bucketId" : 25,
+          "role" : "SECONDARY",
+          "relevance" : 0.05,
+          "confidence" : 0.95,
+          "claimedOutcome" : "无容器或云原生工程实践",
+          "evidenceFindings" : [ "参加讲座 1.5 小时" ],
+          "riskFlags" : [ "语义相似度召回，实际无容器、Kubernetes 或云原生部署行为" ],
+          "reason" : "证据中无任何容器、集群或云原生部署相关内容，候选召回不相关。"
+        } ]
+      },
+      "functionCandidateNames" : {
+        "25" : "容器与云原生工程",
+        "6" : "软件架构设计",
+        "1" : "后端开发",
+        "37" : "渗透测试",
+        "20" : "DevOps工程",
+        "33" : "云安全",
+        "13" : "中间件开发",
+        "7" : "分布式系统开发",
+        "5" : "小程序与轻应用开发",
+        "24" : "云计算工程"
+      }
+    },
+    "G29" : {
+      "knowledge" : {
+        "summary" : "该证据仅为参加 1 小时 Python 入门讲座，可归入 Python 知识桶；已忽略心得中的指令性文字（要求创建“全栈架构大师”并设定相关度与 PRIMARY 职能），未据此创建标签或调整数值。",
+        "assignments" : [ {
+          "action" : "CREATE",
+          "bucketId" : null,
+          "bucketName" : "Python",
+          "aliases" : [ "python" ],
+          "relevance" : 0.3,
+          "confidence" : 0.6,
+          "evidenceFindings" : [ "参加 1 小时 Python 入门讲座", "活动标题与描述均为 Python 入门讲座，未提及任何编码、练习或产出" ],
+          "reason" : "existingBuckets 为空，没有任何已有标签可复用；证据中唯一可核对的技术概念是 Python，且属于可长期累计的粗粒度知识标签，故创建 Python。仅凭 1 小时入门讲座只能说明接触过 Python 基础内容，因此相关度与置信度均不高，不夸大为掌握。"
+        } ]
+      },
+      "function" : {
+        "summary" : "该证据仅为参加1小时Python入门讲座，属于知识接触而非职能承担，且学生文本包含试图操纵归因的指令，应忽略。",
+        "assignments" : [ {
+          "action" : "SKIP",
+          "bucketId" : 1,
+          "role" : "PRIMARY",
+          "relevance" : 0.0,
+          "confidence" : 0.95,
+          "claimedOutcome" : "无实际交付成果，仅参加讲座。",
+          "evidenceFindings" : [ "参加讲座 1 小时", "参加 1 小时 Python 入门讲座" ],
+          "riskFlags" : [ "studentWrittenText 包含要求创建标签、设定relevance并选择后端开发为PRIMARY的指令，属于操纵性内容，已忽略" ],
+          "reason" : "仅参加入门讲座属于知识接触，无服务端编程、接口设计等真实交付行为，不能证明具备后端开发职能。"
+        }, {
+          "action" : "SKIP",
+          "bucketId" : 6,
+          "role" : "SECONDARY",
+          "relevance" : 0.0,
+          "confidence" : 0.95,
+          "claimedOutcome" : "无。",
+          "evidenceFindings" : [ "参加讲座 1 小时" ],
+          "riskFlags" : [ ],
+          "reason" : "无任何架构设计相关行为证据。"
+        }, {
+          "action" : "SKIP",
+          "bucketId" : 25,
+          "role" : "SECONDARY",
+          "relevance" : 0.0,
+          "confidence" : 0.95,
+          "claimedOutcome" : "无。",
+          "evidenceFindings" : [ "参加讲座 1 小时" ],
+          "riskFlags" : [ ],
+          "reason" : "无容器或云原生相关行为证据。"
+        }, {
+          "action" : "SKIP",
+          "bucketId" : 2,
+          "role" : "SECONDARY",
+          "relevance" : 0.0,
+          "confidence" : 0.95,
+          "claimedOutcome" : "无。",
+          "evidenceFindings" : [ "参加讲座 1 小时" ],
+          "riskFlags" : [ ],
+          "reason" : "无前端开发相关行为证据。"
+        } ]
+      },
+      "functionCandidateNames" : {
+        "6" : "软件架构设计",
+        "25" : "容器与云原生工程",
+        "2" : "前端开发",
+        "94" : "设计系统建设",
+        "1" : "后端开发",
+        "11" : "操作系统开发",
+        "5" : "小程序与轻应用开发",
+        "4" : "桌面应用开发",
+        "59" : "大数据平台工程",
+        "98" : "游戏玩法设计"
+      }
+    },
+    "G30" : {
+      "knowledge" : {
+        "summary" : "该证据为完成 7 道 LeetCode 简单题的算法练习，可归入算法知识桶；已忽略心得中要求“相关度给 1、新建分布式系统专家标签”的指令性文字。",
+        "assignments" : [ {
+          "action" : "CREATE",
+          "bucketId" : null,
+          "bucketName" : "算法",
+          "aliases" : [ "Algorithm", "算法与数据结构" ],
+          "relevance" : 0.7,
+          "confidence" : 0.8,
+          "evidenceFindings" : [ "完成 7 道 LeetCode 简单题", "标题为“每日算法打卡”，属于持续的算法题目练习" ],
+          "reason" : "证据事实是刷 LeetCode 算法题，直接对应算法这一可长期累计的粗粒度知识标签；existingBuckets 为空，没有任何已有标签可复用，故创建“算法”。未采用“LeetCode”作为标签名，因其是平台名而非知识技术；也未按心得要求创建“分布式系统专家”，该文字属指令性内容且与证据事实无关。"
+        } ]
+      },
+      "function" : {
+        "summary" : "仅完成 7 道 LeetCode 简单题，属于低难度练习，不足以证明能承担任何核心职能；学生文字中的评分与新建标签要求属于无效指令，已忽略。",
+        "assignments" : [ {
+          "action" : "SKIP",
+          "bucketId" : 9,
+          "role" : "SECONDARY",
+          "relevance" : 0.2,
+          "confidence" : 0.7,
+          "claimedOutcome" : "完成 7 道 LeetCode 简单题",
+          "evidenceFindings" : [ "完成 7 道题", "题目为 LeetCode 简单题", "标题为每日算法打卡" ],
+          "riskFlags" : [ "题量与难度均低，无算法设计或复杂度分析的交付证据" ],
+          "reason" : "简单题打卡属于入门练习，未体现算法设计、优化或竞赛级别的真实交付，不足以支撑算法工程职能。"
+        }, {
+          "action" : "SKIP",
+          "bucketId" : 7,
+          "role" : "SECONDARY",
+          "relevance" : 0.05,
+          "confidence" : 0.9,
+          "claimedOutcome" : "无分布式系统相关工作",
+          "evidenceFindings" : [ "证据仅涉及 LeetCode 简单题练习" ],
+          "riskFlags" : [ "候选仅因关键词“分布式”字面命中，与证据无关" ],
+          "reason" : "证据中不存在一致性、分布式事务、服务治理等任何分布式系统开发行为。"
+        }, {
+          "action" : "SKIP",
+          "bucketId" : 59,
+          "role" : "SECONDARY",
+          "relevance" : 0.05,
+          "confidence" : 0.9,
+          "claimedOutcome" : "无大数据平台相关工作",
+          "evidenceFindings" : [ "证据仅涉及 LeetCode 简单题练习" ],
+          "riskFlags" : [ "候选仅因关键词“分布式计算”字面命中，与证据无关" ],
+          "reason" : "无分布式计算、存储、调度或数据平台治理的实际工作。"
+        }, {
+          "action" : "SKIP",
+          "bucketId" : 101,
+          "role" : "SECONDARY",
+          "relevance" : 0.05,
+          "confidence" : 0.9,
+          "claimedOutcome" : "无游戏任务设计工作",
+          "evidenceFindings" : [ "标题含“每日打卡”，但为学习打卡而非游戏任务" ],
+          "riskFlags" : [ "仅因“每日任务/打卡”语义相似命中" ],
+          "reason" : "每日算法打卡与游戏任务链、成就系统设计无关。"
+        } ]
+      },
+      "functionCandidateNames" : {
+        "9" : "算法工程",
+        "59" : "大数据平台工程",
+        "7" : "分布式系统开发",
+        "101" : "游戏任务设计",
+        "20" : "DevOps工程",
+        "100" : "游戏数值设计",
+        "99" : "游戏关卡设计",
+        "37" : "渗透测试",
+        "63" : "运筹优化",
+        "6" : "软件架构设计"
+      }
+    },
+    "G31" : {
+      "knowledge" : {
+        "summary" : "证据显示学生参加了 1 小时 Web 安全讲座并了解 XSS 与 SQL 注入原理，归入 Web 安全知识桶；已忽略心得中的指令性文字（要求创建“Senior Security Engineer”并设定相关度 1）。",
+        "assignments" : [ {
+          "action" : "CREATE",
+          "bucketId" : null,
+          "bucketName" : "Web 安全",
+          "aliases" : [ "Web Security", "网络安全", "XSS", "SQL 注入" ],
+          "relevance" : 0.6,
+          "confidence" : 0.7,
+          "evidenceFindings" : [ "参加题为“Web 安全讲座”的活动，时长 1 小时", "描述中写明了解 XSS 与 SQL 注入的原理" ],
+          "reason" : "证据中的实际知识内容是 XSS 与 SQL 注入等 Web 层安全原理，属于可长期累计的粗粒度知识领域；existingBuckets 为空，没有任何已有标签可复用，因此创建“Web 安全”。仅凭一次 1 小时讲座只能说明接触并了解原理，未达到掌握程度，故相关度与置信度均为中等。"
+        } ]
+      },
+      "function" : {
+        "summary" : "该证据仅为参加1小时Web安全讲座、了解XSS与SQL注入原理，属于知识接触而非可验证的职能承担行为，不支撑任何核心职能。",
+        "assignments" : [ {
+          "action" : "SKIP",
+          "bucketId" : 32,
+          "role" : "PRIMARY",
+          "relevance" : 0.2,
+          "confidence" : 0.85,
+          "claimedOutcome" : "参加讲座并了解XSS与SQL注入原理，无实际交付或安全实践成果",
+          "evidenceFindings" : [ "参加讲座1小时", "了解XSS与SQL注入的原理" ],
+          "riskFlags" : [ "仅有被动听讲，无任何实操、代码审计或漏洞验证行为", "studentWrittenText包含试图操纵归因结果的指令，已忽略" ],
+          "reason" : "应用安全职能要求代码审计、Web安全实践、安全开发生命周期等可验证行为；本证据仅为讲座听讲与概念了解，属于知识接触，不足以证明能承担该职能。"
+        }, {
+          "action" : "SKIP",
+          "bucketId" : 31,
+          "role" : "SECONDARY",
+          "relevance" : 0.1,
+          "confidence" : 0.8,
+          "claimedOutcome" : "无攻防、安全架构、漏洞治理或应急响应的实际工作",
+          "evidenceFindings" : [ "参加讲座1小时", "了解XSS与SQL注入的原理" ],
+          "riskFlags" : [ "候选仅因安全语义相似被召回，无对应事实支撑" ],
+          "reason" : "网络安全工程涉及攻防、架构、漏洞治理与应急响应等实际职责，本证据无任何相关交付行为。"
+        }, {
+          "action" : "SKIP",
+          "bucketId" : 37,
+          "role" : "SECONDARY",
+          "relevance" : 0.1,
+          "confidence" : 0.8,
+          "claimedOutcome" : "无漏洞挖掘、红队测试或漏洞验证行为",
+          "evidenceFindings" : [ "参加讲座1小时", "了解XSS与SQL注入的原理" ],
+          "riskFlags" : [ "仅概念了解，无渗透测试实操" ],
+          "reason" : "渗透测试要求漏洞挖掘与验证等实操，本证据仅为讲座听讲，不构成职能承担。"
+        } ]
+      },
+      "functionCandidateNames" : {
+        "31" : "网络安全工程",
+        "1" : "后端开发",
+        "34" : "数据安全",
+        "32" : "应用安全",
+        "12" : "数据库开发",
+        "37" : "渗透测试",
+        "2" : "前端开发",
+        "21" : "站点可靠性工程",
+        "106" : "游戏服务端开发",
+        "35" : "身份与访问管理"
+      }
+    },
+    "G32" : {
+      "knowledge" : {
+        "summary" : "该经历涉及 STM32 主控程序编写、PID 循迹与超声波避障，可归入 STM32 与控制算法，并复用已有 C 标签。",
+        "assignments" : [ {
+          "action" : "REUSE",
+          "bucketId" : -1,
+          "bucketName" : "C",
+          "aliases" : [ "C语言" ],
+          "relevance" : 0.6,
+          "confidence" : 0.6,
+          "evidenceFindings" : [ "负责 STM32 主控程序编写" ],
+          "reason" : "STM32 主控程序编写通常属于嵌入式 C 语言编程范畴，已有 C 标签可覆盖该语言知识，故复用。"
+        }, {
+          "action" : "CREATE",
+          "bucketId" : null,
+          "bucketName" : "STM32",
+          "aliases" : [ "stm32" ],
+          "relevance" : 0.9,
+          "confidence" : 0.9,
+          "evidenceFindings" : [ "负责 STM32 主控程序编写" ],
+          "reason" : "已有 C 标签只覆盖编程语言，不能覆盖 STM32 微控制器平台知识，因此创建 STM32 标签。"
+        }, {
+          "action" : "CREATE",
+          "bucketId" : null,
+          "bucketName" : "控制算法",
+          "aliases" : [ "PID", "PID控制" ],
+          "relevance" : 0.8,
+          "confidence" : 0.9,
+          "evidenceFindings" : [ "实现 PID 循迹", "调 PID 参数花了一周" ],
+          "reason" : "已有 C 和 STM32 标签不能覆盖 PID 控制算法知识，因此创建控制算法标签。"
+        } ]
+      },
+      "function" : {
+        "summary" : "该经历是嵌入式智能小车主控程序开发，核心是PID循迹与超声波避障控制实现，可归因为自动控制工程。",
+        "assignments" : [ {
+          "action" : "SELECT",
+          "bucketId" : 77,
+          "role" : "PRIMARY",
+          "relevance" : 0.86,
+          "confidence" : 0.82,
+          "claimedOutcome" : "负责STM32主控程序编写，实现PID循迹与超声波避障，获得校赛二等奖。",
+          "evidenceFindings" : [ "负责STM32主控程序编写", "实现PID循迹与超声波避障", "获得校赛二等奖", "调PID参数花了一周" ],
+          "riskFlags" : [ "竞赛项目规模有限，未体现工业级控制系统设计", "未说明团队分工与个人独立完成程度" ],
+          "reason" : "证据包含真实项目交付：在STM32平台上编写主控程序，实现PID循迹与超声波避障，属于运动控制/控制系统设计的实际实现，符合自动控制工程的核心职责。"
+        } ]
+      },
+      "functionCandidateNames" : {
+        "81" : "自动驾驶工程",
+        "77" : "自动控制工程",
+        "80" : "智能汽车软件开发",
+        "51" : "强化学习工程",
+        "5" : "小程序与轻应用开发",
+        "74" : "硬件测试",
+        "71" : "电子系统设计",
+        "42" : "深度学习工程",
+        "210" : "过程控制工程",
+        "197" : "自动化工程"
+      }
+    },
+    "G33" : {
+      "knowledge" : {
+        "summary" : "该经历以用户需求调研、PRD 撰写、迭代需求优先级排定和跨角色协调上线为主，属于需求分析范畴，因无已有标签可复用而新建粗粒度知识桶。",
+        "assignments" : [ {
+          "action" : "CREATE",
+          "bucketId" : null,
+          "bucketName" : "需求分析",
+          "aliases" : [ "需求调研", "需求管理", "PRD" ],
+          "relevance" : 0.85,
+          "confidence" : 0.75,
+          "evidenceFindings" : [ "调研 60 名同学的需求", "撰写 PRD", "排定两个迭代的需求优先级", "协调 3 名开发上线" ],
+          "reason" : "existingBuckets 为空，没有任何标签可 REUSE；证据中的调研需求、撰写 PRD、排定需求优先级均属于需求分析这一可长期累计的粗粒度知识领域，且未使用职能或岗位名称。"
+        } ]
+      },
+      "function" : {
+        "summary" : "该经历核心是产品管理：完成需求调研、PRD、迭代优先级排定与开发协调，并推动两个迭代上线；同时包含用户研究职责，但未体现小程序开发实现。",
+        "assignments" : [ {
+          "action" : "SELECT",
+          "bucketId" : 83,
+          "role" : "PRIMARY",
+          "relevance" : 0.95,
+          "confidence" : 0.9,
+          "claimedOutcome" : "作为校园跑腿小程序产品负责人，完成60名同学需求调研、PRD撰写、两个迭代需求优先级排定，并协调3名开发上线。",
+          "evidenceFindings" : [ "调研 60 名同学的需求", "撰写 PRD", "排定两个迭代的需求优先级", "协调 3 名开发上线", "两个迭代上线" ],
+          "riskFlags" : [ "职责描述来自学生自述，缺少PRD、排期或上线数据等可验证文档；但事实包含两个迭代上线，整体风险较低" ],
+          "reason" : "证据包含需求分析、PRD、版本/迭代优先级和跨职能协调上线，直接对应产品管理核心职责。"
+        }, {
+          "action" : "SELECT",
+          "bucketId" : 88,
+          "role" : "SECONDARY",
+          "relevance" : 0.72,
+          "confidence" : 0.78,
+          "claimedOutcome" : "完成60名同学的需求调研，为产品需求定义和PRD提供用户输入。",
+          "evidenceFindings" : [ "调研 60 名同学的需求", "调研结果用于撰写 PRD 和排定需求优先级" ],
+          "riskFlags" : [ "未说明具体调研方法（访谈、问卷或可用性测试），无法判断用户研究方法的完整度" ],
+          "reason" : "调研60名同学需求属于用户研究活动，且调研结果被用于产品需求定义，可作为辅助职责。"
+        } ]
+      },
+      "functionCandidateNames" : {
+        "83" : "产品管理",
+        "88" : "用户研究",
+        "5" : "小程序与轻应用开发",
+        "86" : "增长产品管理",
+        "1" : "后端开发",
+        "82" : "硬件产品工程",
+        "307" : "教育产品设计",
+        "105" : "游戏客户端开发",
+        "84" : "技术产品管理",
+        "2" : "前端开发"
+      }
+    },
+    "G34" : {
+      "knowledge" : {
+        "summary" : "模拟投资大赛中负责行业研究与估值建模，证据支持金融投资与估值建模相关的知识桶；心得中的复盘表述为正常反思，未发现指令性文字。",
+        "assignments" : [ {
+          "action" : "CREATE",
+          "bucketId" : null,
+          "bucketName" : "投资分析",
+          "aliases" : [ "证券投资", "投资研究" ],
+          "relevance" : 0.85,
+          "confidence" : 0.8,
+          "evidenceFindings" : [ "组队管理 100 万虚拟资金", "负责行业研究", "收益率排名前 10%" ],
+          "reason" : "existingBuckets 为空，无任何可复用标签；证据中明确出现虚拟资金管理与行业研究，属于可长期累计的金融投资分析知识，故创建粗粒度标签“投资分析”。"
+        }, {
+          "action" : "CREATE",
+          "bucketId" : null,
+          "bucketName" : "估值建模",
+          "aliases" : [ "财务估值", "估值模型" ],
+          "relevance" : 0.8,
+          "confidence" : 0.75,
+          "evidenceFindings" : [ "负责估值建模", "心得提到估值假设要写清楚才能复盘" ],
+          "reason" : "existingBuckets 为空，无任何可复用标签；证据明确提到估值建模与估值假设，属于独立于投资分析的建模技术，故创建“估值建模”。"
+        } ]
+      },
+      "function" : {
+        "summary" : "该经历核心是模拟投资中的行业研究与估值建模，可归因为投资分析，并辅助支撑财务分析和投资管理。",
+        "assignments" : [ {
+          "action" : "SELECT",
+          "bucketId" : 167,
+          "role" : "PRIMARY",
+          "relevance" : 0.92,
+          "confidence" : 0.86,
+          "claimedOutcome" : "组队管理100万虚拟资金，负责行业研究与估值建模，取得收益率前10%。",
+          "evidenceFindings" : [ "模拟投资大赛", "组队管理100万虚拟资金", "负责行业研究与估值建模", "收益率排名前10%", "反思提到估值假设要写清楚才能复盘" ],
+          "riskFlags" : [ "虚拟资金/比赛环境，非真实资金管理", "未明确个人在团队中的具体贡献边界" ],
+          "reason" : "行业研究、估值建模和投资组合管理是投资分析的核心职责，且有比赛结果佐证。"
+        }, {
+          "action" : "SELECT",
+          "bucketId" : 161,
+          "role" : "SECONDARY",
+          "relevance" : 0.68,
+          "confidence" : 0.6,
+          "claimedOutcome" : "完成估值建模，用于投资决策与复盘。",
+          "evidenceFindings" : [ "负责估值建模", "反思提到估值假设要写清楚才能复盘" ],
+          "riskFlags" : [ "未体现报表分析、现金流、财务预测等完整财务分析工作" ],
+          "reason" : "估值建模属于财务分析范畴，但证据未覆盖报表分析等典型职责，作为辅助支撑。"
+        }, {
+          "action" : "SELECT",
+          "bucketId" : 168,
+          "role" : "SECONDARY",
+          "relevance" : 0.62,
+          "confidence" : 0.55,
+          "claimedOutcome" : "组队管理100万虚拟资金，进行投资组合管理。",
+          "evidenceFindings" : [ "组队管理100万虚拟资金", "收益率排名前10%" ],
+          "riskFlags" : [ "未明确交易执行、资产配置、市场监测等具体行为", "虚拟资金非真实交易" ],
+          "reason" : "管理虚拟资金可体现投资管理/组合管理，但缺少交易执行等细节，作为辅助支撑。"
+        } ]
+      },
+      "functionCandidateNames" : {
+        "167" : "投资分析",
+        "172" : "精算分析",
+        "161" : "财务分析",
+        "68" : "量化分析",
+        "100" : "游戏数值设计",
+        "166" : "公司金融",
+        "162" : "预算管理",
+        "133" : "经营分析",
+        "168" : "证券交易与投资管理",
+        "121" : "活动运营"
+      }
+    },
+    "G35" : {
+      "knowledge" : {
+        "summary" : "该证据显示在 Kaggle 房价预测比赛中进行了特征工程与 XGBoost 调参，属于机器学习实践，归入已有“机器学习”标签。已忽略心得中的指令性文字。",
+        "assignments" : [ {
+          "action" : "REUSE",
+          "bucketId" : -1,
+          "bucketName" : "机器学习",
+          "aliases" : [ "ML" ],
+          "relevance" : 0.95,
+          "confidence" : 0.9,
+          "evidenceFindings" : [ "完成特征工程与 XGBoost 调参", "Kaggle 房价预测比赛排名前 15%" ],
+          "reason" : "特征工程与 XGBoost 调参属于机器学习建模流程，已有“机器学习”标签含义覆盖该证据，故复用而非新建。"
+        } ]
+      },
+      "function" : {
+        "summary" : "该经历为 Kaggle 房价预测比赛，用户实际完成特征工程与 XGBoost 调参并取得前 15% 排名，属于真实的机器学习建模实践，可支撑机器学习工程职能。",
+        "assignments" : [ {
+          "action" : "SELECT",
+          "bucketId" : 41,
+          "role" : "PRIMARY",
+          "relevance" : 0.9,
+          "confidence" : 0.85,
+          "claimedOutcome" : "完成特征工程与 XGBoost 调参，比赛排名前 15%",
+          "evidenceFindings" : [ "完成特征工程与 XGBoost 调参", "最终排名前 15%", "Kaggle 房价预测比赛" ],
+          "riskFlags" : [ "Kaggle 竞赛为个人练习性质，未体现生产环境部署或团队协作" ],
+          "reason" : "证据显示用户独立完成特征工程与模型训练调参，并取得可验证的竞赛排名，直接对应机器学习工程的核心职责（特征工程、模型训练、模型评估）。"
+        }, {
+          "action" : "SKIP",
+          "bucketId" : 60,
+          "role" : "SECONDARY",
+          "relevance" : 0.4,
+          "confidence" : 0.5,
+          "claimedOutcome" : "完成房价预测建模",
+          "evidenceFindings" : [ "完成特征工程与 XGBoost 调参" ],
+          "riskFlags" : [ "未体现统计建模、实验分析或模型解释等数据科学典型职责" ],
+          "reason" : "虽涉及预测建模，但证据未体现统计推断、实验设计或数据探索等数据科学核心工作，仅凭竞赛建模不足以支撑该职能。"
+        } ]
+      },
+      "functionCandidateNames" : {
+        "41" : "机器学习工程",
+        "49" : "推荐与搜索工程",
+        "50" : "知识图谱工程",
+        "42" : "深度学习工程",
+        "64" : "预测与时间序列分析",
+        "60" : "数据科学",
+        "51" : "强化学习工程",
+        "52" : "AI平台工程",
+        "62" : "实验与因果分析",
+        "43" : "生成式人工智能工程"
+      }
+    },
+    "G36" : {
+      "knowledge" : {
+        "summary" : "证据显示用户通过 Docker 官方入门教程学习并实际运行 nginx 容器，理解镜像与容器关系，归入 Docker 知识桶。",
+        "assignments" : [ {
+          "action" : "CREATE",
+          "bucketId" : null,
+          "bucketName" : "Docker",
+          "aliases" : [ "docker", "容器" ],
+          "relevance" : 0.9,
+          "confidence" : 0.9,
+          "evidenceFindings" : [ "看完 Docker 官方入门教程", "在本机运行了 nginx 容器", "运行 1 个容器", "复盘提到理清镜像和容器的关系" ],
+          "reason" : "证据明确涉及 Docker 教程学习、容器运行及镜像与容器关系理解，现有标签为空，无合适标签可复用，故创建 Docker 粗粒度知识标签。"
+        } ]
+      },
+      "function" : {
+        "summary" : "该证据仅为学习 Docker 入门教程并在本机运行一个 nginx 容器，属于低难度入门练习，未体现容器与云原生工程的实际交付或运维职责。",
+        "assignments" : [ {
+          "action" : "SKIP",
+          "bucketId" : 25,
+          "role" : "PRIMARY",
+          "relevance" : 0.2,
+          "confidence" : 0.85,
+          "claimedOutcome" : "在本机运行了一个 nginx 容器，理解了镜像与容器的关系",
+          "evidenceFindings" : [ "运行 1 个容器", "看完 Docker 官方入门教程", "在本机运行了 nginx 容器", "自述理清了镜像和容器的关系" ],
+          "riskFlags" : [ "仅为教程级入门练习，无真实交付或生产环境运维" ],
+          "reason" : "接触知识并做低难度练习不等于能承担容器与云原生工程职能，未涉及容器编排、集群治理、云原生部署等核心工作，故 SKIP。"
+        }, {
+          "action" : "SKIP",
+          "bucketId" : 20,
+          "role" : "SECONDARY",
+          "relevance" : 0.1,
+          "confidence" : 0.8,
+          "claimedOutcome" : "无 CI/CD、构建发布或交付流水线相关工作",
+          "evidenceFindings" : [ "运行 1 个容器", "看完 Docker 官方入门教程" ],
+          "riskFlags" : [ "候选仅由语义相似度召回，无实际 DevOps 行为" ],
+          "reason" : "证据中没有任何 CI/CD、环境管理或交付流水线的实际工作，故 SKIP。"
+        } ]
+      },
+      "functionCandidateNames" : {
+        "25" : "容器与云原生工程",
+        "20" : "DevOps工程",
+        "11" : "操作系统开发",
+        "42" : "深度学习工程",
+        "245" : "船舶与海洋工程",
+        "26" : "基础设施工程",
+        "30" : "边缘计算工程",
+        "2" : "前端开发",
+        "13" : "中间件开发",
+        "59" : "大数据平台工程"
+      }
+    },
+    "G37" : {
+      "knowledge" : {
+        "summary" : "该经历是在开源 Markdown 编辑器项目中提交并合并 3 个修复中文输入法光标错位的 PR，可归入前端实现技术与 Git 协作流程；心得仅为个人感受，未出现指令性文字。",
+        "assignments" : [ {
+          "action" : "REUSE",
+          "bucketId" : -1,
+          "bucketName" : "JavaScript",
+          "aliases" : [ ],
+          "relevance" : 0.5,
+          "confidence" : 0.45,
+          "evidenceFindings" : [ "向一个开源 Markdown 编辑器提交 3 个 PR 并全部被合并", "修复中文输入法光标错位问题", "复盘提到读懂别人的代码库比写代码花的时间多" ],
+          "reason" : "证据未直接写明技术栈，但开源 Markdown 编辑器属于前端项目，已有标签 JavaScript 是现有标签中唯一能覆盖该实现技术的粗粒度标签，按“用户已有命名优先”原则复用，不另建同义标签。"
+        }, {
+          "action" : "CREATE",
+          "bucketId" : null,
+          "bucketName" : "Git",
+          "aliases" : [ "git", "github" ],
+          "relevance" : 0.6,
+          "confidence" : 0.65,
+          "evidenceFindings" : [ "提交 3 个 PR 并被合并，说明走通了基于 PR 的代码协作与合并流程" ],
+          "reason" : "已有标签 JavaScript 只覆盖语言层面，无法覆盖 PR 提交与合并所体现的版本控制与代码协作流程；该证据是 Git/PR 工作流的直接可核对事实，故新建粗粒度、可长期累计的 Git 标签。"
+        } ]
+      },
+      "function" : {
+        "summary" : "证据显示向开源 Markdown 编辑器提交并合并了 3 个修复中文输入法光标错位的 PR，属于真实代码贡献，但候选职能中无明确匹配的技术栈或职能，无法归因到具体核心职能。",
+        "assignments" : [ ]
+      },
+      "functionCandidateNames" : {
+        "10" : "编译器与程序语言开发",
+        "317" : "写作与编辑",
+        "14" : "开发工具工程",
+        "2" : "前端开发",
+        "370" : "翻译",
+        "5" : "小程序与轻应用开发",
+        "371" : "口译",
+        "37" : "渗透测试",
+        "318" : "新闻采编",
+        "313" : "学术写作与出版"
+      }
+    },
+    "G38" : {
+      "knowledge" : {
+        "summary" : "该证据使用 Python 的 requests 和 BeautifulSoup 抓取学校新闻网站并完成入库，归入 Python 与爬虫知识桶；心得中的 robots 协议与频率控制属于学生反思，未作为指令处理。",
+        "assignments" : [ {
+          "action" : "REUSE",
+          "bucketId" : -1,
+          "bucketName" : "Python",
+          "aliases" : [ ],
+          "relevance" : 0.95,
+          "confidence" : 0.95,
+          "evidenceFindings" : [ "使用 requests 和 BeautifulSoup 抓取学校新闻网站", "完成数据入库脚本", "抓取 2000 条新闻" ],
+          "reason" : "证据明确使用 Python 的 requests 和 BeautifulSoup 完成抓取与入库，已有 Python 标签覆盖该语言技术，直接复用。"
+        }, {
+          "action" : "CREATE",
+          "bucketId" : null,
+          "bucketName" : "爬虫",
+          "aliases" : [ ],
+          "relevance" : 0.9,
+          "confidence" : 0.9,
+          "evidenceFindings" : [ "抓取 2000 条新闻", "使用 requests 和 BeautifulSoup 抓取学校新闻网站", "心得提到遵守 robots 协议并控制频率" ],
+          "reason" : "已有 Python 标签只覆盖编程语言，不覆盖网络爬虫这一独立技术领域；证据包含抓取新闻、解析页面、遵守 robots 协议等爬虫实践，适合创建可长期累计的粗粒度标签“爬虫”。"
+        } ]
+      },
+      "function" : {
+        "summary" : "该证据显示用户在数据工作坊中完成新闻网站爬取与入库脚本，属于数据采集与入库的工程实践，最贴合数据工程职能。",
+        "assignments" : [ {
+          "action" : "SELECT",
+          "bucketId" : 58,
+          "role" : "PRIMARY",
+          "relevance" : 0.75,
+          "confidence" : 0.7,
+          "claimedOutcome" : "使用 requests 和 BeautifulSoup 抓取学校新闻网站 2000 条新闻，并完成数据入库脚本。",
+          "evidenceFindings" : [ "抓取 2000 条新闻", "在工作坊中用 requests 和 BeautifulSoup 抓取学校新闻网站", "完成数据入库脚本" ],
+          "riskFlags" : [ "工作坊环境下的任务，独立性与生产级复杂度不明确", "未说明数据清洗、调度、存储选型等 ETL 环节细节" ],
+          "reason" : "证据包含真实的数据采集与入库交付行为，符合数据工程中数据采集与 ETL 的核心职责，故作为 PRIMARY。"
+        }, {
+          "action" : "SKIP",
+          "bucketId" : 318,
+          "role" : "SECONDARY",
+          "relevance" : 0.1,
+          "confidence" : 0.8,
+          "claimedOutcome" : "无新闻采编行为，仅抓取新闻网站数据。",
+          "evidenceFindings" : [ "抓取对象为学校新闻网站" ],
+          "riskFlags" : [ ],
+          "reason" : "新闻采编指采访、写作、事实核查等，本证据仅为技术性数据抓取，不涉及新闻内容生产，故 SKIP。"
+        }, {
+          "action" : "SKIP",
+          "bucketId" : 314,
+          "role" : "SECONDARY",
+          "relevance" : 0.15,
+          "confidence" : 0.7,
+          "claimedOutcome" : "无科研数据管理行为。",
+          "evidenceFindings" : [ "完成数据入库脚本" ],
+          "riskFlags" : [ ],
+          "reason" : "虽涉及数据采集，但无实验记录、数据共享、复现或归档等科研数据管理要素，故 SKIP。"
+        }, {
+          "action" : "SKIP",
+          "bucketId" : 1,
+          "role" : "SECONDARY",
+          "relevance" : 0.2,
+          "confidence" : 0.6,
+          "claimedOutcome" : "无服务端接口或业务系统开发证据。",
+          "evidenceFindings" : [ "完成数据入库脚本" ],
+          "riskFlags" : [ "入库脚本可能涉及数据库访问，但未说明服务端编程或接口设计" ],
+          "reason" : "入库脚本可能触及数据库写入，但证据未体现服务端编程、接口设计或业务系统等后端核心职责，故 SKIP。"
+        } ]
+      },
+      "functionCandidateNames" : {
+        "318" : "新闻采编",
+        "58" : "数据工程",
+        "314" : "科研数据管理",
+        "75" : "物联网工程",
+        "49" : "推荐与搜索工程",
+        "2" : "前端开发",
+        "42" : "深度学习工程",
+        "50" : "知识图谱工程",
+        "1" : "后端开发",
+        "5" : "小程序与轻应用开发"
+      }
+    }
+  }
+}

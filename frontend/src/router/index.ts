@@ -15,6 +15,7 @@ import StudentFollowsView from "@/views/StudentFollowsView.vue";
 import StudentLayout from "@/views/StudentLayout.vue";
 import StudentModulePlaceholder from "@/views/StudentModulePlaceholder.vue";
 import StudentReservationsView from "@/views/StudentReservationsView.vue";
+import StudentResumeInterviewView from "@/views/StudentResumeInterviewView.vue";
 import StudentScheduleView from "@/views/StudentScheduleView.vue";
 import WorkspacePlaceholder from "@/views/WorkspacePlaceholder.vue";
 
@@ -36,7 +37,8 @@ const studentChildren: RouteRecordRaw[] = [
   ["challenges", "student-challenges", "挑战", "行动管理"],
   ["coach", "student-coach", "教练", "成长复盘"],
   ["follows", "student-follows", "关注", "发现机会"],
-  ["achievements", "student-achievements", "个人成就", "成长档案"]
+  ["achievements", "student-achievements", "个人成就", "成长档案"],
+  ["resume-interview", "student-resume-interview", "简历定段", "成长档案"]
 ].map(([path, name, title, section]) => ({
   path,
   name,
@@ -51,10 +53,12 @@ const studentChildren: RouteRecordRaw[] = [
           ? StudentScheduleView
           : path === "challenges"
             ? StudentChallengesView
-            : path === "coach"
-              ? StudentCoachView
-              : path === "follows"
-                ? StudentFollowsView
+        : path === "coach"
+          ? StudentCoachView
+          : path === "follows"
+            ? StudentFollowsView
+            : path === "resume-interview"
+              ? StudentResumeInterviewView
         : StudentModulePlaceholder,
   meta: { title, section }
 }));

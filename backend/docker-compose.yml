@@ -8,7 +8,8 @@ services:
       MYSQL_USER: donotmiss
       MYSQL_PASSWORD: donotmiss123
     ports:
-      - "3306:3306"
+      # 3306 is frequently occupied by a local MySQL instance or IDE port forwarding on Windows.
+      - "3307:3306"
     volumes:
       - do_not_miss_mysql:/var/lib/mysql
     healthcheck:

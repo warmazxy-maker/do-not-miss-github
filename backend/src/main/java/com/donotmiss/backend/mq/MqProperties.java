@@ -37,6 +37,7 @@ public class MqProperties {
         private String eventQuality = "do-not-miss.event-quality";
         private String growthTag = "do-not-miss.growth-tag";
         private String abilityEvidence = "do-not-miss.ability-evidence";
+        private String capabilityV2Scoring = "do-not-miss.capability-v2-scoring";
         private String userProfile = "do-not-miss.user-profile";
 
         public String getEventIndex() {
@@ -71,6 +72,14 @@ public class MqProperties {
             this.abilityEvidence = abilityEvidence;
         }
 
+        public String getCapabilityV2Scoring() {
+            return capabilityV2Scoring;
+        }
+
+        public void setCapabilityV2Scoring(String capabilityV2Scoring) {
+            this.capabilityV2Scoring = capabilityV2Scoring;
+        }
+
         public String getUserProfile() {
             return userProfile;
         }
@@ -85,6 +94,7 @@ public class MqProperties {
         private String eventQuality = "event.quality";
         private String growthTag = "growth-tag.extract";
         private String abilityEvidence = "ability-evidence.assess";
+        private String capabilityV2Scoring = "capability-v2.score";
         private String userProfile = "user-profile.refresh";
 
         public String getEventIndex() {
@@ -117,6 +127,14 @@ public class MqProperties {
 
         public void setAbilityEvidence(String abilityEvidence) {
             this.abilityEvidence = abilityEvidence;
+        }
+
+        public String getCapabilityV2Scoring() {
+            return capabilityV2Scoring;
+        }
+
+        public void setCapabilityV2Scoring(String capabilityV2Scoring) {
+            this.capabilityV2Scoring = capabilityV2Scoring;
         }
 
         public String getUserProfile() {

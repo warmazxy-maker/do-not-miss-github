@@ -84,6 +84,38 @@ export interface EventRecommendationResponse {
   toolContext?: ToolContextResponse;
 }
 
+export type GuideAction = "CALL_RAG_NEW" | "CALL_RAG_REFINE" | "CHAT_ONLY" | "ASK_CLARIFY";
+
+export interface GuideMessage {
+  role: string;
+  content: string;
+  at: string;
+}
+
+export interface GuideSessionView {
+  sessionId: string;
+  currentGoal: string;
+  sessionSummary: string;
+  lastAction: string;
+  lastRagNeed: string;
+  recentMessages: GuideMessage[];
+  lastRecommendedEventIds: number[];
+  acceptedPreferences: string[];
+  rejectedConditions: string[];
+  updatedAt: string;
+  expiresAt: string;
+}
+
+export interface GuideChatResponse {
+  sessionId: string;
+  reply: string;
+  action: GuideAction;
+  usedRag: boolean;
+  recommendations: RecommendedEvent[];
+  session: GuideSessionView;
+  toolContext?: ToolContextResponse;
+}
+
 export interface PlanStep {
   order: number;
   dateLabel: string;

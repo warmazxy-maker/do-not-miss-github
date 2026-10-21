@@ -49,6 +49,11 @@ public class RabbitMqConfig {
     }
 
     @Bean
+    public Queue capabilityV2ScoringQueue(MqProperties properties) {
+        return QueueBuilder.durable(properties.getQueues().getCapabilityV2Scoring()).build();
+    }
+
+    @Bean
     public Queue userProfileQueue(MqProperties properties) {
         return QueueBuilder.durable(properties.getQueues().getUserProfile()).build();
     }
@@ -87,6 +92,17 @@ public class RabbitMqConfig {
         return BindingBuilder.bind(abilityEvidenceQueue)
                 .to(doNotMissExchange)
                 .with(properties.getRoutingKeys().getAbilityEvidence());
+    }
+
+    @Bean
+    public Binding capabilityV2ScoringBinding(
+            @Qualifier("capabilityV2ScoringQueue") Queue capabilityV2ScoringQueue,
+            TopicExchange doNotMissExchange,
+            MqProperties properties
+    ) {
+        return BindingBuilder.bind(capabilityV2ScoringQueue)
+                .to(doNotMissExchange)
+                .with(properties.getRoutingKeys().getCapabilityV2Scoring());
     }
 
     @Bean

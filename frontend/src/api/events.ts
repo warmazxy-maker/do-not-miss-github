@@ -4,6 +4,7 @@ import type {
   EventRecommendationResponse,
   EventSearchFilters,
   FollowItem,
+  GuideChatResponse,
   ImportPlanResponse,
   PlanRecommendationResponse,
   RecommendedPlan,
@@ -55,6 +56,13 @@ export const eventsApi = {
     toolContext: ToolContextRequest;
   }) {
     return api.post<EventRecommendationResponse>("/api/ai/event-recommendations", payload);
+  },
+  guideChat(payload: {
+    message: string;
+    sessionId?: string;
+    toolContext: ToolContextRequest;
+  }) {
+    return api.post<GuideChatResponse>("/api/guide/chat", payload);
   },
   recommendPlans(payload: {
     goal: string;

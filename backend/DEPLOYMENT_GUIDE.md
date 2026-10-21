@@ -667,19 +667,18 @@ mvn spring-boot:run
 
 ## 10. 常见问题
 
-### 端口 3306 被占用
+### MySQL 默认使用 3307
 
-说明本机已有 MySQL。可以修改 `docker-compose.yml`：
-
-```yaml
-ports:
-  - "3307:3306"
-```
-
-然后启动后端时指定：
+项目将 Docker MySQL 映射为 `localhost:3307`，避免与 Windows 上常见的本机 MySQL、IDE 端口转发冲突。后端默认已经使用该端口，正常情况下直接运行：
 
 ```powershell
-$env:DB_URL="jdbc:mysql://localhost:3307/do_not_miss?useUnicode=true&characterEncoding=utf8&serverTimezone=Asia/Tokyo"
+mvn spring-boot:run
+```
+
+如果你自行改回了其他端口，再用 `DB_URL` 覆盖即可：
+
+```powershell
+$env:DB_URL="jdbc:mysql://localhost:自定义端口/do_not_miss?useUnicode=true&characterEncoding=utf8&serverTimezone=Asia/Tokyo"
 mvn spring-boot:run
 ```
 
