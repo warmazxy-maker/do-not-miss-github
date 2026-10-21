@@ -1,0 +1,123 @@
+services:
+  mysql:
+    image: mysql:8.4
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-root123456}
+      MYSQL_DATABASE: ${MYSQL_DATABASE:-do_not_miss}
+      MYSQL_USER: ${MYSQL_USER:-donotmiss}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD:-donotmiss123}
+    ports:
+      - "${MYSQL_PORT:-3306}:3306"
+    volumes:
+      - do_not_miss_mysql:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-uroot", "-p${MYSQL_ROOT_PASSWORD:-root123456}"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  redis:
+    image: redis:7.4-alpine
+    ports:
+      - "${REDIS_PORT:-6379}:6379"
+    volumes:
+      - do_not_miss_redis:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  rabbitmq:
+    image: rabbitmq:3.13-management
+    environment:
+      RABBITMQ_DEFAULT_USER: ${RABBITMQ_USERNAME:-donotmiss}
+      RABBITMQ_DEFAULT_PASS: ${RABBITMQ_PASSWORD:-donotmiss123}
+    ports:
+      - "${RABBITMQ_PORT:-5672}:5672"
+      - "${RABBITMQ_MANAGEMENT_PORT:-15672}:15672"
+    volumes:
+      - do_not_miss_rabbitmq:/var/lib/rabbitmq
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "-q", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  opensearch:
+    image: opensearchproject/opensearch:2.15.0
+    environment:
+      discovery.type: single-node
+      plugins.security.disabled: "true"
+      OPENSEARCH_INITIAL_ADMIN_PASSWORD: ${OPENSEARCH_INITIAL_ADMIN_PASSWORD:-DoNotMiss123!}
+      OPENSEARCH_JAVA_OPTS: ${OPENSEARCH_JAVA_OPTS:--Xms512m -Xmx512m}
+    ports:
+      - "${OPENSEARCH_PORT:-9200}:9200"
+    volumes:
+      - do_not_miss_opensearch:/usr/share/opensearch/data
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fsS http://localhost:9200 >/dev/null || exit 1"]
+      interval: 15s
+      timeout: 10s
+      retries: 20
+
+  backend:
+    image: ${BACKEND_IMAGE:-ghcr.io/warmazxy-maker/do-not-miss-github-backend:dev}
+    build:
+      context: ./backend
+    depends_on:
+      mysql:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+      opensearch:
+        condition: service_healthy
+    environment:
+      SERVER_PORT: 8080
+      DB_URL: jdbc:mysql://mysql:3306/${MYSQL_DATABASE:-do_not_miss}?useUnicode=true&characterEncoding=utf8&serverTimezone=Asia/Shanghai
+      DB_USERNAME: ${MYSQL_USER:-donotmiss}
+      DB_PASSWORD: ${MYSQL_PASSWORD:-donotmiss123}
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      RABBITMQ_HOST: rabbitmq
+      RABBITMQ_PORT: 5672
+      RABBITMQ_USERNAME: ${RABBITMQ_USERNAME:-donotmiss}
+      RABBITMQ_PASSWORD: ${RABBITMQ_PASSWORD:-donotmiss123}
+      SEARCH_BASE_URL: http://opensearch:9200
+      SEARCH_ENABLED: ${SEARCH_ENABLED:-false}
+      SEARCH_VECTOR_ENABLED: ${SEARCH_VECTOR_ENABLED:-false}
+      SEARCH_RERANK_ENABLED: ${SEARCH_RERANK_ENABLED:-false}
+      AI_PROVIDER: ${AI_PROVIDER:-mock}
+      AI_MODEL: ${AI_MODEL:-qwen-plus}
+      AI_EMBEDDING_MODEL: ${AI_EMBEDDING_MODEL:-text-embedding-v4}
+      AI_EMBEDDING_DIMENSIONS: ${AI_EMBEDDING_DIMENSIONS:-1024}
+      AI_BASE_URL: ${AI_BASE_URL:-https://dashscope.aliyuncs.com/compatible-mode/v1}
+      DASHSCOPE_API_KEY: ${DASHSCOPE_API_KEY:-}
+      MCP_DEFAULT_TIMEZONE: ${MCP_DEFAULT_TIMEZONE:-Asia/Shanghai}
+      MCP_DEFAULT_LOCATION: ${MCP_DEFAULT_LOCATION:-中国 上海}
+      JAVA_OPTS: ${JAVA_OPTS:-}
+    ports:
+      - "${BACKEND_PORT:-8080}:8080"
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fsS http://localhost:8080/api/health >/dev/null || exit 1"]
+      interval: 15s
+      timeout: 5s
+      retries: 20
+
+  frontend:
+    image: ${FRONTEND_IMAGE:-ghcr.io/warmazxy-maker/do-not-miss-github-frontend:dev}
+    build:
+      context: ./frontend
+    depends_on:
+      backend:
+        condition: service_healthy
+    ports:
+      - "${FRONTEND_PORT:-80}:80"
+
+volumes:
+  do_not_miss_mysql:
+  do_not_miss_redis:
+  do_not_miss_rabbitmq:
+  do_not_miss_opensearch:
