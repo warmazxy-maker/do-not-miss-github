@@ -9,9 +9,13 @@ import com.donotmiss.backend.coach.CoachLogRepository;
 import com.donotmiss.backend.event.BenefitType;
 import com.donotmiss.backend.eventquality.EventQualityReportEntity;
 import com.donotmiss.backend.eventquality.EventQualityReportRepository;
+import com.donotmiss.backend.resumeinterview.ResumeInterviewAnswerEntity;
+import com.donotmiss.backend.resumeinterview.ResumeInterviewAnswerRepository;
 import com.donotmiss.backend.resumeinterview.ResumeInterviewEvidenceEntity;
 import com.donotmiss.backend.resumeinterview.ResumeInterviewEvidenceRepository;
 import com.donotmiss.backend.resumeinterview.ResumeInterviewEvidenceStatus;
+import com.donotmiss.backend.resumeinterview.ResumeInterviewQuestionEntity;
+import com.donotmiss.backend.resumeinterview.ResumeInterviewQuestionRepository;
 import com.donotmiss.backend.resumeinterview.ResumeInterviewSessionEntity;
 import com.donotmiss.backend.resumeinterview.ResumeInterviewSessionRepository;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -40,6 +44,10 @@ class CapabilityEvidenceInputServiceTest {
     private ResumeInterviewEvidenceRepository resumeInterviewEvidenceRepository;
     @Mock
     private ResumeInterviewSessionRepository resumeInterviewSessionRepository;
+    @Mock
+    private ResumeInterviewQuestionRepository resumeInterviewQuestionRepository;
+    @Mock
+    private ResumeInterviewAnswerRepository resumeInterviewAnswerRepository;
     @Mock
     private EventQualityReportRepository eventQualityReportRepository;
 
@@ -107,25 +115,76 @@ class CapabilityEvidenceInputServiceTest {
 
     @Test
     void adaptsReadyResumeInterviewEvidenceWithoutBypassingUnifiedContract() {
-        ResumeInterviewEvidenceEntity evidence = new ResumeInterviewEvidenceEntity();
-        setId(evidence, 31L);
-        evidence.setSessionId(7L);
-        evidence.setSourceType(AbilityEvidenceSourceType.RESUME_INTERVIEW);
-        evidence.setStatus(ResumeInterviewEvidenceStatus.EVIDENCE_READY);
-        evidence.setAbilityEvidenceJson("{\"ability\":\"RAG\"}");
-
-        ResumeInterviewSessionEntity session = new ResumeInterviewSessionEntity();
-        session.setUserId("student-1");
-        session.setTargetRole("Agent 后端工程师");
-        when(resumeInterviewEvidenceRepository.findById(31L)).thenReturn(Optional.of(evidence));
-        when(resumeInterviewSessionRepository.findByIdAndUserId(7L, "student-1")).thenReturn(Optional.of(session));
+        ResumeInterviewEvidenceEntity evidence = stubResume(ResumeInterviewEvidenceStatus.EVIDENCE_READY,
+                "我用 LangChain 搭了 RAG 检索，负责向量召回和重排。");
 
         CapabilityEvidenceInput input = service().fromResumeInterviewEvidence(31L, "student-1");
 
         assertEquals(CapabilityEvidenceSourceKind.RESUME_INTERVIEW, input.sourceKind());
         assertEquals("RESUME_INTERVIEW", input.sourceType());
+        assertEquals(AbilityEvidenceSourceType.RESUME_INTERVIEW.credibilityPrior(), input.sourceCredibilityPrior());
+        assertEquals("31", input.sourceId());
+        assertEquals("resume-interview-evidence:31", input.evidenceId());
         assertTrue(input.scoringEligible());
         assertTrue(input.structuredPayloadJson().contains("Agent 后端工程师"));
+        // The question is system text; the answer is the student's own words and goes to reflection.
+        assertEquals("面试问题：你在 RAG 项目里具体负责什么？", input.description());
+        assertTrue(input.reflection().contains("向量召回"));
+        assertTrue(input.evidenceFacts().contains("考察维度：RAG"));
+        assertFalse(input.evidenceFacts().stream().anyMatch(fact -> fact.startsWith("证据状态")));
+
+        // V1 scoring flips the status to SCORED; the V2 evidence must stay the same evidence.
+        evidence.setStatus(ResumeInterviewEvidenceStatus.SCORED);
+        CapabilityEvidenceInput afterV1 = service().fromResumeInterviewEvidence(31L, "student-1");
+        assertEquals(input.evidenceHash(), afterV1.evidenceHash());
+        assertTrue(afterV1.scoringEligible());
+    }
+
+    @Test
+    void resumeEvidenceWithoutAnAnswerIsNotScored() {
+        stubResume(ResumeInterviewEvidenceStatus.EVIDENCE_READY, "  ");
+
+        CapabilityEvidenceInput input = service().fromResumeInterviewEvidence(31L, "student-1");
+
+        assertFalse(input.scoringEligible());
+        assertTrue(input.eligibilityReason().contains("回答缺失"));
+    }
+
+    @Test
+    void resumeEvidenceThatIsStillADraftIsNotScored() {
+        stubResume(ResumeInterviewEvidenceStatus.DRAFT, "完整回答");
+
+        CapabilityEvidenceInput input = service().fromResumeInterviewEvidence(31L, "student-1");
+
+        assertFalse(input.scoringEligible());
+        assertTrue(input.eligibilityReason().contains("尚未就绪"));
+    }
+
+    private ResumeInterviewEvidenceEntity stubResume(ResumeInterviewEvidenceStatus status, String answerText) {
+        ResumeInterviewEvidenceEntity evidence = new ResumeInterviewEvidenceEntity();
+        setId(evidence, 31L);
+        evidence.setSessionId(7L);
+        evidence.setQuestionId(11L);
+        evidence.setAnswerId(12L);
+        evidence.setSourceType(AbilityEvidenceSourceType.RESUME_INTERVIEW);
+        evidence.setStatus(status);
+        evidence.setAbilityEvidenceJson("{\"ability\":\"RAG\"}");
+
+        ResumeInterviewSessionEntity session = new ResumeInterviewSessionEntity();
+        session.setUserId("student-1");
+        session.setTargetRole("Agent 后端工程师");
+        ResumeInterviewQuestionEntity question = new ResumeInterviewQuestionEntity();
+        question.setQuestionText("你在 RAG 项目里具体负责什么？");
+        question.setTargetDimension("RAG");
+        ResumeInterviewAnswerEntity answer = new ResumeInterviewAnswerEntity();
+        answer.setSessionId(7L);
+        answer.setAnswerText(answerText);
+
+        when(resumeInterviewEvidenceRepository.findById(31L)).thenReturn(Optional.of(evidence));
+        when(resumeInterviewSessionRepository.findByIdAndUserId(7L, "student-1")).thenReturn(Optional.of(session));
+        when(resumeInterviewQuestionRepository.findByIdAndSessionId(11L, 7L)).thenReturn(Optional.of(question));
+        when(resumeInterviewAnswerRepository.findById(12L)).thenReturn(Optional.of(answer));
+        return evidence;
     }
 
     private CapabilityEvidenceInputService service() {
@@ -134,6 +193,8 @@ class CapabilityEvidenceInputServiceTest {
                 coachLogRepository,
                 resumeInterviewEvidenceRepository,
                 resumeInterviewSessionRepository,
+                resumeInterviewQuestionRepository,
+                resumeInterviewAnswerRepository,
                 eventQualityReportRepository,
                 new ObjectMapper()
         );

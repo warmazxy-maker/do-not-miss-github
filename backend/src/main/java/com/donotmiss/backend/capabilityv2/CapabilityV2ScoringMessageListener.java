@@ -35,24 +35,29 @@ public class CapabilityV2ScoringMessageListener {
 
     @RabbitListener(queues = "${app.mq.queues.capability-v2-scoring}")
     public void handle(DomainEventMessages.CapabilityV2ScoringMessage message) {
-        if (message == null || message.recordId() == null || message.assessmentId() == null
-                || message.userId() == null || message.userId().isBlank()) {
+        if (!isValid(message)) {
             log.warn("Ignored invalid capability V2 scoring message: {}", message);
             return;
         }
 
         try {
-            CapabilityV2AsyncScoringService.ProcessingOutcome outcome = asyncScoringService.process(
-                    message.recordId(),
-                    message.userId(),
-                    message.assessmentId(),
-                    message.evidenceQuality(),
-                    message.novelty()
-            );
+            CapabilityV2AsyncScoringService.ProcessingOutcome outcome = message.fromResumeInterview()
+                    ? asyncScoringService.processResumeEvidence(
+                            message.resumeEvidenceId(),
+                            message.userId(),
+                            message.assessmentId(),
+                            message.evidenceQuality(),
+                            message.novelty())
+                    : asyncScoringService.process(
+                            message.recordId(),
+                            message.userId(),
+                            message.assessmentId(),
+                            message.evidenceQuality(),
+                            message.novelty());
             log.info(
-                    "Processed capability V2 scoring message. recordId={}, assessmentId={}, skipped={}, buckets={}, runId={}, summary={}",
-                    message.recordId(), message.assessmentId(), outcome.skipped(), outcome.scoredBuckets(),
-                    outcome.agentRunId(), outcome.summary()
+                    "Processed capability V2 scoring message. source={}, sourceId={}, assessmentId={}, skipped={}, buckets={}, runId={}, summary={}",
+                    message.evidenceSource(), sourceId(message), message.assessmentId(), outcome.skipped(),
+                    outcome.scoredBuckets(), outcome.agentRunId(), outcome.summary()
             );
         } catch (CapabilityModelUnavailableException exception) {
             handleModelUnavailable(message, exception);
@@ -63,14 +68,28 @@ public class CapabilityV2ScoringMessageListener {
                                         CapabilityModelUnavailableException exception) {
         if (!exception.retryable() || message.deferralCount() >= MAX_DEFERRALS) {
             // Nothing was written; the failed agent run keeps the evidence and the reason for a manual replay.
-            log.error("Capability V2 scoring gave up. recordId={}, deferrals={}, stage={}, reason={}",
-                    message.recordId(), message.deferralCount(), exception.stage(), exception.getMessage());
+            log.error("Capability V2 scoring gave up. source={}, sourceId={}, deferrals={}, stage={}, reason={}",
+                    message.evidenceSource(), sourceId(message), message.deferralCount(), exception.stage(),
+                    exception.getMessage());
             return;
         }
         Duration delay = deferralDelay(message.deferralCount());
         publisher.deferCapabilityV2Scoring(message, delay);
-        log.warn("Capability V2 scoring deferred because the model is unavailable. recordId={}, deferral={}/{}, delay={}, stage={}",
-                message.recordId(), message.deferralCount() + 1, MAX_DEFERRALS, delay, exception.stage());
+        log.warn("Capability V2 scoring deferred because the model is unavailable. source={}, sourceId={}, deferral={}/{}, delay={}, stage={}",
+                message.evidenceSource(), sourceId(message), message.deferralCount() + 1, MAX_DEFERRALS, delay,
+                exception.stage());
+    }
+
+    private static boolean isValid(DomainEventMessages.CapabilityV2ScoringMessage message) {
+        if (message == null || message.assessmentId() == null
+                || message.userId() == null || message.userId().isBlank()) {
+            return false;
+        }
+        return sourceId(message) != null;
+    }
+
+    private static Long sourceId(DomainEventMessages.CapabilityV2ScoringMessage message) {
+        return message.fromResumeInterview() ? message.resumeEvidenceId() : message.recordId();
     }
 
     static Duration deferralDelay(int deferralCount) {

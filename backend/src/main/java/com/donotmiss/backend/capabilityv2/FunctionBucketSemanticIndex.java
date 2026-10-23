@@ -56,6 +56,19 @@ public class FunctionBucketSemanticIndex {
         this.enabled = enabled;
     }
 
+    /** Read-only state for the operations console: whether the index is built, its size and the last failure. */
+    public Map<String, Object> status() {
+        Snapshot current = snapshot;
+        Map<String, Object> status = new LinkedHashMap<>();
+        status.put("enabled", enabled);
+        status.put("available", available());
+        status.put("built", current != null);
+        status.put("vectors", current == null ? 0 : current.vectors().size());
+        status.put("lastFailureAt", lastFailureAt);
+        status.put("model", llmClient.embeddingModeLabel());
+        return status;
+    }
+
     public boolean available() {
         return enabled && llmClient.isEmbeddingEnabled();
     }

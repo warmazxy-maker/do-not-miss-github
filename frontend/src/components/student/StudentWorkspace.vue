@@ -6,6 +6,7 @@ import {
   CirclePlus,
   Compass,
   Flag,
+  Gauge,
   LogOut,
   Menu,
   Search,
@@ -21,6 +22,7 @@ import {
   studentNavigationItems,
   type StudentNavigationItem
 } from "@/navigation/student";
+import { opsApi } from "@/api/ops";
 import { useAuthStore } from "@/stores/auth";
 
 const route = useRoute();
@@ -32,6 +34,7 @@ const commandInput = ref<HTMLInputElement | null>(null);
 const quickMenuOpen = ref(false);
 const userMenuOpen = ref(false);
 const mobileMoreOpen = ref(false);
+const opsAllowed = ref(false);
 
 const initial = computed(() => authStore.user?.username.slice(0, 1).toUpperCase() ?? "D");
 const currentTitle = computed(() => String(route.meta.title ?? "学生端"));
@@ -121,7 +124,13 @@ function handleGlobalKeydown(event: KeyboardEvent) {
   }
 }
 
-onMounted(() => window.addEventListener("keydown", handleGlobalKeydown));
+onMounted(() => {
+  window.addEventListener("keydown", handleGlobalKeydown);
+  opsApi
+    .access()
+    .then((result) => (opsAllowed.value = result.allowed))
+    .catch(() => (opsAllowed.value = false));
+});
 onBeforeUnmount(() => window.removeEventListener("keydown", handleGlobalKeydown));
 </script>
 
@@ -220,6 +229,10 @@ onBeforeUnmount(() => window.removeEventListener("keydown", handleGlobalKeydown)
                   <strong>{{ authStore.user?.username }}</strong>
                   <small>{{ authStore.user?.email }}</small>
                 </div>
+                <button v-if="opsAllowed" type="button" @click="navigate('/ops')">
+                  <Gauge :size="17" />
+                  <span>运维观测面板</span>
+                </button>
                 <button type="button" @click="logout">
                   <LogOut :size="17" />
                   <span>退出登录</span>
@@ -314,6 +327,10 @@ onBeforeUnmount(() => window.removeEventListener("keydown", handleGlobalKeydown)
                 <ChevronRight :size="16" />
               </RouterLink>
             </nav>
+            <button v-if="opsAllowed" class="student-mobile-logout" type="button" @click="navigate('/ops')">
+              <Gauge :size="19" />
+              <span>运维观测面板</span>
+            </button>
             <button class="student-mobile-logout" type="button" @click="logout">
               <LogOut :size="19" />
               <span>退出登录</span>

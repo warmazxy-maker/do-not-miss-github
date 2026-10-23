@@ -9,6 +9,8 @@ import com.donotmiss.backend.agentlog.AgentRunService;
 import com.donotmiss.backend.agentlog.AgentRunType;
 import com.donotmiss.backend.agentlog.AgentStepName;
 import com.donotmiss.backend.agentlog.AgentTraceArtifactService;
+import com.donotmiss.backend.resumeinterview.ResumeInterviewEvidenceEntity;
+import com.donotmiss.backend.resumeinterview.ResumeInterviewEvidenceRepository;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -47,6 +49,7 @@ class CapabilityV2AsyncScoringServiceTest {
     @Mock private CapabilityV2PipelineWriter writer;
     @Mock private AbilityEvidenceAssessmentRepository assessmentRepository;
     @Mock private AbilityAssessmentJobRepository jobRepository;
+    @Mock private ResumeInterviewEvidenceRepository resumeEvidenceRepository;
     @Mock private AgentRunService agentRunService;
     @Mock private AgentTraceArtifactService artifactService;
 
@@ -125,6 +128,103 @@ class CapabilityV2AsyncScoringServiceTest {
         verifyNoInteractions(writer, agentRunService);
     }
 
+    @Test
+    void resumeEvidenceRunsTheSamePipelineWithResumeSourceAndAssessmentSignals() {
+        CapabilityEvidenceInput evidence = resumeEvidence();
+        when(evidenceInputService.fromResumeInterviewEvidence(31L, "student-1")).thenReturn(evidence);
+        when(resumeEvidenceRepository.findById(31L)).thenReturn(Optional.of(resumeRow(31L, 71L)));
+        when(assessmentRepository.findById(71L)).thenReturn(Optional.of(assessment(71L)));
+        when(jobRepository.findById(501L)).thenReturn(Optional.of(job(null, "student-1")));
+        when(scoringService.hasRecordedBusinessEvidence(evidence)).thenReturn(false);
+        when(agentRunService.startRun(eq("student-1"), eq(AgentRunType.CAPABILITY_V2_PIPELINE), anyString(), anyString()))
+                .thenReturn(RUN_ID);
+        FunctionCapabilityAttributionAgent.DeliveryGate gate = new FunctionCapabilityAttributionAgent.DeliveryGate(true, List.of(), "ok");
+        when(userKnowledgeBucketService.loadForUser("student-1")).thenReturn(List.of());
+        when(knowledgeAgent.decide(evidence, List.of())).thenReturn(new KnowledgeBucketNormalizationAgent.KnowledgeDecision(
+                "p", "m", "s", null, List.of(), List.of()));
+        when(functionAgent.recall(evidence)).thenReturn(List.of());
+        when(functionAgent.deliveryGate(evidence)).thenReturn(gate);
+        when(functionAgent.decide(evidence, List.of(), gate)).thenReturn(new FunctionCapabilityAttributionAgent.FunctionDecision(
+                "m", "s", null, List.of(), List.of()));
+        when(writer.write(any())).thenReturn(new CapabilityV2PipelineWriter.WriteResult(false,
+                new KnowledgeBucketNormalizationAgent.KnowledgeClassificationOutcome("k", List.of(), List.of(), "m", "s", List.of()),
+                new FunctionCapabilityAttributionAgent.FunctionAttributionOutcome("f", List.of(), List.of(), "m", "s", List.of()),
+                new CapabilityV2ScoringService.ScoringOutcome(evidence.evidenceId(), 0, List.of())));
+
+        CapabilityV2AsyncScoringService.ProcessingOutcome result = service().processResumeEvidence(
+                31L, "student-1", 71L, new BigDecimal("0.7"), new BigDecimal("0.7"));
+
+        ArgumentCaptor<CapabilityV2PipelineWriter.WriteCommand> command = ArgumentCaptor.forClass(CapabilityV2PipelineWriter.WriteCommand.class);
+        verify(writer).write(command.capture());
+        assertEquals(CapabilityEvidenceSourceKind.RESUME_INTERVIEW, command.getValue().evidence().sourceKind());
+        assertEquals(new BigDecimal("0.7000"), command.getValue().evidence().sourceCredibilityPrior());
+        assertEquals(71L, command.getValue().legacyAssessmentId());
+        assertEquals(new BigDecimal("46"), command.getValue().signals().activityDifficulty());
+        assertEquals(new BigDecimal("0.7500"), command.getValue().signals().personalContribution());
+        assertEquals(new BigDecimal("0.7000"), command.getValue().novelty());
+        assertFalse(result.skipped());
+        verify(agentRunService).startRun(eq("student-1"), eq(AgentRunType.CAPABILITY_V2_PIPELINE), anyString(),
+                eq("resumeEvidenceId=31, assessmentId=71, evidenceId=resume-interview-evidence:31"));
+        verify(evidenceInputService, never()).fromAchievement(any(), any());
+    }
+
+    @Test
+    void resumeEvidenceAlreadyInTheV2LedgerIsSkippedBeforeAnyModelCall() {
+        CapabilityEvidenceInput evidence = resumeEvidence();
+        when(evidenceInputService.fromResumeInterviewEvidence(31L, "student-1")).thenReturn(evidence);
+        when(resumeEvidenceRepository.findById(31L)).thenReturn(Optional.of(resumeRow(31L, 71L)));
+        when(assessmentRepository.findById(71L)).thenReturn(Optional.of(assessment(71L)));
+        when(jobRepository.findById(501L)).thenReturn(Optional.of(job(null, "student-1")));
+        when(scoringService.hasRecordedBusinessEvidence(evidence)).thenReturn(true);
+
+        CapabilityV2AsyncScoringService.ProcessingOutcome result = service().processResumeEvidence(
+                31L, "student-1", 71L, BigDecimal.ONE, BigDecimal.ONE);
+
+        assertTrue(result.skipped());
+        verify(knowledgeAgent, never()).decide(any(), any());
+        verifyNoInteractions(writer, agentRunService);
+    }
+
+    @Test
+    void anAssessmentThatIsNotTheResumeRowsOwnIsRejected() {
+        when(evidenceInputService.fromResumeInterviewEvidence(31L, "student-1")).thenReturn(resumeEvidence());
+        when(resumeEvidenceRepository.findById(31L)).thenReturn(Optional.of(resumeRow(31L, 70L)));
+
+        assertThrows(IllegalArgumentException.class, () -> service().processResumeEvidence(
+                31L, "student-1", 71L, BigDecimal.ONE, BigDecimal.ONE));
+        verifyNoInteractions(writer, agentRunService, knowledgeAgent);
+    }
+
+    @Test
+    void aGrowthRecordAssessmentCannotBeReplayedAsResumeEvidence() {
+        when(evidenceInputService.fromResumeInterviewEvidence(31L, "student-1")).thenReturn(resumeEvidence());
+        when(resumeEvidenceRepository.findById(31L)).thenReturn(Optional.of(resumeRow(31L, 71L)));
+        when(assessmentRepository.findById(71L)).thenReturn(Optional.of(assessment(71L)));
+        when(jobRepository.findById(501L)).thenReturn(Optional.of(job(99L, "student-1")));
+
+        assertThrows(IllegalArgumentException.class, () -> service().processResumeEvidence(
+                31L, "student-1", 71L, BigDecimal.ONE, BigDecimal.ONE));
+        verifyNoInteractions(writer, agentRunService);
+    }
+
+    private ResumeInterviewEvidenceEntity resumeRow(Long id, Long assessmentId) {
+        ResumeInterviewEvidenceEntity row = new ResumeInterviewEvidenceEntity();
+        setId(row, id);
+        row.setAbilityAssessmentId(assessmentId);
+        return row;
+    }
+
+    private CapabilityEvidenceInput resumeEvidence() {
+        return new CapabilityEvidenceInput(
+                "capability-evidence-v2", "resume-interview-evidence:31", "k",
+                CapabilityEvidenceSourceKind.RESUME_INTERVIEW, "student-1", "31",
+                AbilityEvidenceSourceType.RESUME_INTERVIEW.name(),
+                AbilityEvidenceSourceType.RESUME_INTERVIEW.credibilityPrior(),
+                "简历面试：后端工程师", "面试问题：讲讲你做的接口", "我负责了鉴权模块", "{}", "{}",
+                List.of("目标岗位：后端工程师"), Instant.parse("2026-08-14T00:00:00Z"),
+                true, "就绪", "b".repeat(64));
+    }
+
     private CapabilityEvidenceInput stubInputs() {
         CapabilityEvidenceInput evidence = evidence();
         when(evidenceInputService.fromAchievement(99L, "student-1")).thenReturn(evidence);
@@ -137,7 +237,8 @@ class CapabilityV2AsyncScoringServiceTest {
     private CapabilityV2AsyncScoringService service() {
         return new CapabilityV2AsyncScoringService(
                 evidenceInputService, userKnowledgeBucketService, knowledgeAgent, functionAgent, scoringService,
-                writer, assessmentRepository, jobRepository, agentRunService, artifactService, new ObjectMapper());
+                writer, assessmentRepository, jobRepository, resumeEvidenceRepository, agentRunService, artifactService,
+                new ObjectMapper());
     }
 
     private AbilityEvidenceAssessmentEntity assessment(Long id) {

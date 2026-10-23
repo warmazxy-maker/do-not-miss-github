@@ -109,6 +109,19 @@ public class AgentRunService {
     public AgentLogDtos.RunDetail detail(String userId, Long runId) {
         AgentRunEntity run = agentRunRepository.findByIdAndUserId(runId, userId)
                 .orElseThrow(() -> new ApiException(HttpStatus.NOT_FOUND, "Agent run not found."));
+        return toDetail(run);
+    }
+
+    /** Any user's run, for the operations console only; callers must check ops access first. */
+    @Transactional(readOnly = true)
+    public AgentLogDtos.RunDetail detailForOps(Long runId) {
+        AgentRunEntity run = agentRunRepository.findById(runId)
+                .orElseThrow(() -> new ApiException(HttpStatus.NOT_FOUND, "Agent run not found."));
+        return toDetail(run);
+    }
+
+    private AgentLogDtos.RunDetail toDetail(AgentRunEntity run) {
+        Long runId = run.getId();
         List<AgentLogDtos.StepResponse> steps = agentRunStepRepository.findByRunIdOrderBySequenceNoAsc(runId).stream()
                 .map(AgentLogDtos.StepResponse::from)
                 .toList();

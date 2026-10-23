@@ -22,4 +22,5 @@
 | 双标签 Stage 15：标签详情与里程碑 | [Stage15_标签详情与里程碑.md](Stage15_标签详情与里程碑.md) | 2026-10-19 |
 | 双标签 Stage 15.1：晋级复核与补充说明 | [Stage15.1_晋级复核与补充说明.md](Stage15.1_晋级复核与补充说明.md) | 2026-10-19 |
 | 双标签 Stage 16 + 17：Golden Set 评测与链路 Trace | [Stage16-17_GoldenSet与AgentTrace.md](Stage16-17_GoldenSet与AgentTrace.md) | 2026-10-20 |
+| 双标签 Stage 12.1：简历定段接入 V2 双标签链路 | [Stage12.1_简历定段接入V2.md](Stage12.1_简历定段接入V2.md) | 2026-10-21 |
 | 双标签 Stage 16.5：职能召回改为语义为主，并取消关键词门禁（主要职能命中率 0.39 → 0.80） | [Stage16.5_职能混合召回.md](Stage16.5_职能混合召回.md) | 2026-10-21 |

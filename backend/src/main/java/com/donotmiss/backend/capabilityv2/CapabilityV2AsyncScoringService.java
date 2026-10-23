@@ -8,6 +8,8 @@ import com.donotmiss.backend.agentlog.AgentRunService;
 import com.donotmiss.backend.agentlog.AgentRunType;
 import com.donotmiss.backend.agentlog.AgentStepName;
 import com.donotmiss.backend.agentlog.AgentTraceArtifactService;
+import com.donotmiss.backend.resumeinterview.ResumeInterviewEvidenceEntity;
+import com.donotmiss.backend.resumeinterview.ResumeInterviewEvidenceRepository;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -22,7 +24,8 @@ import java.util.Map;
 import java.util.function.Supplier;
 
 /**
- * Asynchronous orchestration for one completed activity or challenge, traced as one agent run.
+ * Asynchronous orchestration for one completed activity or challenge, or one scored
+ * resume-interview evidence, traced as one agent run.
  *
  * <p>Order of work: read inputs, run every model step with no transaction open, then commit all
  * writes at once through {@link CapabilityV2PipelineWriter}. If a model step has no usable answer
@@ -51,6 +54,7 @@ public class CapabilityV2AsyncScoringService {
     private final CapabilityV2PipelineWriter writer;
     private final AbilityEvidenceAssessmentRepository assessmentRepository;
     private final AbilityAssessmentJobRepository jobRepository;
+    private final ResumeInterviewEvidenceRepository resumeEvidenceRepository;
     private final AgentRunService agentRunService;
     private final AgentTraceArtifactService artifactService;
     private final ObjectMapper objectMapper;
@@ -64,10 +68,12 @@ public class CapabilityV2AsyncScoringService {
             CapabilityV2PipelineWriter writer,
             AbilityEvidenceAssessmentRepository assessmentRepository,
             AbilityAssessmentJobRepository jobRepository,
+            ResumeInterviewEvidenceRepository resumeEvidenceRepository,
             AgentRunService agentRunService,
             AgentTraceArtifactService artifactService,
             ObjectMapper objectMapper
     ) {
+        this.resumeEvidenceRepository = resumeEvidenceRepository;
         this.evidenceInputService = evidenceInputService;
         this.userKnowledgeBucketService = userKnowledgeBucketService;
         this.knowledgeAgent = knowledgeAgent;
@@ -89,20 +95,44 @@ public class CapabilityV2AsyncScoringService {
         requireMessage(recordId, userId, assessmentId);
         CapabilityEvidenceInput evidence = evidenceInputService.fromAchievement(recordId, userId.trim());
         AbilityEvidenceAssessmentEntity assessment = verifyAssessmentOwnership(assessmentId, recordId, evidence.userId());
+        return run(evidence, assessment, evidenceQuality, novelty, "recordId=" + recordId);
+    }
 
+    /**
+     * Same pipeline for one resume-interview evidence that the V1 resume scoring already turned
+     * into an {@link AbilityEvidenceAssessmentEntity}. Only the input adapter and the ownership
+     * check differ; signals, idempotency, the single write transaction and the trace are shared.
+     */
+    public ProcessingOutcome processResumeEvidence(Long resumeEvidenceId,
+                                                   String userId,
+                                                   Long assessmentId,
+                                                   BigDecimal evidenceQuality,
+                                                   BigDecimal novelty) {
+        requireMessage(resumeEvidenceId, userId, assessmentId);
+        CapabilityEvidenceInput evidence = evidenceInputService.fromResumeInterviewEvidence(resumeEvidenceId, userId.trim());
+        AbilityEvidenceAssessmentEntity assessment =
+                verifyResumeAssessmentOwnership(assessmentId, resumeEvidenceId, evidence.userId());
+        return run(evidence, assessment, evidenceQuality, novelty, "resumeEvidenceId=" + resumeEvidenceId);
+    }
+
+    private ProcessingOutcome run(CapabilityEvidenceInput evidence,
+                                  AbilityEvidenceAssessmentEntity assessment,
+                                  BigDecimal evidenceQuality,
+                                  BigDecimal novelty,
+                                  String sourceLabel) {
         if (!evidence.scoringEligible()) {
             return ProcessingOutcome.skipped(evidence.evidenceId(), "证据不具备计分资格：" + evidence.eligibilityReason());
         }
         // Checked before any model call, so a redelivered message costs nothing.
         if (scoringService.hasRecordedBusinessEvidence(evidence)) {
-            return ProcessingOutcome.skipped(evidence.evidenceId(), "重复投递：该完成记录已写入 V2 能力账本");
+            return ProcessingOutcome.skipped(evidence.evidenceId(), "重复投递：该证据已写入 V2 能力账本");
         }
 
         Trace trace = new Trace(agentRunService.startRun(
                 evidence.userId(),
                 AgentRunType.CAPABILITY_V2_PIPELINE,
                 "双标签归因与评分：" + evidence.title(),
-                "recordId=" + recordId + ", assessmentId=" + assessmentId + ", evidenceId=" + evidence.evidenceId()
+                sourceLabel + ", assessmentId=" + assessment.getId() + ", evidenceId=" + evidence.evidenceId()
         ));
         try {
             List<CapabilityV2Dtos.BucketCandidate> existing = trace.step(
@@ -193,7 +223,7 @@ public class CapabilityV2AsyncScoringService {
 
             if (written.duplicate()) {
                 agentRunService.finishRun(trace.runId(), "duplicate delivery");
-                return ProcessingOutcome.skipped(evidence.evidenceId(), "重复投递：该完成记录已写入 V2 能力账本");
+                return ProcessingOutcome.skipped(evidence.evidenceId(), "重复投递：该证据已写入 V2 能力账本");
             }
             agentRunService.finishRun(trace.runId(), "knowledge=" + written.knowledge().assignments().size()
                     + ", function=" + written.function().assignments().size()
@@ -223,6 +253,31 @@ public class CapabilityV2AsyncScoringService {
         );
         if (!recordId.equals(job.getAchievementRecordId()) || !userId.equals(job.getUserId())) {
             throw new IllegalArgumentException("能力证据评估与当前完成记录不匹配");
+        }
+        return assessment;
+    }
+
+    /**
+     * A resume assessment has no growth record; it belongs to the evidence row that the V1 resume
+     * scoring stamped with it, and its job must be the same user's.
+     */
+    private AbilityEvidenceAssessmentEntity verifyResumeAssessmentOwnership(Long assessmentId,
+                                                                            Long resumeEvidenceId,
+                                                                            String userId) {
+        ResumeInterviewEvidenceEntity resumeEvidence = resumeEvidenceRepository.findById(resumeEvidenceId).orElseThrow(
+                () -> new IllegalArgumentException("简历面试证据不存在：" + resumeEvidenceId)
+        );
+        if (!assessmentId.equals(resumeEvidence.getAbilityAssessmentId())) {
+            throw new IllegalArgumentException("能力证据评估与当前简历面试证据不匹配");
+        }
+        AbilityEvidenceAssessmentEntity assessment = assessmentRepository.findById(assessmentId).orElseThrow(
+                () -> new IllegalArgumentException("能力证据评估不存在：" + assessmentId)
+        );
+        AbilityAssessmentJobEntity job = jobRepository.findById(assessment.getJobId()).orElseThrow(
+                () -> new IllegalArgumentException("能力证据任务不存在：" + assessment.getJobId())
+        );
+        if (job.getAchievementRecordId() != null || !userId.equals(job.getUserId())) {
+            throw new IllegalArgumentException("能力证据评估与当前简历面试证据不匹配");
         }
         return assessment;
     }
@@ -306,9 +361,9 @@ public class CapabilityV2AsyncScoringService {
         }
     }
 
-    private void requireMessage(Long recordId, String userId, Long assessmentId) {
-        if (recordId == null || assessmentId == null || userId == null || userId.isBlank()) {
-            throw new IllegalArgumentException("V2 能力评分消息缺少 recordId、userId 或 assessmentId");
+    private void requireMessage(Long sourceId, String userId, Long assessmentId) {
+        if (sourceId == null || assessmentId == null || userId == null || userId.isBlank()) {
+            throw new IllegalArgumentException("V2 能力评分消息缺少来源 ID、userId 或 assessmentId");
         }
     }
 

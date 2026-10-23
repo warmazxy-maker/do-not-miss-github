@@ -9,9 +9,13 @@ import com.donotmiss.backend.coach.CoachLogRepository;
 import com.donotmiss.backend.common.ApiException;
 import com.donotmiss.backend.eventquality.EventQualityReportEntity;
 import com.donotmiss.backend.eventquality.EventQualityReportRepository;
+import com.donotmiss.backend.resumeinterview.ResumeInterviewAnswerEntity;
+import com.donotmiss.backend.resumeinterview.ResumeInterviewAnswerRepository;
 import com.donotmiss.backend.resumeinterview.ResumeInterviewEvidenceEntity;
 import com.donotmiss.backend.resumeinterview.ResumeInterviewEvidenceRepository;
 import com.donotmiss.backend.resumeinterview.ResumeInterviewEvidenceStatus;
+import com.donotmiss.backend.resumeinterview.ResumeInterviewQuestionEntity;
+import com.donotmiss.backend.resumeinterview.ResumeInterviewQuestionRepository;
 import com.donotmiss.backend.resumeinterview.ResumeInterviewSessionEntity;
 import com.donotmiss.backend.resumeinterview.ResumeInterviewSessionRepository;
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -44,6 +48,8 @@ public class CapabilityEvidenceInputService {
     private final CoachLogRepository coachLogRepository;
     private final ResumeInterviewEvidenceRepository resumeInterviewEvidenceRepository;
     private final ResumeInterviewSessionRepository resumeInterviewSessionRepository;
+    private final ResumeInterviewQuestionRepository resumeInterviewQuestionRepository;
+    private final ResumeInterviewAnswerRepository resumeInterviewAnswerRepository;
     private final EventQualityReportRepository eventQualityReportRepository;
     private final ObjectMapper objectMapper;
 
@@ -52,6 +58,8 @@ public class CapabilityEvidenceInputService {
             CoachLogRepository coachLogRepository,
             ResumeInterviewEvidenceRepository resumeInterviewEvidenceRepository,
             ResumeInterviewSessionRepository resumeInterviewSessionRepository,
+            ResumeInterviewQuestionRepository resumeInterviewQuestionRepository,
+            ResumeInterviewAnswerRepository resumeInterviewAnswerRepository,
             EventQualityReportRepository eventQualityReportRepository,
             ObjectMapper objectMapper
     ) {
@@ -59,6 +67,8 @@ public class CapabilityEvidenceInputService {
         this.coachLogRepository = coachLogRepository;
         this.resumeInterviewEvidenceRepository = resumeInterviewEvidenceRepository;
         this.resumeInterviewSessionRepository = resumeInterviewSessionRepository;
+        this.resumeInterviewQuestionRepository = resumeInterviewQuestionRepository;
+        this.resumeInterviewAnswerRepository = resumeInterviewAnswerRepository;
         this.eventQualityReportRepository = eventQualityReportRepository;
         this.objectMapper = objectMapper;
     }
@@ -132,21 +142,48 @@ public class CapabilityEvidenceInputService {
         );
     }
 
+    /**
+     * The question is system-generated and goes to {@code description}; the answer is the
+     * student's own text and goes to {@code reflection}, which the V2 prompts treat as untrusted.
+     * The evidence status is deliberately kept out of the payload so the hash describes content,
+     * not the V1 lifecycle (EVIDENCE_READY → SCORED).
+     */
     public CapabilityEvidenceInput fromResumeInterviewEvidence(Long evidenceId, String userId) {
         ResumeInterviewEvidenceEntity evidence = resumeInterviewEvidenceRepository.findById(evidenceId)
                 .orElseThrow(() -> ApiException.notFound("面试证据不存在"));
         ResumeInterviewSessionEntity session = resumeInterviewSessionRepository.findByIdAndUserId(evidence.getSessionId(), userId)
                 .orElseThrow(() -> ApiException.notFound("面试证据不存在"));
+        ResumeInterviewQuestionEntity question = evidence.getQuestionId() == null
+                ? null
+                : resumeInterviewQuestionRepository.findByIdAndSessionId(evidence.getQuestionId(), evidence.getSessionId())
+                .orElse(null);
+        ResumeInterviewAnswerEntity answer = evidence.getAnswerId() == null
+                ? null
+                : resumeInterviewAnswerRepository.findById(evidence.getAnswerId())
+                .filter(item -> evidence.getSessionId().equals(item.getSessionId()))
+                .orElse(null);
         boolean ready = evidence.getStatus() == ResumeInterviewEvidenceStatus.EVIDENCE_READY
                 || evidence.getStatus() == ResumeInterviewEvidenceStatus.SCORED;
+        boolean answered = answer != null && !safe(answer.getAnswerText()).isBlank();
+        String questionText = question == null ? "" : safe(question.getQuestionText());
+        String targetDimension = question == null ? "" : safe(question.getTargetDimension());
         Map<String, Object> payload = new LinkedHashMap<>();
         payload.put("sessionId", evidence.getSessionId());
         payload.put("targetRole", safe(session.getTargetRole()));
         payload.put("evidenceKind", evidence.getEvidenceKind() == null ? "" : evidence.getEvidenceKind().name());
-        payload.put("status", evidence.getStatus() == null ? "" : evidence.getStatus().name());
         payload.put("abilityEvidence", safe(evidence.getAbilityEvidenceJson()));
         payload.put("questionId", evidence.getQuestionId());
         payload.put("answerId", evidence.getAnswerId());
+        payload.put("targetDimension", targetDimension);
+
+        String eligibilityReason;
+        if (!ready) {
+            eligibilityReason = "面试证据尚未就绪，暂不进入评分流程";
+        } else if (!answered) {
+            eligibilityReason = "面试回答缺失，无法据此归因";
+        } else {
+            eligibilityReason = "面试证据已就绪，可进入后续统一评分流程";
+        }
 
         return build(
                 CapabilityEvidenceSourceKind.RESUME_INTERVIEW,
@@ -155,18 +192,18 @@ public class CapabilityEvidenceInputService {
                 session.getUserId(),
                 evidence.getSourceType() == null ? AbilityEvidenceSourceType.RESUME_INTERVIEW : evidence.getSourceType(),
                 "简历面试：" + safe(session.getTargetRole()),
-                "来自简历与问答的能力证据候选",
-                "",
+                questionText.isBlank() ? "来自简历与问答的能力证据候选" : "面试问题：" + questionText,
+                answered ? safe(answer.getAnswerText()) : "",
                 toJson(payload),
                 "{}",
                 nonBlankFacts(
                         "目标岗位：" + safe(session.getTargetRole()),
                         "证据类型：" + (evidence.getEvidenceKind() == null ? "" : evidence.getEvidenceKind().name()),
-                        "证据状态：" + (evidence.getStatus() == null ? "" : evidence.getStatus().name())
+                        targetDimension.isBlank() ? "" : "考察维度：" + targetDimension
                 ),
                 evidence.getCreatedAt(),
-                ready,
-                ready ? "面试证据已就绪，可进入后续统一评分流程" : "面试证据尚未就绪，暂不进入评分流程"
+                ready && answered,
+                eligibilityReason
         );
     }
 

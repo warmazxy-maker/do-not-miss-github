@@ -57,7 +57,33 @@ public class DomainEventPublisher {
                         evidenceQuality,
                         novelty,
                         Instant.now(),
-                        0
+                        0,
+                        DomainEventMessages.CapabilityV2ScoringMessage.SOURCE_ACHIEVEMENT,
+                        null
+                );
+        publish(properties.getRoutingKeys().getCapabilityV2Scoring(), message);
+    }
+
+    /**
+     * Sends one scored resume-interview evidence into the same V2 queue. Called inside the
+     * transaction that marks the evidence SCORED, so the outbox row and the V1 result commit together.
+     */
+    public void publishResumeCapabilityV2Scoring(Long resumeEvidenceId,
+                                                 String userId,
+                                                 Long assessmentId,
+                                                 BigDecimal evidenceQuality,
+                                                 BigDecimal novelty) {
+        DomainEventMessages.CapabilityV2ScoringMessage message =
+                new DomainEventMessages.CapabilityV2ScoringMessage(
+                        null,
+                        userId,
+                        assessmentId,
+                        evidenceQuality,
+                        novelty,
+                        Instant.now(),
+                        0,
+                        DomainEventMessages.CapabilityV2ScoringMessage.SOURCE_RESUME_INTERVIEW,
+                        resumeEvidenceId
                 );
         publish(properties.getRoutingKeys().getCapabilityV2Scoring(), message);
     }

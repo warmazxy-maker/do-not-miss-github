@@ -5,6 +5,7 @@ import com.donotmiss.backend.agentlog.AgentRunService;
 import com.donotmiss.backend.agentlog.AgentRunType;
 import com.donotmiss.backend.agentlog.AgentStepName;
 import com.donotmiss.backend.common.ApiException;
+import com.donotmiss.backend.mq.DomainEventPublisher;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -35,6 +36,7 @@ public class ResumeAbilityScoringService {
     private final EvidenceAssessmentPersistenceService persistenceService;
     private final AbilityScoringService abilityScoringService;
     private final AgentRunService agentRunService;
+    private final DomainEventPublisher domainEventPublisher;
     private final ObjectMapper objectMapper;
     private final TransactionTemplate transactionTemplate;
 
@@ -47,8 +49,10 @@ public class ResumeAbilityScoringService {
                                        EvidenceAssessmentPersistenceService persistenceService,
                                        AbilityScoringService abilityScoringService,
                                        AgentRunService agentRunService,
+                                       DomainEventPublisher domainEventPublisher,
                                        ObjectMapper objectMapper,
                                        TransactionTemplate transactionTemplate) {
+        this.domainEventPublisher = domainEventPublisher;
         this.sessionRepository = sessionRepository;
         this.evidenceRepository = evidenceRepository;
         this.scoreSummaryRepository = scoreSummaryRepository;
@@ -204,6 +208,15 @@ public class ResumeAbilityScoringService {
             entity.setAbilityAssessmentId(savedAssessment.getId());
             entity.setAbilityScoreResultIdsJson(toJson(resultIds));
             evidenceRepository.save(entity);
+            // V1 stays the synchronous result of this request; V2 (dual labels) follows through the
+            // outbox. Same transaction, so a rollback here never leaves a V2 message for an unscored row.
+            domainEventPublisher.publishResumeCapabilityV2Scoring(
+                    entity.getId(),
+                    userId,
+                    savedAssessment.getId(),
+                    evidenceQuality(assessment),
+                    novelty(assessment)
+            );
             return null;
         });
         return new CandidateScoreResult(execution, resultIds, judgeTriggered);
