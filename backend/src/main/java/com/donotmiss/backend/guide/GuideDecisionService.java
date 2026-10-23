@@ -51,20 +51,21 @@ public class GuideDecisionService {
             );
             UserMemoryDtos.Profile memory = userMemoryService.profile(userId);
             GuideDtos.GuideDecision ruleDecision = ruleBasedDecision(message, session);
-            GuideDtos.GuideDecision decision = llmClient.chatForJson(
+            GuideDtos.GuideDecision modelDecision = llmClient.chatForJson(
                             systemPrompt(),
                             userPrompt(message, session, memory, ruleDecision),
                             GuideDtos.GuideActionModelResponse.class
                     )
                     .map(output -> normalizeModelDecision(message, session, output, ruleDecision))
-                    .orElse(ruleDecision);
-            decision = guardDecision(message, session, decision, ruleDecision);
+                    .orElse(null);
+            GuideDtos.GuideDecision decision = guardDecision(
+                    message, session, modelDecision == null ? ruleDecision : modelDecision);
 
             traceArtifactService.record(
                     runId,
                     AgentStepName.GUIDE_ACTION_DECISION,
                     "GUIDE_ACTION_DECISION",
-                    decisionArtifact(message, session, ruleDecision, decision),
+                    decisionArtifact(message, session, ruleDecision, modelDecision, decision),
                     "action=" + decision.action() + ", confidence=" + decision.confidence()
             );
             agentRunService.completeStep(
@@ -110,29 +111,78 @@ public class GuideDecisionService {
         );
     }
 
-    private GuideDtos.GuideDecision guardDecision(String message,
-                                                 GuideDtos.GuideSessionView session,
-                                                 GuideDtos.GuideDecision decision,
-                                                 GuideDtos.GuideDecision fallback) {
-        String normalized = normalize(message);
-        boolean hasSessionGoal = hasText(currentGoal(session));
-        boolean hasRecommendations = session != null
-                && session.lastRecommendedEventIds() != null
-                && !session.lastRecommendedEventIds().isEmpty();
-
+    /**
+     * Only structural invariants live here; whether a sentence is specific enough to search is the
+     * model's call. Keyword checks used to override the model and turned complete requests that
+     * happened to mention a place or "最好" into endless clarifying questions.
+     */
+    GuideDtos.GuideDecision guardDecision(String message,
+                                          GuideDtos.GuideSessionView session,
+                                          GuideDtos.GuideDecision decision) {
         if (!hasText(message)) {
             return askClarify("用户输入为空，需要先追问。", session);
         }
-        if (!hasSessionGoal && (isRefineOnly(normalized) || isContinueRequest(normalized))) {
-            return askClarify("没有上一轮搜索目标，补充条件无法单独检索。", session);
-        }
-        if (!hasRecommendations && decision.action() == GuideAction.CHAT_ONLY && isSearchLike(normalized)) {
-            return fallback;
-        }
-        if (decision.action() == GuideAction.CALL_RAG_REFINE && !hasSessionGoal) {
+        if (decision.action() == GuideAction.CALL_RAG_REFINE && !hasText(currentGoal(session))) {
             return newSearch(message, "没有可继承的上一轮目标，按新搜索处理。", session);
         }
+        if (decision.action() == GuideAction.ASK_CLARIFY && lastActionWas(session, GuideAction.ASK_CLARIFY)) {
+            return searchAfterClarify(message, session, decision);
+        }
         return decision;
+    }
+
+    /**
+     * At most one clarifying round: the user already answered once, so search with what is known
+     * and let later turns refine the results instead of asking again.
+     */
+    private GuideDtos.GuideDecision searchAfterClarify(String message,
+                                                       GuideDtos.GuideSessionView session,
+                                                       GuideDtos.GuideDecision decision) {
+        // The model chose to clarify, so its ragNeed/currentGoal were back-filled from the rule decision,
+        // which only sees this turn. Rebuild them from the original request plus the answer.
+        String combined = joinNonBlank("；", lastUserMessage(session), safe(message));
+        String goal = firstPresent(currentGoal(session), combined);
+        String ragNeed = combined;
+        return new GuideDtos.GuideDecision(
+                GuideAction.CALL_RAG_NEW,
+                true,
+                decision.confidence(),
+                "已追问过一轮，按已收集的信息先检索，再根据结果继续调整。",
+                compact(goal, 500),
+                compact(ragNeed, 1000),
+                "先按已知条件推荐，并告诉用户可以继续补充条件。",
+                decision.acceptedPreferences(),
+                decision.rejectedConditions()
+        );
+    }
+
+    private boolean lastActionWas(GuideDtos.GuideSessionView session, GuideAction action) {
+        return session != null && action.name().equalsIgnoreCase(safe(session.lastAction()));
+    }
+
+    /** The request the clarifying question was about: the user message just before it. */
+    private String lastUserMessage(GuideDtos.GuideSessionView session) {
+        if (session == null || session.recentMessages() == null) {
+            return "";
+        }
+        List<GuideDtos.GuideMessage> messages = session.recentMessages();
+        for (int i = messages.size() - 1; i >= 0; i--) {
+            GuideDtos.GuideMessage item = messages.get(i);
+            if (item != null && "user".equalsIgnoreCase(item.role()) && hasText(item.content())) {
+                return item.content().trim();
+            }
+        }
+        return "";
+    }
+
+    private String joinNonBlank(String separator, String... parts) {
+        List<String> kept = new ArrayList<>();
+        for (String part : parts) {
+            if (hasText(part)) {
+                kept.add(part.trim());
+            }
+        }
+        return String.join(separator, kept);
     }
 
     private GuideDtos.GuideDecision ruleBasedDecision(String message, GuideDtos.GuideSessionView session) {
@@ -249,6 +299,8 @@ public class GuideDecisionService {
                 4. 如果用户问“为什么推荐这个”“这两个哪个好”“解释一下”，优先 CHAT_ONLY。
                 5. 如果没有上下文而用户只说“线上”“再来点”“都行”，优先 ASK_CLARIFY。
                 6. acceptedPreferences 记录用户明确想要的偏好，rejectedConditions 记录用户明确不要的条件。
+                7. 只要能看出用户想做什么（学什么、找什么样的活动），就可以检索。地点、时间、线上线下、难度都是可选条件，缺了也先检索，不要为了补齐它们而追问。
+                8. 如果 lastAction 已经是 ASK_CLARIFY，说明已经追问过一轮：结合 recentMessages 里的上一句需求和本轮回答，写出完整的 ragNeed，选择 CALL_RAG_NEW。
 
                 只输出 JSON，不要输出 Markdown。
                 JSON 字段：
@@ -312,13 +364,18 @@ public class GuideDecisionService {
     private Map<String, Object> decisionArtifact(String message,
                                                  GuideDtos.GuideSessionView session,
                                                  GuideDtos.GuideDecision ruleDecision,
+                                                 GuideDtos.GuideDecision modelDecision,
                                                  GuideDtos.GuideDecision finalDecision) {
         Map<String, Object> artifact = new LinkedHashMap<>();
         artifact.put("message", safe(message));
         artifact.put("sessionId", safe(session == null ? "" : session.sessionId()));
         artifact.put("currentGoalBefore", safe(currentGoal(session)));
+        artifact.put("lastActionBefore", safe(session == null ? "" : session.lastAction()));
         artifact.put("ruleDecision", ruleDecision);
+        // null when the model was unavailable and the rule decision was used instead.
+        artifact.put("modelDecision", modelDecision);
         artifact.put("finalDecision", finalDecision);
+        artifact.put("overriddenByGuard", modelDecision != null && modelDecision.action() != finalDecision.action());
         return artifact;
     }
 
@@ -354,8 +411,7 @@ public class GuideDecisionService {
     }
 
     private boolean isRefineOnly(String normalized) {
-        return containsAny(normalized, "最好", "更", "偏", "不要", "不想", "不太想", "线上", "线下",
-                "大阪", "东京", "周末", "晚上", "下午", "上午", "低难度", "难度低", "零基础", "有报酬", "有偿");
+        return containsAny(normalized, "不要", "不想", "不太想", "换成", "改成");
     }
 
     private boolean isSearchLike(String normalized) {
@@ -390,12 +446,6 @@ public class GuideDecisionService {
         }
         if (containsAny(normalized, "线下")) {
             values.add("线下可参与");
-        }
-        if (containsAny(normalized, "大阪")) {
-            values.add("大阪");
-        }
-        if (containsAny(normalized, "东京")) {
-            values.add("东京");
         }
         if (containsAny(normalized, "java")) {
             values.add("Java");

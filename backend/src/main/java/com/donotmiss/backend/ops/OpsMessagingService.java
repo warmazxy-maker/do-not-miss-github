@@ -65,7 +65,6 @@ public class OpsMessagingService {
         Map<String, String> queueToKey = new LinkedHashMap<>();
         queueToKey.put(names.getEventIndex(), keys.getEventIndex());
         queueToKey.put(names.getEventQuality(), keys.getEventQuality());
-        queueToKey.put(names.getGrowthTag(), keys.getGrowthTag());
         queueToKey.put(names.getAbilityEvidence(), keys.getAbilityEvidence());
         queueToKey.put(names.getCapabilityV2Scoring(), keys.getCapabilityV2Scoring());
         queueToKey.put(names.getUserProfile(), keys.getUserProfile());

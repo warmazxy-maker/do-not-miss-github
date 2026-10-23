@@ -39,11 +39,6 @@ public class RabbitMqConfig {
     }
 
     @Bean
-    public Queue growthTagQueue(MqProperties properties) {
-        return QueueBuilder.durable(properties.getQueues().getGrowthTag()).build();
-    }
-
-    @Bean
     public Queue abilityEvidenceQueue(MqProperties properties) {
         return QueueBuilder.durable(properties.getQueues().getAbilityEvidence()).build();
     }
@@ -74,15 +69,6 @@ public class RabbitMqConfig {
         return BindingBuilder.bind(eventQualityQueue)
                 .to(doNotMissExchange)
                 .with(properties.getRoutingKeys().getEventQuality());
-    }
-
-    @Bean
-    public Binding growthTagBinding(@Qualifier("growthTagQueue") Queue growthTagQueue,
-                                    TopicExchange doNotMissExchange,
-                                    MqProperties properties) {
-        return BindingBuilder.bind(growthTagQueue)
-                .to(doNotMissExchange)
-                .with(properties.getRoutingKeys().getGrowthTag());
     }
 
     @Bean

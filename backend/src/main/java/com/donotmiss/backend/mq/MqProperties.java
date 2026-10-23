@@ -35,7 +35,6 @@ public class MqProperties {
     public static class Queues {
         private String eventIndex = "do-not-miss.event-index";
         private String eventQuality = "do-not-miss.event-quality";
-        private String growthTag = "do-not-miss.growth-tag";
         private String abilityEvidence = "do-not-miss.ability-evidence";
         private String capabilityV2Scoring = "do-not-miss.capability-v2-scoring";
         private String userProfile = "do-not-miss.user-profile";
@@ -54,14 +53,6 @@ public class MqProperties {
 
         public void setEventQuality(String eventQuality) {
             this.eventQuality = eventQuality;
-        }
-
-        public String getGrowthTag() {
-            return growthTag;
-        }
-
-        public void setGrowthTag(String growthTag) {
-            this.growthTag = growthTag;
         }
 
         public String getAbilityEvidence() {
@@ -92,7 +83,6 @@ public class MqProperties {
     public static class RoutingKeys {
         private String eventIndex = "event.index";
         private String eventQuality = "event.quality";
-        private String growthTag = "growth-tag.extract";
         private String abilityEvidence = "ability-evidence.assess";
         private String capabilityV2Scoring = "capability-v2.score";
         private String userProfile = "user-profile.refresh";
@@ -111,14 +101,6 @@ public class MqProperties {
 
         public void setEventQuality(String eventQuality) {
             this.eventQuality = eventQuality;
-        }
-
-        public String getGrowthTag() {
-            return growthTag;
-        }
-
-        public void setGrowthTag(String growthTag) {
-            this.growthTag = growthTag;
         }
 
         public String getAbilityEvidence() {

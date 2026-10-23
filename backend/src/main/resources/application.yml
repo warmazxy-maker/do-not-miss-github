@@ -111,14 +111,12 @@ app:
     queues:
       event-index: ${APP_MQ_QUEUE_EVENT_INDEX:do-not-miss.event-index}
       event-quality: ${APP_MQ_QUEUE_EVENT_QUALITY:do-not-miss.event-quality}
-      growth-tag: ${APP_MQ_QUEUE_GROWTH_TAG:do-not-miss.growth-tag}
       ability-evidence: ${APP_MQ_QUEUE_ABILITY_EVIDENCE:do-not-miss.ability-evidence}
       capability-v2-scoring: ${APP_MQ_QUEUE_CAPABILITY_V2_SCORING:do-not-miss.capability-v2-scoring}
       user-profile: ${APP_MQ_QUEUE_USER_PROFILE:do-not-miss.user-profile}
     routing-keys:
       event-index: event.index
       event-quality: event.quality
-      growth-tag: growth-tag.extract
       ability-evidence: ability-evidence.assess
       capability-v2-scoring: capability-v2.score
       user-profile: user-profile.refresh
