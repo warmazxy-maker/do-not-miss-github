@@ -8,7 +8,14 @@ import com.donotmiss.backend.agentlog.AgentRunStepEntity;
 import com.donotmiss.backend.agentlog.AgentRunType;
 import com.donotmiss.backend.auth.UserEntity;
 import com.donotmiss.backend.mq.DomainEventOutboxEntity;
+import com.donotmiss.backend.event.EventEntity;
 import com.donotmiss.backend.mq.DomainEventOutboxStatus;
+import com.donotmiss.backend.recommendation.RecommendationFeedbackEntity;
+import com.donotmiss.backend.recommendation.RecommendationImpressionEntity;
+import com.donotmiss.backend.resumeinterview.ResumeInterviewEvidenceEntity;
+import com.donotmiss.backend.resumeinterview.ResumeInterviewQuestionEntity;
+import com.donotmiss.backend.resumeinterview.ResumeInterviewScoreSummaryEntity;
+import com.donotmiss.backend.resumeinterview.ResumeInterviewSessionEntity;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.Repository;
@@ -44,14 +51,16 @@ public interface OpsQueries extends Repository<AgentRunEntity, Long> {
     @Query("select step from AgentRunStepEntity step where step.runId in :runIds")
     List<AgentRunStepEntity> stepsOf(@Param("runIds") Collection<Long> runIds);
 
+    /** Runs whose input summary starts with a correlation prefix such as {@code recordId=} or {@code sessionId=}. */
     @Query("""
             select run from AgentRunEntity run
-            where run.userId = :userId and run.runType in :runTypes and run.inputSummary like 'recordId=%'
+            where run.userId = :userId and run.runType in :runTypes and run.inputSummary like :prefix
             order by run.id desc
             """)
-    List<AgentRunEntity> recordRuns(@Param("userId") String userId,
-                                    @Param("runTypes") Collection<AgentRunType> runTypes,
-                                    Pageable pageable);
+    List<AgentRunEntity> runsWithInputPrefix(@Param("userId") String userId,
+                                             @Param("runTypes") Collection<AgentRunType> runTypes,
+                                             @Param("prefix") String prefix,
+                                             Pageable pageable);
 
     @Query("select count(run) from AgentRunEntity run where run.status = :status and run.startedAt < :before")
     long countRunsStartedBefore(@Param("status") AgentRunStatus status, @Param("before") Instant before);
@@ -128,6 +137,43 @@ public interface OpsQueries extends Repository<AgentRunEntity, Long> {
             where job.status = com.donotmiss.backend.abilityscore.AbilityAssessmentJobStatus.FAILED
             """)
     long countFailedJobs();
+
+    // ---- Recommendations ----
+
+    @Query("select run from AgentRunEntity run where run.runType = :runType and run.startedAt >= :since order by run.id desc")
+    List<AgentRunEntity> runsOfTypeSince(@Param("runType") AgentRunType runType, @Param("since") Instant since);
+
+    @Query("select impression from RecommendationImpressionEntity impression where impression.shownAt >= :since")
+    List<RecommendationImpressionEntity> impressionsSince(@Param("since") Instant since);
+
+    @Query("select impression from RecommendationImpressionEntity impression where impression.runId in :runIds")
+    List<RecommendationImpressionEntity> impressionsOfRuns(@Param("runIds") Collection<Long> runIds);
+
+    @Query("select feedback from RecommendationFeedbackEntity feedback where feedback.impressionId in :impressionIds")
+    List<RecommendationFeedbackEntity> feedbackOf(@Param("impressionIds") Collection<Long> impressionIds);
+
+    @Query("""
+            select count(artifact) from AgentTraceArtifactEntity artifact
+            where artifact.runId in :runIds and artifact.artifactType = :artifactType
+            """)
+    long countArtifacts(@Param("runIds") Collection<Long> runIds, @Param("artifactType") String artifactType);
+
+    @Query("select event from EventEntity event where event.id in :ids")
+    List<EventEntity> eventsByIds(@Param("ids") Collection<Long> ids);
+
+    // ---- Resume interviews ----
+
+    @Query("select session from ResumeInterviewSessionEntity session where session.userId = :userId order by session.id desc")
+    List<ResumeInterviewSessionEntity> resumeSessions(@Param("userId") String userId, Pageable pageable);
+
+    @Query("select question from ResumeInterviewQuestionEntity question where question.sessionId in :sessionIds")
+    List<ResumeInterviewQuestionEntity> resumeQuestionsOf(@Param("sessionIds") Collection<Long> sessionIds);
+
+    @Query("select evidence from ResumeInterviewEvidenceEntity evidence where evidence.sessionId in :sessionIds order by evidence.id asc")
+    List<ResumeInterviewEvidenceEntity> resumeEvidenceOf(@Param("sessionIds") Collection<Long> sessionIds);
+
+    @Query("select summary from ResumeInterviewScoreSummaryEntity summary where summary.sessionId in :sessionIds")
+    List<ResumeInterviewScoreSummaryEntity> resumeScoresOf(@Param("sessionIds") Collection<Long> sessionIds);
 
     @Query("select user from UserEntity user order by user.id asc")
     List<UserEntity> users();

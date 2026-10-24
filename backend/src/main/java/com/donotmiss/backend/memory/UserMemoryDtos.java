@@ -14,7 +14,10 @@ public class UserMemoryDtos {
             List<MemorySignal> recentSignals,
             long completedCount,
             long activeChallengeCount,
-            long coachLogCount
+            long coachLogCount,
+            // What the student took up / turned down among past recommendations (B3).
+            List<String> recommendationLikes,
+            List<String> recommendationAvoids
     ) {
     }
 
@@ -34,7 +37,9 @@ public class UserMemoryDtos {
             List<String> preferredLocations,
             List<String> benefitPreferences,
             List<String> evidenceKeywords,
-            List<MemorySignalModel> recentSignals
+            List<MemorySignalModel> recentSignals,
+            List<String> recommendationLikes,
+            List<String> recommendationAvoids
     ) {
     }
 

@@ -3,10 +3,12 @@ package com.donotmiss.backend.ops;
 import com.donotmiss.backend.agentlog.AgentLogDtos;
 import com.donotmiss.backend.agentlog.AgentRunService;
 import com.donotmiss.backend.common.CurrentUser;
+import com.donotmiss.backend.recommendation.EvalCandidateStatus;
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
@@ -29,6 +31,8 @@ public class OpsController {
     private final OpsMessagingService messagingService;
     private final OpsJourneyService journeyService;
     private final AgentRunService agentRunService;
+    private final OpsRecommendationService recommendationService;
+    private final OpsEvalCandidateService evalCandidateService;
 
     public OpsController(OpsAccessGuard guard,
                          CurrentUser currentUser,
@@ -36,7 +40,9 @@ public class OpsController {
                          OpsAgentService agentService,
                          OpsMessagingService messagingService,
                          OpsJourneyService journeyService,
-                         AgentRunService agentRunService) {
+                         AgentRunService agentRunService,
+                         OpsRecommendationService recommendationService,
+                         OpsEvalCandidateService evalCandidateService) {
         this.guard = guard;
         this.currentUser = currentUser;
         this.healthService = healthService;
@@ -44,6 +50,8 @@ public class OpsController {
         this.messagingService = messagingService;
         this.journeyService = journeyService;
         this.agentRunService = agentRunService;
+        this.recommendationService = recommendationService;
+        this.evalCandidateService = evalCandidateService;
     }
 
     /** Lets the frontend decide whether to show the entry; never fails. */
@@ -121,6 +129,42 @@ public class OpsController {
         return healthService.databaseInfo();
     }
 
+    @GetMapping("/recommendations/stats")
+    public OpsDtos.RecommendationStats recommendationStats(@RequestParam(defaultValue = "7") int days,
+                                                           HttpServletRequest request) {
+        guard.require(request);
+        return recommendationService.stats(days);
+    }
+
+    @GetMapping("/recommendations/runs")
+    public List<OpsDtos.RecommendationRunRow> recommendationRuns(@RequestParam(defaultValue = "20") int limit,
+                                                                 HttpServletRequest request) {
+        guard.require(request);
+        return recommendationService.recentRuns(limit);
+    }
+
+    @GetMapping("/eval-candidates")
+    public List<OpsDtos.EvalCandidateRow> evalCandidates(@RequestParam(defaultValue = "PENDING") String status,
+                                                         HttpServletRequest request) {
+        guard.require(request);
+        return evalCandidateService.list(status);
+    }
+
+    @PostMapping("/eval-candidates/{id}/review")
+    public void reviewEvalCandidate(@PathVariable Long id,
+                                    @RequestBody OpsDtos.EvalCandidateReview review,
+                                    HttpServletRequest request) {
+        guard.require(request);
+        evalCandidateService.review(id, EvalCandidateStatus.valueOf(review.decision().trim().toUpperCase()),
+                review.needText(), review.note(), currentUser.id(request));
+    }
+
+    @GetMapping("/eval-candidates/export")
+    public OpsDtos.EvalExport exportEvalSet(HttpServletRequest request) {
+        guard.require(request);
+        return evalCandidateService.export();
+    }
+
     @GetMapping("/users")
     public List<OpsDtos.UserOption> users(HttpServletRequest request) {
         guard.require(request);
@@ -129,9 +173,12 @@ public class OpsController {
 
     @GetMapping("/journeys")
     public List<OpsDtos.Journey> journeys(@RequestParam String userId,
+                                          @RequestParam(defaultValue = "achievement") String kind,
                                           @RequestParam(defaultValue = "15") int limit,
                                           HttpServletRequest request) {
         guard.require(request);
-        return journeyService.journeys(userId, limit);
+        return "resume".equalsIgnoreCase(kind)
+                ? journeyService.resumeJourneys(userId, limit)
+                : journeyService.journeys(userId, limit);
     }
 }

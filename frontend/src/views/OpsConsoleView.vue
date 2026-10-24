@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { Activity, ArrowLeft, Bot, Database, GitBranch, MessagesSquare } from "@lucide/vue";
+import { Activity, ArrowLeft, Bot, Database, GitBranch, MessagesSquare, ThumbsUp } from "@lucide/vue";
 import { computed, onMounted, ref } from "vue";
 import { RouterLink } from "vue-router";
 
@@ -8,17 +8,19 @@ import OpsAgentRuns from "@/components/ops/OpsAgentRuns.vue";
 import OpsJourneys from "@/components/ops/OpsJourneys.vue";
 import OpsMessaging from "@/components/ops/OpsMessaging.vue";
 import OpsOverview from "@/components/ops/OpsOverview.vue";
+import OpsRecommendations from "@/components/ops/OpsRecommendations.vue";
 import OpsStorage from "@/components/ops/OpsStorage.vue";
 import { useAuthStore } from "@/stores/auth";
 import "@/styles/ops.css";
 
-type TabKey = "overview" | "journeys" | "agents" | "messaging" | "storage";
+type TabKey = "overview" | "journeys" | "agents" | "recommendations" | "messaging" | "storage";
 
 const authStore = useAuthStore();
 const tabs: { key: TabKey; label: string; hint: string; icon: unknown }[] = [
   { key: "overview", label: "总览", hint: "依赖健康与关键计数", icon: Activity },
   { key: "journeys", label: "链路追踪", hint: "一条成果从 SQL → MQ → Agent 的全过程", icon: GitBranch },
   { key: "agents", label: "Agent 运行", hint: "所有用户的 Agent 运行、步骤耗时与产物", icon: Bot },
+  { key: "recommendations", label: "推荐", hint: "推荐效果：零结果率、反馈漏斗、不相关原因、最近的推荐", icon: ThumbsUp },
   { key: "messaging", label: "消息队列", hint: "Outbox 待发消息与 RabbitMQ 队列", icon: MessagesSquare },
   { key: "storage", label: "Redis / 数据库", hint: "键空间、连接池、迁移与表大小", icon: Database }
 ];
@@ -90,6 +92,7 @@ function openRun(runId: number) {
         <OpsOverview v-if="active === 'overview'" @navigate="select" />
         <OpsJourneys v-else-if="active === 'journeys'" @open-run="openRun" />
         <OpsAgentRuns v-else-if="active === 'agents'" :focus-run-id="focusRunId" @consumed="focusRunId = null" />
+        <OpsRecommendations v-else-if="active === 'recommendations'" @open-run="openRun" />
         <OpsMessaging v-else-if="active === 'messaging'" />
         <OpsStorage v-else />
       </main>

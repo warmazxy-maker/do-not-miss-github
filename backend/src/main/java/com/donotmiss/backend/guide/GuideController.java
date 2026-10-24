@@ -70,6 +70,7 @@ public class GuideController {
         String reply;
         List<AiDtos.RecommendedEvent> recommendations = List.of();
         McpDtos.ToolContextResponse toolContext = null;
+        Long recommendationRunId = null;
 
         if (decision.shouldCallRag()) {
             GuideRagToolService.ToolResult toolResult = guideRagToolService.recommendEvents(
@@ -81,6 +82,7 @@ public class GuideController {
             reply = toolResult.message();
             recommendations = toolResult.recommendations() == null ? List.of() : toolResult.recommendations();
             toolContext = toolResult.toolContext();
+            recommendationRunId = toolResult.runId();
             session = guideSessionService.saveRagSnapshot(
                     session,
                     decision.action(),
@@ -106,7 +108,8 @@ public class GuideController {
                 usedRag,
                 recommendations,
                 guideSessionService.view(session),
-                toolContext
+                toolContext,
+                recommendationRunId
         );
     }
 }

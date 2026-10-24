@@ -33,7 +33,9 @@ public class AiDtos {
             String message,
             UserMemoryDtos.Profile memory,
             List<RecommendedEvent> recommendations,
-            McpDtos.ToolContextResponse toolContext
+            McpDtos.ToolContextResponse toolContext,
+            // EVENT_RECOMMENDATION run id; feedback on these recommendations refers to it.
+            Long runId
     ) {
     }
 

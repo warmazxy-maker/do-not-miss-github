@@ -83,6 +83,32 @@ public class RetrievalTraceService {
         );
     }
 
+    /**
+     * Retrieval with every input pinned by the caller: profile, clock and corpus. Evaluation uses
+     * this so that results depend only on the evaluation set, not on who runs it or when.
+     */
+    @Transactional(readOnly = true)
+    public CorpusTrace traceOver(RetrievalDtos.TraceRequest request,
+                                 UserMemoryDtos.Profile memory,
+                                 McpDtos.ToolContextResponse toolContext,
+                                 EventCorpus corpus,
+                                 boolean baseline) {
+        RetrievalDtos.QueryRewrite rewrite = queryRewriteService.rewrite(request.need(), memory);
+        int limit = normalizeLimit(request.limit());
+        List<RetrievedEvent> retrievedEvents = baseline
+                ? hybridEventRetrievalService.retrieveBaseline(rewrite.rewrittenQuery(), request.category(),
+                request.benefitType(), request.location(), memory, limit, toolContext, corpus)
+                : hybridEventRetrievalService.retrieve(rewrite.rewrittenQuery(), request.category(),
+                request.benefitType(), request.location(), memory, limit, toolContext, corpus);
+        return new CorpusTrace(
+                new RetrievalDtos.TraceResponse(request.need(), rewrite, memory, toolContext, toCandidateTraces(retrievedEvents)),
+                retrievedEvents);
+    }
+
+    /** The trace view plus the retrieved entities, which ranking needs. */
+    public record CorpusTrace(RetrievalDtos.TraceResponse response, List<RetrievedEvent> events) {
+    }
+
     @Transactional(readOnly = true)
     public RetrievalDtos.TraceResponse trace(String userId, AiDtos.EventRecommendationRequest request, int limit) {
         return trace(userId, new RetrievalDtos.TraceRequest(

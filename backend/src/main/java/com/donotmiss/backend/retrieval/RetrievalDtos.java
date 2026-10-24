@@ -137,7 +137,11 @@ public class RetrievalDtos {
             List<Long> expectedEventIds,
             List<String> expectedTerms,
             Integer topK,
-            String note
+            String note,
+            // Events that must NOT be in the top K for this need, e.g. a student marked them not relevant.
+            List<Long> rejectedEventIds,
+            // Where the case came from, e.g. "manual" or "feedback:candidate-12".
+            String source
     ) {
     }
 
@@ -165,7 +169,26 @@ public class RetrievalDtos {
             List<String> matchedTerms,
             List<CandidateTrace> topCandidates,
             QueryRewrite queryRewrite,
-            String note
+            String note,
+            List<Long> rejectedEventIds,
+            List<Long> rejectedInTopK
+    ) {
+    }
+
+    /**
+     * Which evaluation produced a result. Results are only comparable when evalSetVersion,
+     * corpusFingerprint and mode match.
+     */
+    public record EvalRunInfo(
+            String mode,
+            String evalSetVersion,
+            String labelStatus,
+            String corpusVersion,
+            String corpusFingerprint,
+            int corpusSize,
+            String asOf,
+            String modelMode,
+            Instant ranAt
     ) {
     }
 
@@ -176,13 +199,61 @@ public class RetrievalDtos {
             double averagePrecisionAtK,
             double averageRecallAtK,
             double averageNdcgAtK,
-            double meanReciprocalRank
+            double meanReciprocalRank,
+            double zeroResultRate,
+            double expiredReturnRate,
+            int rejectedCaseCount,
+            double rejectedHitRate
     ) {
     }
 
     public record EvalResponse(
+            EvalRunInfo run,
             EvalSummary summary,
             List<EvalCaseResult> results
+    ) {
+    }
+
+    /** One case of the end-to-end evaluation: retrieval, then the same LLM ranking as a live request. */
+    public record EndToEndCaseResult(
+            String id,
+            String need,
+            int topK,
+            boolean hit,
+            double ndcgAtK,
+            double reciprocalRank,
+            Integer bestAnswerRank,
+            List<Long> recommendedEventIds,
+            List<Long> modelEventIds,
+            List<Long> invalidModelEventIds,
+            boolean ruleFallback,
+            double retrievalNdcgAtK,
+            List<RelevanceJudgment> judgments,
+            String note,
+            List<Long> rejectedEventIds,
+            List<Long> rejectedInTopK
+    ) {
+    }
+
+    public record EndToEndSummary(
+            int caseCount,
+            double hitRate,
+            double averageNdcgAtK,
+            double meanReciprocalRank,
+            double averageRetrievalNdcgAtK,
+            double zeroResultRate,
+            double expiredReturnRate,
+            double invalidModelIdRate,
+            double ruleFallbackRate,
+            int rejectedCaseCount,
+            double rejectedHitRate
+    ) {
+    }
+
+    public record EndToEndResponse(
+            EvalRunInfo run,
+            EndToEndSummary summary,
+            List<EndToEndCaseResult> results
     ) {
     }
 
@@ -216,6 +287,7 @@ public class RetrievalDtos {
     }
 
     public record EvalAbResponse(
+            EvalRunInfo run,
             EvalAbSummary summary,
             List<EvalAbCaseResult> results
     ) {

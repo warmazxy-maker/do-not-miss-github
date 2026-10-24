@@ -27,6 +27,7 @@ import type {
   EventItem,
   GuideAction,
   GuideSessionView,
+  RecommendationFeedbackType,
   RecommendedEvent,
   RecommendedPlan,
   ToolContextRequest
@@ -96,6 +97,12 @@ const guideTrace = ref<GuideTraceState>({
   lastRagNeed: ""
 });
 const recommendedEvents = ref<RecommendedEvent[]>([]);
+// The recommendation run the cards came from; feedback refers to it.
+const recommendationRunId = ref<number | null>(null);
+const feedbackByEvent = ref<Record<number, RecommendationFeedbackType | null>>({});
+const reasonEditorEventId = ref<number | null>(null);
+const reasonDraft = ref("");
+const feedbackSaving = ref<number | null>(null);
 const recommendedPlans = ref<RecommendedPlan[]>([]);
 const planDialogOpen = ref(false);
 const importingPlan = ref(false);
@@ -196,6 +203,46 @@ function isReserved(event: EventItem) {
   return reservedEventIds.value.includes(event.id);
 }
 
+async function sendFeedback(eventId: number, type: RecommendationFeedbackType | null, reason?: string) {
+  if (recommendationRunId.value === null || feedbackSaving.value !== null) {
+    return;
+  }
+  feedbackSaving.value = eventId;
+  try {
+    const state = await eventsApi.recommendationFeedback({
+      runId: recommendationRunId.value,
+      eventId,
+      type,
+      reason: reason?.trim() || undefined
+    });
+    feedbackByEvent.value = { ...feedbackByEvent.value, [eventId]: state.type };
+    reasonEditorEventId.value = null;
+    reasonDraft.value = "";
+    if (state.type === "NOT_RELEVANT") {
+      showNotice("已标记为不相关，之后不会再推荐这个活动");
+    } else if (state.type === "INTERESTED") {
+      showNotice("已记录：感兴趣");
+    }
+  } catch (error) {
+    showNotice(errorMessage(error, "反馈提交失败"));
+  } finally {
+    feedbackSaving.value = null;
+  }
+}
+
+function toggleInterested(eventId: number) {
+  void sendFeedback(eventId, feedbackByEvent.value[eventId] === "INTERESTED" ? null : "INTERESTED");
+}
+
+function openReasonEditor(eventId: number) {
+  if (feedbackByEvent.value[eventId] === "NOT_RELEVANT") {
+    void sendFeedback(eventId, null);
+    return;
+  }
+  reasonEditorEventId.value = eventId;
+  reasonDraft.value = "";
+}
+
 async function toggleFollow(event: EventItem) {
   if (followingOrganization.value) {
     return;
@@ -264,6 +311,9 @@ async function submitAi() {
       updateGuideTrace(response.action, response.usedRag, response.session);
       if (response.usedRag) {
         recommendedEvents.value = response.recommendations ?? [];
+        recommendationRunId.value = response.recommendationRunId ?? null;
+        feedbackByEvent.value = {};
+        reasonEditorEventId.value = null;
       }
       aiMessage.value = response.reply || `找到 ${recommendedEvents.value.length} 个匹配事件`;
       aiMessages.value.push({
@@ -627,6 +677,34 @@ function errorMessage(error: unknown, fallback: string) {
               {{ isReserved(recommendation.event) ? "已预约" : "预约" }}
             </button>
           </div>
+          <div v-if="recommendationRunId !== null" class="ai-recommendation-feedback">
+            <span>这条推荐</span>
+            <button
+              type="button"
+              :class="{ active: feedbackByEvent[recommendation.event.id] === 'INTERESTED' }"
+              :disabled="feedbackSaving === recommendation.event.id"
+              @click="toggleInterested(recommendation.event.id)"
+            >
+              感兴趣
+            </button>
+            <button
+              type="button"
+              :class="{ active: feedbackByEvent[recommendation.event.id] === 'NOT_RELEVANT', negative: true }"
+              :disabled="feedbackSaving === recommendation.event.id"
+              @click="openReasonEditor(recommendation.event.id)"
+            >
+              {{ feedbackByEvent[recommendation.event.id] === "NOT_RELEVANT" ? "已标记不相关 · 撤销" : "不相关" }}
+            </button>
+          </div>
+          <form
+            v-if="reasonEditorEventId === recommendation.event.id"
+            class="ai-recommendation-reason"
+            @submit.prevent="sendFeedback(recommendation.event.id, 'NOT_RELEVANT', reasonDraft)"
+          >
+            <input v-model="reasonDraft" maxlength="200" placeholder="哪里不合适？（选填，比如太远、方向不对）" />
+            <button type="submit" :disabled="feedbackSaving === recommendation.event.id">提交</button>
+            <button type="button" @click="reasonEditorEventId = null">取消</button>
+          </form>
         </article>
       </section>
 

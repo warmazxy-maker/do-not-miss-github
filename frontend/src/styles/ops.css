@@ -186,6 +186,30 @@
   gap: 8px;
 }
 
+.ops-segmented {
+  display: inline-flex;
+  padding: 3px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--surface);
+}
+
+.ops-segmented button {
+  padding: 5px 12px;
+  border: 0;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--muted);
+  font: inherit;
+  font-size: 13px;
+  cursor: pointer;
+}
+
+.ops-segmented button.active {
+  background: var(--teal);
+  color: #fff;
+}
+
 .ops-muted {
   color: var(--muted);
   font-size: 13px;
@@ -668,7 +692,8 @@ button.ops-counter:hover {
 .ops-timeline li.status-pending,
 .ops-timeline li.status-retrying,
 .ops-timeline li.status-running,
-.ops-timeline li.status-review {
+.ops-timeline li.status-review,
+.ops-timeline li.status-waiting {
   border-left-color: var(--gold);
 }
 
@@ -687,6 +712,14 @@ button.ops-counter:hover {
   color: var(--muted);
   font-size: 12px;
   word-break: break-word;
+}
+
+.ops-timeline li.status-retried {
+  border-left-style: dashed;
+}
+
+.ops-timeline li.status-retried strong {
+  color: var(--muted);
 }
 
 .ops-timeline li.status-failed p {
@@ -815,4 +848,137 @@ button.ops-counter:hover {
   .ops-verdict {
     margin-left: 0;
   }
+}
+
+/* Recommendations */
+
+.ops-bar-fill.tone-good {
+  background: var(--teal);
+}
+
+.ops-bar-fill.tone-bad {
+  background: var(--coral);
+}
+
+.ops-bar-fill.tone-base {
+  background: var(--blue);
+}
+
+.ops-inline-bar {
+  display: inline-block;
+  width: 60px;
+  height: 6px;
+  margin-right: 6px;
+  border-radius: 3px;
+  background: #eeece6;
+  vertical-align: middle;
+  overflow: hidden;
+}
+
+.ops-inline-bar span {
+  display: block;
+  height: 100%;
+  background: var(--blue);
+}
+
+.ops-rec-run {
+  padding: 10px 0;
+  border-bottom: 1px solid #ece9e1;
+}
+
+.ops-rec-run:last-of-type {
+  border-bottom: 0;
+}
+
+.ops-rec-run header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+
+.ops-rec-need {
+  margin: 4px 0;
+  font-size: 13px;
+  word-break: break-word;
+}
+
+.ops-rec-shown {
+  display: grid;
+  gap: 4px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  font-size: 13px;
+}
+
+.ops-rec-shown li {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+}
+
+.ops-chip {
+  padding: 1px 7px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 600;
+}
+
+.ops-chip.tone-good {
+  background: #e5f3f1;
+  color: var(--teal-dark);
+}
+
+.ops-chip.tone-bad {
+  background: #fdecea;
+  color: #a33a28;
+}
+
+/* Evaluation candidates */
+
+.ops-wrap {
+  max-width: 280px;
+  white-space: normal;
+  word-break: break-word;
+}
+
+.ops-actions {
+  white-space: nowrap;
+}
+
+.ops-actions > * + * {
+  margin-left: 6px;
+}
+
+.ops-export {
+  margin: 10px 0;
+  padding: 10px 12px;
+  border: 1px dashed var(--line);
+  border-radius: 8px;
+  font-size: 13px;
+}
+
+.ops-export p {
+  margin: 0 0 8px;
+}
+
+.ops-approve-form {
+  display: grid;
+  gap: 8px;
+  font-size: 13px;
+}
+
+.ops-approve-form label {
+  display: grid;
+  gap: 4px;
+}
+
+.ops-approve-form textarea,
+.ops-approve-form input {
+  padding: 6px 8px;
+  border: 1px solid var(--line);
+  border-radius: 7px;
+  font: inherit;
 }

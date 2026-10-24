@@ -129,6 +129,10 @@ public class EventSearchIndexService {
         }
     }
 
+    /**
+     * Idempotent: 404 means the document is already gone, which is the goal. Events that never
+     * passed review were never indexed, yet review rejection and expiry still send a delete.
+     */
     public void deleteOrThrow(Long eventId) {
         if (!enabled || eventId == null) {
             return;
@@ -136,6 +140,8 @@ public class EventSearchIndexService {
         restClient.delete()
                 .uri("/{index}/_doc/{id}", indexName, eventId)
                 .retrieve()
+                .onStatus(status -> status.value() == 404,
+                        (request, response) -> log.debug("Event {} was not in the search index; nothing to delete.", eventId))
                 .toBodilessEntity();
     }
 
@@ -146,12 +152,17 @@ public class EventSearchIndexService {
     }
 
     public List<SearchHit> searchHits(String query, String category, String benefitType, String location, int limit) {
+        return searchHits(indexName, query, category, benefitType, location, limit);
+    }
+
+    /** BM25 search against any index built by this service, e.g. a frozen evaluation index. */
+    public List<SearchHit> searchHits(String index, String query, String category, String benefitType, String location, int limit) {
         if (!enabled) {
             return List.of();
         }
         String lexicalQuery = Bm25QueryCompactor.compact(query);
         try {
-            return executeBm25Search(lexicalQuery, category, benefitType, location, limit, false);
+            return executeBm25Search(index, lexicalQuery, category, benefitType, location, limit, false);
         } catch (RestClientException ex) {
             String fallbackQuery = Bm25QueryCompactor.fallback(query);
             log.warn(
@@ -165,7 +176,7 @@ public class EventSearchIndexService {
                 return List.of();
             }
             try {
-                return executeBm25Search(fallbackQuery, category, benefitType, location, limit, true);
+                return executeBm25Search(index, fallbackQuery, category, benefitType, location, limit, true);
             } catch (RestClientException fallbackEx) {
                 log.warn(
                         "BM25 fallback query failed; local/vector retrieval will continue. reason={}",
@@ -176,15 +187,16 @@ public class EventSearchIndexService {
         }
     }
 
-    private List<SearchHit> executeBm25Search(String query,
+    private List<SearchHit> executeBm25Search(String index,
+                                              String query,
                                               String category,
                                               String benefitType,
                                               String location,
                                               int limit,
                                               boolean fallback) {
-        ensureIndex();
+        ensureIndex(index);
         JsonNode response = restClient.post()
-                .uri("/{index}/_search", indexName)
+                .uri("/{index}/_search", index)
                 .contentType(MediaType.APPLICATION_JSON)
                 .body(searchBody(query, category, benefitType, location, limit, fallback))
                 .retrieve()
@@ -199,20 +211,24 @@ public class EventSearchIndexService {
     }
 
     public List<SearchHit> vectorSearchHits(String query, int limit) {
+        return vectorSearchHits(indexName, query, limit);
+    }
+
+    public List<SearchHit> vectorSearchHits(String index, String query, int limit) {
         if (!isVectorEnabled() || !isPresent(query)) {
             return List.of();
         }
         return llmClient.embedding(query)
                 .filter(this::hasExpectedDimensions)
-                .map(vector -> searchVectorHits(vector, limit))
+                .map(vector -> searchVectorHits(index, vector, limit))
                 .orElseGet(List::of);
     }
 
-    private List<SearchHit> searchVectorHits(List<Double> vector, int limit) {
+    private List<SearchHit> searchVectorHits(String index, List<Double> vector, int limit) {
         try {
-            ensureIndex();
+            ensureIndex(index);
             JsonNode response = restClient.post()
-                    .uri("/{index}/_search", indexName)
+                    .uri("/{index}/_search", index)
                     .contentType(MediaType.APPLICATION_JSON)
                     .body(vectorSearchBody(vector, limit))
                     .retrieve()
@@ -225,18 +241,59 @@ public class EventSearchIndexService {
         }
     }
 
-    private void ensureIndex() {
+    /** Whether the index exists; any failure to answer counts as "no", so the caller rebuilds it. */
+    public boolean indexExists(String index) {
+        if (!enabled) {
+            return false;
+        }
         try {
             restClient.head()
-                    .uri("/{index}", indexName)
+                    .uri("/{index}", index)
                     .retrieve()
                     .toBodilessEntity();
+            return true;
         } catch (RestClientException ex) {
-            createIndex();
+            return false;
         }
     }
 
-    private void createIndex() {
+    /**
+     * Replaces {@code index} with exactly these documents. Used for frozen evaluation corpora: the
+     * events and their quality reports come from a fixture file, not from the database.
+     */
+    public int rebuildIndex(String index, List<IndexedEvent> events) {
+        if (!enabled) {
+            return 0;
+        }
+        recreateIndex(index);
+        for (IndexedEvent item : events) {
+            restClient.put()
+                    .uri("/{index}/_doc/{id}", index, item.event().getId())
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .body(documentOf(item.event(), item.qualityReport()))
+                    .retrieve()
+                    .toBodilessEntity();
+        }
+        refreshIndex(index);
+        return events.size();
+    }
+
+    private void ensureIndex() {
+        ensureIndex(indexName);
+    }
+
+    private void ensureIndex(String index) {
+        try {
+            restClient.head()
+                    .uri("/{index}", index)
+                    .retrieve()
+                    .toBodilessEntity();
+        } catch (RestClientException ex) {
+            createIndex(index);
+        }
+    }
+
+    private void createIndex(String index) {
         Map<String, Object> properties = new LinkedHashMap<>();
         properties.put("eventId", Map.of("type", "long"));
         properties.put("title", textField());
@@ -301,7 +358,7 @@ public class EventSearchIndexService {
         ));
 
         restClient.put()
-                .uri("/{index}", indexName)
+                .uri("/{index}", index)
                 .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
                 .body(Map.of(
                         "settings", settings,
@@ -312,20 +369,28 @@ public class EventSearchIndexService {
     }
 
     private void recreateIndex() {
+        recreateIndex(indexName);
+    }
+
+    private void recreateIndex(String index) {
         try {
             restClient.delete()
-                    .uri("/{index}", indexName)
+                    .uri("/{index}", index)
                     .retrieve()
                     .toBodilessEntity();
         } catch (RestClientException ex) {
-            log.info("Search index {} did not exist or could not be deleted before rebuild: {}", indexName, ex.getMessage());
+            log.info("Search index {} did not exist or could not be deleted before rebuild: {}", index, ex.getMessage());
         }
-        createIndex();
+        createIndex(index);
     }
 
     private void refreshIndex() {
+        refreshIndex(indexName);
+    }
+
+    private void refreshIndex(String index) {
         restClient.post()
-                .uri("/{index}/_refresh", indexName)
+                .uri("/{index}/_refresh", index)
                 .retrieve()
                 .toBodilessEntity();
     }
@@ -396,7 +461,10 @@ public class EventSearchIndexService {
     }
 
     private Map<String, Object> documentOf(EventEntity event) {
-        EventQualityReportEntity qualityReport = qualityReportRepository.findByEventId(event.getId()).orElse(null);
+        return documentOf(event, qualityReportRepository.findByEventId(event.getId()).orElse(null));
+    }
+
+    private Map<String, Object> documentOf(EventEntity event, EventQualityReportEntity qualityReport) {
         Map<String, Object> data = new LinkedHashMap<>();
         data.put("eventId", event.getId());
         data.put("title", event.getTitle());
@@ -556,6 +624,10 @@ public class EventSearchIndexService {
             normalized = normalized.substring(0, normalized.length() - 1);
         }
         return normalized;
+    }
+
+    /** An event with the quality report to index alongside it (may be null). */
+    public record IndexedEvent(EventEntity event, EventQualityReportEntity qualityReport) {
     }
 
     public record SearchHit(Long eventId, double score) {

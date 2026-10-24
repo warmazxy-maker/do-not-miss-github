@@ -117,6 +117,61 @@ class OpsConsoleTest {
         assertEquals("MUTED", OpsJourneyService.verdict(List.of(record))[1]);
     }
 
+    @Test
+    void resumeRunsAreMatchedBySessionAndEvidencePrefixes() {
+        java.util.regex.Pattern session = OpsJourneyService.SESSION_ID;
+        java.util.regex.Pattern evidence = OpsJourneyService.RESUME_EVIDENCE_ID;
+
+        assertEquals(Optional.of(12L), OpsJourneyService.idOf(session, "sessionId=12, snapshotId=3"));
+        assertEquals(Optional.of(12L), OpsJourneyService.idOf(session, "sessionId=12"));
+        assertEquals(Optional.of(5L), OpsJourneyService.idOf(evidence, "resumeEvidenceId=5, assessmentId=9, evidenceId=x"));
+        // A guide session id is a UUID and must not be mistaken for a resume session.
+        assertEquals(Optional.empty(), OpsJourneyService.idOf(session, "sessionId=7cee4d1d-33a3"));
+        assertEquals(Optional.empty(), OpsJourneyService.idOf(evidence, "recordId=5, assessmentId=9"));
+    }
+
+    @Test
+    void waitingForUserIsReportedSeparatelyFromProcessing() {
+        OpsDtos.JourneyStep session = step("SQL", "定段会话 resume_interview_sessions", "WAITING");
+        OpsDtos.JourneyStep parsed = step("AGENT", "简历解析 Agent", "OK");
+        OpsDtos.JourneyStep cancelled = step("SQL", "定段会话 resume_interview_sessions", "CANCELLED");
+
+        String[] waiting = OpsJourneyService.verdict(List.of(session, parsed));
+        assertEquals("等待用户回答", waiting[0]);
+        assertEquals("WARN", waiting[1]);
+        assertEquals("MUTED", OpsJourneyService.verdict(List.of(cancelled, parsed))[1]);
+    }
+
+    @Test
+    void failedAttemptFollowedByRetryIsNotTheCurrentState() {
+        Instant t0 = Instant.parse("2026-10-23T07:28:40Z");
+        // evidence 1: failed, failed again, then succeeded
+        com.donotmiss.backend.agentlog.AgentRunEntity a1 = run(144L, com.donotmiss.backend.agentlog.AgentRunStatus.FAILED, t0);
+        com.donotmiss.backend.agentlog.AgentRunEntity a2 = run(149L, com.donotmiss.backend.agentlog.AgentRunStatus.FAILED, t0.plusSeconds(60));
+        com.donotmiss.backend.agentlog.AgentRunEntity a3 = run(154L, com.donotmiss.backend.agentlog.AgentRunStatus.SUCCEEDED, t0.plusSeconds(180));
+        // evidence 3: last attempt failed but a deferred message was queued afterwards
+        com.donotmiss.backend.agentlog.AgentRunEntity b1 = run(153L, com.donotmiss.backend.agentlog.AgentRunStatus.FAILED, t0.plusSeconds(200));
+        // evidence 5: last attempt failed and nothing was queued after it: a real failure
+        com.donotmiss.backend.agentlog.AgentRunEntity c1 = run(160L, com.donotmiss.backend.agentlog.AgentRunStatus.FAILED, t0.plusSeconds(300));
+        Map<com.donotmiss.backend.agentlog.AgentRunEntity, Long> evidenceOf = Map.of(a1, 1L, a2, 1L, a3, 1L, b1, 3L, c1, 5L);
+        Map<Long, Instant> queued = Map.of(1L, t0.minusSeconds(5), 3L, t0.plusSeconds(230), 5L, t0.plusSeconds(290));
+
+        java.util.Set<Long> superseded = OpsJourneyService.supersededRuns(
+                List.of(a1, a2, a3, b1, c1), evidenceOf::get, queued::get);
+
+        assertEquals(java.util.Set.of(144L, 149L, 153L), superseded);
+    }
+
+    private static com.donotmiss.backend.agentlog.AgentRunEntity run(Long id,
+                                                                     com.donotmiss.backend.agentlog.AgentRunStatus status,
+                                                                     Instant startedAt) {
+        com.donotmiss.backend.agentlog.AgentRunEntity run = new com.donotmiss.backend.agentlog.AgentRunEntity();
+        org.springframework.test.util.ReflectionTestUtils.setField(run, "id", id);
+        run.setStatus(status);
+        run.setStartedAt(startedAt);
+        return run;
+    }
+
     // ---- Outbox ----
 
     @Test

@@ -78,6 +78,8 @@ curl -X POST "http://localhost:8080/api/ai/retrieval/reindex" `
   -H "Authorization: Bearer $TOKEN"
 ```
 
+> 2026-10-24 起，`/reindex` 和 `/evaluation*` 只对运维管理员开放：需要 `OPS_CONSOLE_ENABLED=true`，并且 `$TOKEN` 对应的用户在 `OPS_ADMIN_USERS` 里，否则返回 404。
+
 ## 3. 注意事项
 
 - 如果先创建了不带向量字段的 OpenSearch index，之后再打开 `SEARCH_VECTOR_ENABLED=true`，建议删除旧 index 后重新 `/reindex`。

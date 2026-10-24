@@ -82,6 +82,7 @@ export interface EventRecommendationResponse {
   message: string;
   recommendations: RecommendedEvent[];
   toolContext?: ToolContextResponse;
+  runId?: number | null;
 }
 
 export type GuideAction = "CALL_RAG_NEW" | "CALL_RAG_REFINE" | "CHAT_ONLY" | "ASK_CLARIFY";
@@ -114,6 +115,15 @@ export interface GuideChatResponse {
   recommendations: RecommendedEvent[];
   session: GuideSessionView;
   toolContext?: ToolContextResponse;
+  recommendationRunId?: number | null;
+}
+
+export type RecommendationFeedbackType = "INTERESTED" | "NOT_RELEVANT";
+
+export interface RecommendationFeedbackState {
+  eventId: number;
+  type: RecommendationFeedbackType | null;
+  reason: string | null;
 }
 
 export interface PlanStep {

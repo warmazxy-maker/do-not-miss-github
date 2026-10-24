@@ -1,0 +1,2187 @@
+{
+  "corpusVersion": "events-v1",
+  "frozenAt": "2026-10-24",
+  "source": "本地数据库 events 中 id<=56 且审核通过的活动，连同当时的质量报告一起冻结。之后线上活动过期、被修改或质量报告重算，都不影响这份数据。",
+  "eventCount": 55,
+  "earliestStartTime": "2026-04-29T14:53:00",
+  "events": [
+    {
+      "id": 1,
+      "title": "社区儿童日语阅读陪伴",
+      "organizationName": "Tokyo Bridge NPO",
+      "category": "PUBLIC_WELFARE",
+      "startTime": "2026-06-05T15:00:00",
+      "endTime": "2026-06-05T17:00:00",
+      "location": "东京 新宿区",
+      "content": "协助社区中心的儿童阅读活动，准备材料、陪伴朗读，并记录活动反馈。",
+      "benefitType": "SKILL",
+      "skill": "日语沟通、儿童陪伴、活动记录",
+      "moneyAmount": null,
+      "qualityReport": null
+    },
+    {
+      "id": 2,
+      "title": "留学生展会现场运营",
+      "organizationName": "Mirai Career Lab",
+      "category": "COMPANY",
+      "startTime": "2026-06-12T10:30:00",
+      "endTime": "2026-06-12T12:30:00",
+      "location": "大阪 梅田",
+      "content": "负责签到、引导、问卷收集和会场整理，适合想接触活动执行的学生。",
+      "benefitType": "BOTH",
+      "skill": "现场运营、跨文化沟通、团队协作",
+      "moneyAmount": 8000.0,
+      "qualityReport": null
+    },
+    {
+      "id": 3,
+      "title": "城市生活问卷访谈协助",
+      "organizationName": "Waseda Research Hub",
+      "category": "RESEARCH",
+      "startTime": "2026-06-18T13:00:00",
+      "endTime": "2026-06-18T15:00:00",
+      "location": "东京 早稻田",
+      "content": "协助研究室进行问卷整理、访谈预约和基础资料录入。",
+      "benefitType": "BOTH",
+      "skill": "社会调研、访谈整理、数据录入",
+      "moneyAmount": 3000.0,
+      "qualityReport": null
+    },
+    {
+      "id": 4,
+      "title": "线上中文社媒内容运营",
+      "organizationName": "Campus Media Studio",
+      "category": "ONLINE",
+      "startTime": "2026-06-20T18:30:00",
+      "endTime": "2026-06-20T20:30:00",
+      "location": "线上",
+      "content": "协助整理活动资讯、撰写中文推文，并进行简单数据复盘。",
+      "benefitType": "SKILL",
+      "skill": "内容运营、文案写作、数据复盘",
+      "moneyAmount": null,
+      "qualityReport": null
+    },
+    {
+      "id": 5,
+      "title": "关西地域文化节翻译协助",
+      "organizationName": "Kansai Culture Center",
+      "category": "CULTURE",
+      "startTime": "2026-06-29T09:30:00",
+      "endTime": "2026-06-29T11:30:00",
+      "location": "京都 左京区",
+      "content": "在文化节现场协助中日翻译、游客引导和活动记录。",
+      "benefitType": "BOTH",
+      "skill": "中日翻译、公共沟通、活动执行",
+      "moneyAmount": 5000.0,
+      "qualityReport": null
+    },
+    {
+      "id": 7,
+      "title": "药妆店打工",
+      "organizationName": "AAA药妆店",
+      "category": "COMPANY",
+      "startTime": "2026-05-15T16:52:00",
+      "endTime": "2026-05-15T18:52:00",
+      "location": "线上",
+      "content": "打工赚钱",
+      "benefitType": "MONEY",
+      "skill": null,
+      "moneyAmount": 12000.0,
+      "qualityReport": null
+    },
+    {
+      "id": 8,
+      "title": "英语学习",
+      "organizationName": "ETC",
+      "category": "RESEARCH",
+      "startTime": "2026-04-29T14:53:00",
+      "endTime": "2026-04-29T16:53:00",
+      "location": "大阪",
+      "content": "学习商务英语",
+      "benefitType": "SKILL",
+      "skill": "英语沟通",
+      "moneyAmount": null,
+      "qualityReport": null
+    },
+    {
+      "id": 9,
+      "title": "日语N5初学者训练",
+      "organizationName": "LK公司",
+      "category": "ONLINE",
+      "startTime": "2026-06-05T10:56:00",
+      "endTime": "2026-06-05T12:56:00",
+      "location": "线上",
+      "content": "学习初级日语技能",
+      "benefitType": "SKILL",
+      "skill": "N5日语",
+      "moneyAmount": null,
+      "qualityReport": null
+    },
+    {
+      "id": 10,
+      "title": "日语中级阅读训练",
+      "organizationName": "LLN",
+      "category": "RESEARCH",
+      "startTime": "2026-06-11T10:56:00",
+      "endTime": "2026-06-11T12:56:00",
+      "location": "东京",
+      "content": "有基础的情况下可以提升日语水平",
+      "benefitType": "SKILL",
+      "skill": "日语中级",
+      "moneyAmount": null,
+      "qualityReport": null
+    },
+    {
+      "id": 11,
+      "title": "日语口语训练",
+      "organizationName": "大阪大学",
+      "category": "CAMPUS",
+      "startTime": "2026-06-12T10:57:00",
+      "endTime": "2026-06-12T12:57:00",
+      "location": "大阪",
+      "content": "帮助留学生训练口语",
+      "benefitType": "SKILL",
+      "skill": "日语口语",
+      "moneyAmount": null,
+      "qualityReport": null
+    },
+    {
+      "id": 12,
+      "title": "高级日语翻译",
+      "organizationName": "K22公司",
+      "category": "CULTURE",
+      "startTime": "2026-06-28T10:59:00",
+      "endTime": "2026-06-28T12:59:00",
+      "location": "线上",
+      "content": "线上日语翻译",
+      "benefitType": "MONEY",
+      "skill": null,
+      "moneyAmount": 20000.0,
+      "qualityReport": null
+    },
+    {
+      "id": 13,
+      "title": "苍穹外卖项目（java初级项目）",
+      "organizationName": "黑马程序员",
+      "category": "COMPANY",
+      "startTime": "2026-06-06T18:07:00",
+      "endTime": "2026-06-06T20:07:00",
+      "location": "大阪线下",
+      "content": "可以教学生初级的java开发",
+      "benefitType": "SKILL",
+      "skill": "java开发",
+      "moneyAmount": null,
+      "qualityReport": null
+    },
+    {
+      "id": 14,
+      "title": "仿微信项目",
+      "organizationName": "白马程序员",
+      "category": "COMPANY",
+      "startTime": "2026-06-08T18:08:00",
+      "endTime": "2026-06-08T20:08:00",
+      "location": "线上",
+      "content": "需要有一些java的前置知识",
+      "benefitType": "SKILL",
+      "skill": "做一个类似于微信的项目",
+      "moneyAmount": null,
+      "qualityReport": null
+    },
+    {
+      "id": 15,
+      "title": "java项目设计大赛",
+      "organizationName": "KNO",
+      "category": "ONLINE",
+      "startTime": "2026-06-25T18:09:00",
+      "endTime": "2026-06-25T20:09:00",
+      "location": "线上",
+      "content": "设计java程序比赛",
+      "benefitType": "MONEY",
+      "skill": null,
+      "moneyAmount": 10000.0,
+      "qualityReport": null
+    },
+    {
+      "id": 16,
+      "title": "小米新闻发布会",
+      "organizationName": "小米",
+      "category": "COMPANY",
+      "startTime": "2026-06-07T19:17:00",
+      "endTime": "2026-06-08T19:17:00",
+      "location": "线上",
+      "content": "111",
+      "benefitType": "SKILL",
+      "skill": "小米发布会",
+      "moneyAmount": null,
+      "qualityReport": null
+    },
+    {
+      "id": 17,
+      "title": "阿里天池大模型比赛",
+      "organizationName": "阿里巴巴",
+      "category": "COMPANY",
+      "startTime": "2026-06-14T14:42:00",
+      "endTime": "2026-06-14T19:42:00",
+      "location": "线上",
+      "content": "阿里大模型比赛",
+      "benefitType": "SKILL",
+      "skill": "agent知识",
+      "moneyAmount": null,
+      "qualityReport": null
+    },
+    {
+      "id": 18,
+      "title": "bilibili算法竞赛",
+      "organizationName": "bilibili",
+      "category": "CAMPUS",
+      "startTime": "2026-06-27T14:42:00",
+      "endTime": "2026-06-28T14:42:00",
+      "location": "上海大学",
+      "content": "传统算法竞赛",
+      "benefitType": "SKILL",
+      "skill": "编程能力提升",
+      "moneyAmount": null,
+      "qualityReport": null
+    },
+    {
+      "id": 19,
+      "title": "我的第一个游戏",
+      "organizationName": "字节跳动",
+      "category": "COMPANY",
+      "startTime": "2026-06-19T14:43:00",
+      "endTime": "2026-06-20T14:43:00",
+      "location": "线上",
+      "content": "对于游戏初学者的一个教学",
+      "benefitType": "SKILL",
+      "skill": "你可以学习到游戏开发经验",
+      "moneyAmount": null,
+      "qualityReport": null
+    },
+    {
+      "id": 20,
+      "title": "agent应用教学",
+      "organizationName": "ACK",
+      "category": "ONLINE",
+      "startTime": "2026-06-24T14:44:00",
+      "endTime": "2026-06-27T14:44:00",
+      "location": "线上",
+      "content": "零经验可行，学习agent开发知识",
+      "benefitType": "SKILL",
+      "skill": "agent开发知识",
+      "moneyAmount": null,
+      "qualityReport": null
+    },
+    {
+      "id": 21,
+      "title": "大模型agent开发竞赛",
+      "organizationName": "快手",
+      "category": "COMPANY",
+      "startTime": "2026-07-01T14:45:00",
+      "endTime": "2026-07-01T18:47:00",
+      "location": "线上",
+      "content": "agent开发竞赛",
+      "benefitType": "SKILL",
+      "skill": "积累ai经验",
+      "moneyAmount": null,
+      "qualityReport": null
+    },
+    {
+      "id": 22,
+      "title": "日语N5学习",
+      "organizationName": "大阪大学",
+      "category": "CAMPUS",
+      "startTime": "2026-06-11T14:24:00",
+      "endTime": "2026-06-12T13:24:00",
+      "location": "大阪",
+      "content": "大阪大学日语",
+      "benefitType": "SKILL",
+      "skill": "日语N5学习",
+      "moneyAmount": null,
+      "qualityReport": null
+    },
+    {
+      "id": 23,
+      "title": "日语N5学习",
+      "organizationName": "大阪大学",
+      "category": "CAMPUS",
+      "startTime": "2026-06-11T14:24:00",
+      "endTime": "2026-06-12T13:24:00",
+      "location": "大阪",
+      "content": "大阪大学日语",
+      "benefitType": "SKILL",
+      "skill": "日语N5学习",
+      "moneyAmount": null,
+      "qualityReport": null
+    },
+    {
+      "id": 24,
+      "title": "日语N5学习",
+      "organizationName": "大阪大学",
+      "category": "CAMPUS",
+      "startTime": "2026-06-11T14:24:00",
+      "endTime": "2026-06-12T13:24:00",
+      "location": "大阪",
+      "content": "大阪大学日语",
+      "benefitType": "SKILL",
+      "skill": "日语N5学习",
+      "moneyAmount": null,
+      "qualityReport": null
+    },
+    {
+      "id": 25,
+      "title": "日语N5学习",
+      "organizationName": "大阪大学",
+      "category": "CAMPUS",
+      "startTime": "2026-06-11T14:24:00",
+      "endTime": "2026-06-12T13:24:00",
+      "location": "大阪",
+      "content": "大阪大学日语",
+      "benefitType": "SKILL",
+      "skill": "日语N5学习",
+      "moneyAmount": null,
+      "qualityReport": null
+    },
+    {
+      "id": 26,
+      "title": "日语学习N4",
+      "organizationName": "AAA",
+      "category": "CAMPUS",
+      "startTime": "2026-06-24T13:25:00",
+      "endTime": "2026-06-25T13:25:00",
+      "location": "线上",
+      "content": "AAA",
+      "benefitType": "SKILL",
+      "skill": "日语沟通",
+      "moneyAmount": null,
+      "qualityReport": null
+    },
+    {
+      "id": 27,
+      "title": "Java 零基础入门训练营",
+      "organizationName": "大阪代码学习社",
+      "category": "CAMPUS",
+      "startTime": "2026-07-05T10:00:00",
+      "endTime": "2026-07-05T16:00:00",
+      "location": "大阪 梅田",
+      "content": "从变量、流程控制、集合到面向对象逐步练习，现场完成一个命令行学生管理程序，适合没有编程经验的学生。",
+      "benefitType": "SKILL",
+      "skill": "Java基础、面向对象、集合框架",
+      "moneyAmount": null,
+      "qualityReport": {
+        "summary": "Java零基础入门训练营，涵盖变量、流程控制、集合、面向对象，现场实现命令行学生管理系统。",
+        "difficulty": "zero",
+        "qualityLevel": "HIGH",
+        "qualityScore": 82,
+        "riskFlagsJson": [],
+        "extractedTagsJson": [
+          "Java",
+          "编程入门",
+          "面向对象",
+          "集合框架",
+          "实践项目",
+          "零基础"
+        ],
+        "prerequisitesJson": [],
+        "abilityImpactsJson": [
+          {
+            "tag": "编程基础",
+            "score": 25,
+            "evidence": "从变量、流程控制、集合到面向对象逐步练习",
+            "confidence": 0.95
+          },
+          {
+            "tag": "项目实践能力",
+            "score": 20,
+            "evidence": "现场完成一个命令行学生管理程序",
+            "confidence": 0.9
+          },
+          {
+            "tag": "Java语言应用",
+            "score": 28,
+            "evidence": "内容明确覆盖Java基础、面向对象、集合框架",
+            "confidence": 0.92
+          }
+        ],
+        "targetStudentsJson": [
+          "无编程经验的在校学生"
+        ],
+        "learningOutcomesJson": [
+          "掌握Java基础语法",
+          "理解面向对象编程思想",
+          "熟练使用常用集合类",
+          "完成可运行的命令行项目"
+        ]
+      }
+    },
+    {
+      "id": 28,
+      "title": "Spring Boot 商城项目实战",
+      "organizationName": "Kansai Tech Lab",
+      "category": "ONLINE",
+      "startTime": "2026-07-08T19:00:00",
+      "endTime": "2026-08-05T21:00:00",
+      "location": "线上",
+      "content": "分阶段开发商品、订单、登录、库存和支付模拟模块，包含接口联调、数据库设计、异常处理和项目复盘。",
+      "benefitType": "SKILL",
+      "skill": "Java后端、Spring Boot、MySQL、REST API",
+      "moneyAmount": null,
+      "qualityReport": {
+        "summary": "线上Spring Boot商城项目实战，分阶段开发商品、订单、登录等模块，含数据库设计与接口联调。",
+        "difficulty": "intermediate",
+        "qualityLevel": "MEDIUM",
+        "qualityScore": 72,
+        "riskFlagsJson": [
+          "未说明授课形式（直播/录播/协作）",
+          "未明确是否提供代码/文档/导师反馈"
+        ],
+        "extractedTagsJson": [
+          "Spring Boot",
+          "Java后端",
+          "REST API",
+          "MySQL",
+          "项目实战",
+          "线上学习"
+        ],
+        "prerequisitesJson": [
+          "掌握Java基础语法",
+          "了解HTTP和REST概念",
+          "有简单SQL经验"
+        ],
+        "abilityImpactsJson": [
+          {
+            "tag": "后端开发能力",
+            "score": 26,
+            "evidence": "分阶段开发商品、订单、登录、库存和支付模拟模块",
+            "confidence": 0.92
+          },
+          {
+            "tag": "数据库设计能力",
+            "score": 22,
+            "evidence": "包含数据库设计",
+            "confidence": 0.88
+          },
+          {
+            "tag": "API调试能力",
+            "score": 19,
+            "evidence": "包含接口联调、异常处理",
+            "confidence": 0.85
+          }
+        ],
+        "targetStudentsJson": [
+          "Java初学者",
+          "后端开发入门者",
+          "计算机相关专业学生"
+        ],
+        "learningOutcomesJson": [
+          "独立完成Spring Boot微服务模块开发",
+          "实践MySQL数据库设计与优化",
+          "掌握常见异常处理与API调试方法"
+        ]
+      }
+    },
+    {
+      "id": 29,
+      "title": "Java 项目设计大赛",
+      "organizationName": "KNO Software",
+      "category": "COMPANY",
+      "startTime": "2026-07-18T09:30:00",
+      "endTime": "2026-07-19T18:00:00",
+      "location": "大阪 难波",
+      "content": "三人以内团队完成一个可运行的 Java 应用，提交源码、测试说明并进行现场答辩，评委从设计、质量与可用性评分。",
+      "benefitType": "BOTH",
+      "skill": "Java项目开发、系统设计、团队协作、答辩",
+      "moneyAmount": 30000.0,
+      "qualityReport": {
+        "summary": "三人以内团队开发可运行Java应用，提交源码与测试说明，并现场答辩，按设计、质量与可用性评分。",
+        "difficulty": "intermediate",
+        "qualityLevel": "MEDIUM",
+        "qualityScore": 72,
+        "riskFlagsJson": [
+          "未说明报名方式与截止时间",
+          "未披露评委资质或评审标准细则",
+          "奖金金额未说明税前/税后及发放条件"
+        ],
+        "extractedTagsJson": [
+          "Java",
+          "项目开发",
+          "系统设计",
+          "团队协作",
+          "技术答辩",
+          "编程竞赛"
+        ],
+        "prerequisitesJson": [
+          "掌握Java基础语法",
+          "了解基本软件工程概念"
+        ],
+        "abilityImpactsJson": [
+          {
+            "tag": "Java编程能力",
+            "score": 25,
+            "evidence": "要求完成可运行的Java应用，提交源码",
+            "confidence": 0.95
+          },
+          {
+            "tag": "系统设计能力",
+            "score": 22,
+            "evidence": "评委从‘设计’维度评分，内容明确提及‘系统设计’为技能项",
+            "confidence": 0.9
+          },
+          {
+            "tag": "团队协作能力",
+            "score": 18,
+            "evidence": "限定三人以内团队参与，技能中明确列出‘团队协作’",
+            "confidence": 0.85
+          },
+          {
+            "tag": "公开表达能力",
+            "score": 15,
+            "evidence": "要求进行现场答辩",
+            "confidence": 0.8
+          }
+        ],
+        "targetStudentsJson": [
+          "计算机相关专业本科生",
+          "具备Java基础的开发者"
+        ],
+        "learningOutcomesJson": [
+          "实践Java项目开发全流程",
+          "提升系统设计与团队协作能力",
+          "锻炼技术答辩表达能力"
+        ]
+      }
+    },
+    {
+      "id": 30,
+      "title": "JVM 性能调优工作坊",
+      "organizationName": "Tokyo Runtime Research",
+      "category": "RESEARCH",
+      "startTime": "2026-07-25T13:00:00",
+      "endTime": "2026-07-25T18:00:00",
+      "location": "东京 新宿",
+      "content": "通过真实日志分析 GC 停顿、内存泄漏、线程阻塞和 CPU 热点，并使用 JFR 与 VisualVM 完成一次性能诊断。",
+      "benefitType": "SKILL",
+      "skill": "JVM、GC、性能分析、并发诊断",
+      "moneyAmount": null,
+      "qualityReport": {
+        "summary": "JVM性能调优工作坊：基于真实日志，使用JFR与VisualVM诊断GC停顿、内存泄漏、线程阻塞和CPU热点。",
+        "difficulty": "intermediate",
+        "qualityLevel": "HIGH",
+        "qualityScore": 82,
+        "riskFlagsJson": [],
+        "extractedTagsJson": [
+          "JVM",
+          "性能调优",
+          "Java",
+          "GC",
+          "JFR",
+          "VisualVM",
+          "系统诊断"
+        ],
+        "prerequisitesJson": [
+          "熟悉Java基础语法",
+          "了解JVM内存模型基本概念"
+        ],
+        "abilityImpactsJson": [
+          {
+            "tag": "JVM调优能力",
+            "score": 26,
+            "evidence": "活动明确要求通过真实日志分析GC停顿、内存泄漏等，并使用JFR与VisualVM完成一次性能诊断",
+            "confidence": 0.95
+          },
+          {
+            "tag": "性能问题诊断能力",
+            "score": 24,
+            "evidence": "内容指出分析GC停顿、内存泄漏、线程阻塞和CPU热点四类典型问题",
+            "confidence": 0.92
+          },
+          {
+            "tag": "工具实操能力",
+            "score": 22,
+            "evidence": "明确提及使用JFR与VisualVM完成诊断",
+            "confidence": 0.9
+          }
+        ],
+        "targetStudentsJson": [
+          "Java后端开发者",
+          "系统性能工程师",
+          "对JVM底层感兴趣的技术人员"
+        ],
+        "learningOutcomesJson": [
+          "掌握JFR和VisualVM实操诊断流程",
+          "识别常见JVM性能问题模式",
+          "获得真实日志分析经验"
+        ]
+      }
+    },
+    {
+      "id": 31,
+      "title": "Android Kotlin 应用开发",
+      "organizationName": "大阪大学移动开发社",
+      "category": "CAMPUS",
+      "startTime": "2026-07-12T14:00:00",
+      "endTime": "2026-08-02T17:00:00",
+      "location": "线上",
+      "content": "使用 Kotlin 和 Android Studio 开发个人记账应用，练习界面、状态管理、本地存储和简单测试。",
+      "benefitType": "SKILL",
+      "skill": "Kotlin、Android、移动应用开发",
+      "moneyAmount": null,
+      "qualityReport": {
+        "summary": "使用Kotlin和Android Studio开发个人记账App，涵盖UI、状态管理、本地存储与简单测试。",
+        "difficulty": "intermediate",
+        "qualityLevel": "MEDIUM",
+        "qualityScore": 78,
+        "riskFlagsJson": [],
+        "extractedTagsJson": [
+          "Kotlin",
+          "Android开发",
+          "移动应用",
+          "Android Studio",
+          "本地存储",
+          "UI开发",
+          "单元测试"
+        ],
+        "prerequisitesJson": [
+          "掌握Java或Kotlin基础语法",
+          "了解基本面向对象概念"
+        ],
+        "abilityImpactsJson": [
+          {
+            "tag": "移动应用开发",
+            "score": 25,
+            "evidence": "使用 Kotlin 和 Android Studio 开发个人记账应用",
+            "confidence": 0.95
+          },
+          {
+            "tag": "Kotlin编程",
+            "score": 22,
+            "evidence": "使用 Kotlin 和 Android Studio 开发个人记账应用",
+            "confidence": 0.9
+          },
+          {
+            "tag": "软件测试基础",
+            "score": 15,
+            "evidence": "练习...简单测试",
+            "confidence": 0.75
+          }
+        ],
+        "targetStudentsJson": [
+          "计算机相关专业本科生",
+          "有基础编程经验的学生"
+        ],
+        "learningOutcomesJson": [
+          "Android应用开发实战经验",
+          "Kotlin在移动开发中的应用能力",
+          "MVVM或简易架构实践",
+          "本地数据持久化实现能力"
+        ]
+      }
+    },
+    {
+      "id": 32,
+      "title": "从 Java 转向 Go 的工程实践",
+      "organizationName": "Cloud Native Kansai",
+      "category": "COMPANY",
+      "startTime": "2026-08-09T10:00:00",
+      "endTime": "2026-08-09T17:00:00",
+      "location": "线上",
+      "content": "比较 Java 与 Go 的类型系统、并发模型和服务开发方式，把一个简单 Spring Boot 服务迁移为 Go HTTP 服务。",
+      "benefitType": "SKILL",
+      "skill": "Go、Java、并发模型、微服务迁移",
+      "moneyAmount": null,
+      "qualityReport": {
+        "summary": "对比Java与Go的类型系统、并发模型及服务开发，实操迁移Spring Boot服务至Go HTTP服务。",
+        "difficulty": "intermediate",
+        "qualityLevel": "HIGH",
+        "qualityScore": 82,
+        "riskFlagsJson": [],
+        "extractedTagsJson": [
+          "Go",
+          "Java",
+          "并发编程",
+          "微服务迁移",
+          "云原生",
+          "后端开发"
+        ],
+        "prerequisitesJson": [
+          "熟悉Java（尤其Spring Boot）",
+          "了解HTTP服务基本概念"
+        ],
+        "abilityImpactsJson": [
+          {
+            "tag": "Go编程能力",
+            "score": 25,
+            "evidence": "活动内容明确包含‘把一个简单 Spring Boot 服务迁移为 Go HTTP 服务’，需实际编写Go代码",
+            "confidence": 0.95
+          },
+          {
+            "tag": "跨语言工程迁移能力",
+            "score": 22,
+            "evidence": "标题与内容均强调‘从 Java 转向 Go 的工程实践’及‘迁移’动作",
+            "confidence": 0.9
+          },
+          {
+            "tag": "并发模型理解",
+            "score": 18,
+            "evidence": "内容明确列出‘比较 Java 与 Go 的...并发模型’",
+            "confidence": 0.85
+          }
+        ],
+        "targetStudentsJson": [
+          "有Java基础的后端开发者",
+          "希望掌握Go工程实践的学生"
+        ],
+        "learningOutcomesJson": [
+          "掌握Go基础语法与工程结构",
+          "理解Go并发模型（goroutine/channel）",
+          "获得微服务语言迁移实战经验"
+        ]
+      }
+    },
+    {
+      "id": 33,
+      "title": "Agent 应用开发教学",
+      "organizationName": "ACK AI Community",
+      "category": "ONLINE",
+      "startTime": "2026-07-06T19:00:00",
+      "endTime": "2026-07-27T21:00:00",
+      "location": "线上",
+      "content": "从零实现一个带工具调用的学习助手，覆盖结构化输出、Tool Calling、工作流控制、异常兜底与运行日志。",
+      "benefitType": "SKILL",
+      "skill": "AI Agent、Tool Calling、LLM、工作流",
+      "moneyAmount": null,
+      "qualityReport": {
+        "summary": "线上教学活动，指导从零开发带工具调用的学习助手，涵盖结构化输出、Tool Calling、工作流控制等核心能力。",
+        "difficulty": "intermediate",
+        "qualityLevel": "MEDIUM",
+        "qualityScore": 72,
+        "riskFlagsJson": [
+          "时间跨度过长（22天），未说明频次与课时安排",
+          "未说明讲师背景或教学形式（直播/录播/互动）"
+        ],
+        "extractedTagsJson": [
+          "AI Agent",
+          "Tool Calling",
+          "LLM应用",
+          "工作流开发",
+          "线上教学"
+        ],
+        "prerequisitesJson": [
+          "了解Python基础",
+          "熟悉API调用概念",
+          "有LLM初步使用经验"
+        ],
+        "abilityImpactsJson": [
+          {
+            "tag": "AI系统设计",
+            "score": 24,
+            "evidence": "覆盖结构化输出、Tool Calling、工作流控制、异常兜底与运行日志",
+            "confidence": 0.85
+          },
+          {
+            "tag": "工程实践能力",
+            "score": 20,
+            "evidence": "从零实现一个带工具调用的学习助手",
+            "confidence": 0.8
+          },
+          {
+            "tag": "LLM应用开发",
+            "score": 26,
+            "evidence": "内容明确提及Tool Calling、工作流控制、LLM",
+            "confidence": 0.9
+          }
+        ],
+        "targetStudentsJson": [
+          "AI开发者",
+          "LLM应用开发者",
+          "对Agent开发感兴趣的学生"
+        ],
+        "learningOutcomesJson": [
+          "掌握Agent基础架构设计",
+          "实现Tool Calling与异常处理",
+          "构建可运行的AI工作流"
+        ]
+      }
+    },
+    {
+      "id": 34,
+      "title": "LangGraph 多智能体实战",
+      "organizationName": "Agent Systems Lab",
+      "category": "RESEARCH",
+      "startTime": "2026-08-01T10:00:00",
+      "endTime": "2026-08-02T17:00:00",
+      "location": "线上",
+      "content": "使用 Planner、Executor 与 Critic 构建多智能体协作流程，练习状态图、共享上下文、重试和人工介入。",
+      "benefitType": "SKILL",
+      "skill": "Multi-Agent、LangGraph、Python、状态机",
+      "moneyAmount": null,
+      "qualityReport": {
+        "summary": "2天线上实战：用LangGraph构建含Planner/Executor/Critic的多智能体系统，实践状态图、共享上下文与人工介入。",
+        "difficulty": "intermediate",
+        "qualityLevel": "MEDIUM",
+        "qualityScore": 78,
+        "riskFlagsJson": [],
+        "extractedTagsJson": [
+          "LangGraph",
+          "多智能体",
+          "Python",
+          "状态机",
+          "LLM应用开发"
+        ],
+        "prerequisitesJson": [
+          "熟悉Python基础语法",
+          "了解LangChain或LangGraph基本概念"
+        ],
+        "abilityImpactsJson": [
+          {
+            "tag": "系统设计能力",
+            "score": 24,
+            "evidence": "构建多智能体协作流程，练习状态图、共享上下文",
+            "confidence": 0.92
+          },
+          {
+            "tag": "工程实践能力",
+            "score": 22,
+            "evidence": "练习重试和人工介入，使用Planner、Executor与Critic",
+            "confidence": 0.88
+          },
+          {
+            "tag": "AI工具链熟练度",
+            "score": 26,
+            "evidence": "明确要求使用LangGraph、Multi-Agent、Python",
+            "confidence": 0.95
+          }
+        ],
+        "targetStudentsJson": [
+          "具备Python基础的本科生或研究生",
+          "对LLM应用开发感兴趣者"
+        ],
+        "learningOutcomesJson": [
+          "掌握多智能体协作架构设计",
+          "能实现带重试与人工干预的状态化智能体流程",
+          "理解Critic在反馈闭环中的作用"
+        ]
+      }
+    },
+    {
+      "id": 35,
+      "title": "大模型 Agent 开发竞赛",
+      "organizationName": "Future AI Works",
+      "category": "COMPANY",
+      "startTime": "2026-08-15T09:00:00",
+      "endTime": "2026-08-16T19:00:00",
+      "location": "线上",
+      "content": "开发能够规划任务、调用本地工具、处理异常并输出可审计日志的 Agent，提交演示视频和技术报告。",
+      "benefitType": "BOTH",
+      "skill": "Agent工程、规划、工具调用、异常处理",
+      "moneyAmount": 50000.0,
+      "qualityReport": {
+        "summary": "线上举办的大模型Agent开发竞赛，要求实现任务规划、工具调用、异常处理与可审计日志，提交视频及技术报告。",
+        "difficulty": "intermediate",
+        "qualityLevel": "MEDIUM",
+        "qualityScore": 78,
+        "riskFlagsJson": [],
+        "extractedTagsJson": [
+          "AI竞赛",
+          "大模型",
+          "Agent开发",
+          "线上活动",
+          "工程实践"
+        ],
+        "prerequisitesJson": [
+          "熟悉Python编程",
+          "了解大语言模型基本原理",
+          "有API调用或简单Agent开发经验"
+        ],
+        "abilityImpactsJson": [
+          {
+            "tag": "AI工程能力",
+            "score": 25,
+            "evidence": "要求开发具备规划、工具调用、异常处理和日志审计功能的Agent",
+            "confidence": 0.92
+          },
+          {
+            "tag": "系统设计能力",
+            "score": 22,
+            "evidence": "需统筹任务规划、本地工具集成与异常响应机制",
+            "confidence": 0.85
+          },
+          {
+            "tag": "技术表达能力",
+            "score": 18,
+            "evidence": "明确要求提交演示视频和技术报告",
+            "confidence": 0.88
+          }
+        ],
+        "targetStudentsJson": [
+          "计算机/人工智能相关专业本科生及以上",
+          "具备Python和LLM基础的开发者"
+        ],
+        "learningOutcomesJson": [
+          "掌握Agent系统工程化设计方法",
+          "提升多步骤任务编排与错误恢复能力",
+          "产出可展示的技术作品与文档"
+        ]
+      }
+    },
+    {
+      "id": 36,
+      "title": "RAG 混合检索系统工作坊",
+      "organizationName": "Search Engineering Tokyo",
+      "category": "RESEARCH",
+      "startTime": "2026-07-30T10:00:00",
+      "endTime": "2026-07-31T17:00:00",
+      "location": "东京 品川",
+      "content": "动手实现 BM25、Embedding 向量召回、RRF 融合和 Reranker，并使用固定评测集比较检索效果。",
+      "benefitType": "SKILL",
+      "skill": "RAG、OpenSearch、Embedding、RRF、Reranker",
+      "moneyAmount": null,
+      "qualityReport": {
+        "summary": "东京线下工作坊：动手实现BM25、向量召回、RRF融合与Reranker，并用固定评测集对比检索效果。",
+        "difficulty": "intermediate",
+        "qualityLevel": "HIGH",
+        "qualityScore": 82,
+        "riskFlagsJson": [],
+        "extractedTagsJson": [
+          "RAG",
+          "信息检索",
+          "向量搜索",
+          "BM25",
+          "RRF",
+          "重排序",
+          "工作坊",
+          "东京"
+        ],
+        "prerequisitesJson": [
+          "Python编程能力",
+          "了解基本检索概念（如TF-IDF、相似度检索）"
+        ],
+        "abilityImpactsJson": [
+          {
+            "tag": "检索系统实现",
+            "score": 26,
+            "evidence": "动手实现 BM25、Embedding 向量召回、RRF 融合和 Reranker",
+            "confidence": 0.95
+          },
+          {
+            "tag": "多源融合策略",
+            "score": 22,
+            "evidence": "RRF 融合和 Reranker",
+            "confidence": 0.9
+          },
+          {
+            "tag": "实验评估能力",
+            "score": 20,
+            "evidence": "使用固定评测集比较检索效果",
+            "confidence": 0.85
+          }
+        ],
+        "targetStudentsJson": [
+          "具备Python基础的AI/搜索方向学习者",
+          "NLP或信息检索初学者"
+        ],
+        "learningOutcomesJson": [
+          "掌握RAG混合检索全流程实现",
+          "能使用OpenSearch部署召回模块",
+          "具备检索系统量化评估能力"
+        ]
+      }
+    },
+    {
+      "id": 37,
+      "title": "AI 新媒体内容运营实习",
+      "organizationName": "Campus Media Studio",
+      "category": "COMPANY",
+      "startTime": "2026-07-10T10:00:00",
+      "endTime": "2026-08-31T18:00:00",
+      "location": "线上",
+      "content": "使用生成式 AI 辅助撰写文章、制作选题、运营社交账号并分析阅读与转化数据，每周提交运营复盘。",
+      "benefitType": "BOTH",
+      "skill": "内容运营、AI工具、数据分析、文案写作",
+      "moneyAmount": 8000.0,
+      "qualityReport": {
+        "summary": "线上AI新媒体内容运营实习，使用生成式AI辅助选题、撰稿、账号运营及数据复盘。",
+        "difficulty": "intermediate",
+        "qualityLevel": "MEDIUM",
+        "qualityScore": 72,
+        "riskFlagsJson": [
+          "未说明具体AI工具类型及学习支持方式",
+          "未明确指导机制（如导师、反馈频次）",
+          "薪资发放条件与考核标准缺失"
+        ],
+        "extractedTagsJson": [
+          "AI工具应用",
+          "新媒体运营",
+          "内容创作",
+          "数据分析",
+          "线上实习"
+        ],
+        "prerequisitesJson": [
+          "熟悉主流社交平台（如微信公众号、小红书）",
+          "了解基础文案写作",
+          "能自主操作常用AI工具（如ChatGPT、文心一言等）"
+        ],
+        "abilityImpactsJson": [
+          {
+            "tag": "AI工具应用能力",
+            "score": 24,
+            "evidence": "使用生成式 AI 辅助撰写文章、制作选题、运营社交账号",
+            "confidence": 0.95
+          },
+          {
+            "tag": "新媒体运营能力",
+            "score": 26,
+            "evidence": "运营社交账号并分析阅读与转化数据，每周提交运营复盘",
+            "confidence": 0.92
+          },
+          {
+            "tag": "数据分析能力",
+            "score": 18,
+            "evidence": "分析阅读与转化数据",
+            "confidence": 0.88
+          }
+        ],
+        "targetStudentsJson": [
+          "传媒/广告/中文/计算机相关专业本科生",
+          "具备基础写作与社交平台认知的学生"
+        ],
+        "learningOutcomesJson": [
+          "提升AI驱动的内容生产效率",
+          "掌握新媒体运营全流程实践",
+          "锻炼数据复盘与优化能力"
+        ]
+      }
+    },
+    {
+      "id": 38,
+      "title": "生成式 AI 绘画体验会",
+      "organizationName": "Kyoto Digital Art Club",
+      "category": "CULTURE",
+      "startTime": "2026-07-11T13:00:00",
+      "endTime": "2026-07-11T17:00:00",
+      "location": "京都 左京区",
+      "content": "学习图像生成提示词、构图与风格控制，现场完成主题插画并与参与者交流创作思路。",
+      "benefitType": "SKILL",
+      "skill": "图像生成、提示词、创意表达",
+      "moneyAmount": null,
+      "qualityReport": {
+        "summary": "在京都左京区举办生成式AI绘画体验会，学习提示词、构图与风格控制，并完成主题插画。",
+        "difficulty": "basic",
+        "qualityLevel": "MEDIUM",
+        "qualityScore": 72,
+        "riskFlagsJson": [],
+        "extractedTagsJson": [
+          "AI绘画",
+          "提示词工程",
+          "数字艺术",
+          "创意表达",
+          "工作坊"
+        ],
+        "prerequisitesJson": [],
+        "abilityImpactsJson": [
+          {
+            "tag": "提示词工程",
+            "score": 18,
+            "evidence": "学习图像生成提示词",
+            "confidence": 0.95
+          },
+          {
+            "tag": "数字艺术实践",
+            "score": 15,
+            "evidence": "现场完成主题插画",
+            "confidence": 0.9
+          },
+          {
+            "tag": "创意表达",
+            "score": 12,
+            "evidence": "学习...创意表达，与参与者交流创作思路",
+            "confidence": 0.85
+          }
+        ],
+        "targetStudentsJson": [
+          "对AI绘画感兴趣的学生",
+          "数字艺术初学者"
+        ],
+        "learningOutcomesJson": [
+          "掌握基础图像生成提示词撰写方法",
+          "理解AI绘图中的构图与风格控制逻辑",
+          "完成一幅主题插画并参与创作交流"
+        ]
+      }
+    },
+    {
+      "id": 39,
+      "title": "日语 N5 零基础训练营",
+      "organizationName": "Osaka Language Center",
+      "category": "CAMPUS",
+      "startTime": "2026-07-07T18:30:00",
+      "endTime": "2026-08-25T20:30:00",
+      "location": "线上",
+      "content": "面向零基础学习五十音、基础语法、常用词汇和简单会话，每周安排练习与阶段测试。",
+      "benefitType": "SKILL",
+      "skill": "日语N5、五十音、基础语法、日常会话",
+      "moneyAmount": null,
+      "qualityReport": {
+        "summary": "零基础日语N5训练营，线上授课，覆盖五十音、基础语法、词汇与简单会话，含周练习与阶段测试。",
+        "difficulty": "zero",
+        "qualityLevel": "MEDIUM",
+        "qualityScore": 78,
+        "riskFlagsJson": [],
+        "extractedTagsJson": [
+          "日语",
+          "N5",
+          "零基础",
+          "线上学习",
+          "语言培训",
+          "JLPT"
+        ],
+        "prerequisitesJson": [],
+        "abilityImpactsJson": [
+          {
+            "tag": "语言学习能力",
+            "score": 22,
+            "evidence": "面向零基础学习五十音、基础语法、常用词汇和简单会话",
+            "confidence": 0.95
+          },
+          {
+            "tag": "跨文化沟通",
+            "score": 16,
+            "evidence": "常用词汇和简单会话",
+            "confidence": 0.8
+          },
+          {
+            "tag": "自主学习习惯",
+            "score": 14,
+            "evidence": "每周安排练习与阶段测试",
+            "confidence": 0.75
+          }
+        ],
+        "targetStudentsJson": [
+          "日语零基础学生",
+          "计划考取JLPT N5者"
+        ],
+        "learningOutcomesJson": [
+          "掌握平假名与片假名读写",
+          "理解基础日语句型结构",
+          "进行简单日常会话",
+          "具备JLPT N5应试基础"
+        ]
+      }
+    },
+    {
+      "id": 40,
+      "title": "留学生日语口语陪练",
+      "organizationName": "大阪留学生交流会",
+      "category": "PUBLIC_WELFARE",
+      "startTime": "2026-07-09T18:00:00",
+      "endTime": "2026-08-27T20:00:00",
+      "location": "大阪 吹田",
+      "content": "与日本大学生围绕购物、租房、学校生活和求职等场景进行口语练习，并获得表达纠正。",
+      "benefitType": "SKILL",
+      "skill": "日语口语、生活会话、跨文化沟通",
+      "moneyAmount": null,
+      "qualityReport": {
+        "summary": "大阪留学生交流会组织的日语口语陪练活动，与日本大学生围绕生活场景进行会话练习并获表达纠正。",
+        "difficulty": "basic",
+        "qualityLevel": "MEDIUM",
+        "qualityScore": 78,
+        "riskFlagsJson": [],
+        "extractedTagsJson": [
+          "日语学习",
+          "口语训练",
+          "跨文化交流",
+          "留学生支持",
+          "生活日语"
+        ],
+        "prerequisitesJson": [],
+        "abilityImpactsJson": [
+          {
+            "tag": "日语口语表达",
+            "score": 24,
+            "evidence": "与日本大学生围绕购物、租房、学校生活和求职等场景进行口语练习，并获得表达纠正",
+            "confidence": 0.92
+          },
+          {
+            "tag": "跨文化沟通能力",
+            "score": 18,
+            "evidence": "与日本大学生围绕购物、租房、学校生活和求职等场景进行口语练习",
+            "confidence": 0.85
+          }
+        ],
+        "targetStudentsJson": [
+          "在日留学生",
+          "日语初中级学习者"
+        ],
+        "learningOutcomesJson": [
+          "提升日常日语会话能力",
+          "增强跨文化沟通实践能力",
+          "获得即时语音反馈与纠音指导"
+        ]
+      }
+    },
+    {
+      "id": 41,
+      "title": "商务日语与职场礼仪实习",
+      "organizationName": "Sakura Career Partners",
+      "category": "COMPANY",
+      "startTime": "2026-08-03T09:30:00",
+      "endTime": "2026-09-11T17:30:00",
+      "location": "东京 丸之内",
+      "content": "练习商务邮件、敬语、电话应对、会议表达和日本职场礼仪，并协助整理双语业务资料。",
+      "benefitType": "BOTH",
+      "skill": "商务日语、敬语、职场沟通、双语资料",
+      "moneyAmount": 12000.0,
+      "qualityReport": {
+        "summary": "为期5周东京职场实习，训练商务日语、敬语、电话会议表达及日本职场礼仪，并参与双语业务资料整理。",
+        "difficulty": "intermediate",
+        "qualityLevel": "MEDIUM",
+        "qualityScore": 78,
+        "riskFlagsJson": [],
+        "extractedTagsJson": [
+          "日语实习",
+          "商务日语",
+          "职场礼仪",
+          "东京实习",
+          "双语工作"
+        ],
+        "prerequisitesJson": [
+          "日语能力达到JLPT N2或同等水平"
+        ],
+        "abilityImpactsJson": [
+          {
+            "tag": "日语应用能力",
+            "score": 24,
+            "evidence": "练习商务邮件、敬语、电话应对、会议表达",
+            "confidence": 0.92
+          },
+          {
+            "tag": "跨文化职场适应力",
+            "score": 18,
+            "evidence": "练习日本职场礼仪，并协助整理双语业务资料",
+            "confidence": 0.85
+          },
+          {
+            "tag": "文档处理能力",
+            "score": 12,
+            "evidence": "协助整理双语业务资料",
+            "confidence": 0.75
+          }
+        ],
+        "targetStudentsJson": [
+          "日语N2及以上水平学生",
+          "对日本职场文化感兴趣者"
+        ],
+        "learningOutcomesJson": [
+          "提升商务日语实战能力",
+          "掌握日本职场基本礼仪与沟通规范",
+          "积累双语文档处理经验"
+        ]
+      }
+    },
+    {
+      "id": 42,
+      "title": "动漫字幕中日翻译志愿活动",
+      "organizationName": "Open Subtitle Japan",
+      "category": "PUBLIC_WELFARE",
+      "startTime": "2026-07-13T18:00:00",
+      "endTime": "2026-08-10T21:00:00",
+      "location": "线上",
+      "content": "翻译短视频和动画片段字幕，学习时间轴、语境转换和校对规范，由资深志愿者提供修改反馈。",
+      "benefitType": "SKILL",
+      "skill": "中日翻译、字幕制作、语言校对",
+      "moneyAmount": null,
+      "qualityReport": {
+        "summary": "线上参与中日动漫字幕翻译志愿活动，学习时间轴制作、语境转换与校对规范，并获资深志愿者反馈。",
+        "difficulty": "intermediate",
+        "qualityLevel": "HIGH",
+        "qualityScore": 82,
+        "riskFlagsJson": [],
+        "extractedTagsJson": [
+          "翻译",
+          "字幕制作",
+          "志愿服务",
+          "语言实践",
+          "日本文化",
+          "线上活动"
+        ],
+        "prerequisitesJson": [
+          "具备中日双语读写能力",
+          "了解基本翻译原则"
+        ],
+        "abilityImpactsJson": [
+          {
+            "tag": "中日翻译能力",
+            "score": 25,
+            "evidence": "活动内容明确要求翻译短视频和动画片段字幕",
+            "confidence": 0.95
+          },
+          {
+            "tag": "跨文化沟通能力",
+            "score": 18,
+            "evidence": "提及语境转换，体现对文化适配的要求",
+            "confidence": 0.85
+          },
+          {
+            "tag": "数字工具应用能力",
+            "score": 12,
+            "evidence": "学习时间轴制作，隐含使用字幕编辑软件（如Aegisub）",
+            "confidence": 0.75
+          }
+        ],
+        "targetStudentsJson": [
+          "日语或中文母语者",
+          "具备中日双语基础的学生",
+          "对字幕翻译或本地化感兴趣者"
+        ],
+        "learningOutcomesJson": [
+          "提升中日互译准确性",
+          "掌握字幕时间轴编辑基础",
+          "获得专业校对反馈经验"
+        ]
+      }
+    },
+    {
+      "id": 43,
+      "title": "日本留学申请说明会",
+      "organizationName": "Kansai Study Abroad Office",
+      "category": "CAMPUS",
+      "startTime": "2026-07-04T14:00:00",
+      "endTime": "2026-07-04T16:30:00",
+      "location": "大阪 梅田",
+      "content": "介绍日本院校选择、研究计划书、申请材料、签证和奖学金流程，本活动侧重申请规划，不提供日语课程。",
+      "benefitType": "SKILL",
+      "skill": "留学规划、申请材料、院校选择",
+      "moneyAmount": null,
+      "qualityReport": {
+        "summary": "日本留学申请说明会，涵盖院校选择、研究计划书、申请材料、签证及奖学金流程。",
+        "difficulty": "basic",
+        "qualityLevel": "MEDIUM",
+        "qualityScore": 72,
+        "riskFlagsJson": [],
+        "extractedTagsJson": [
+          "日本留学",
+          "留学申请",
+          "研究计划书",
+          "签证",
+          "奖学金",
+          "院校选择"
+        ],
+        "prerequisitesJson": [],
+        "abilityImpactsJson": [
+          {
+            "tag": "留学规划能力",
+            "score": 22,
+            "evidence": "本活动侧重申请规划",
+            "confidence": 0.95
+          },
+          {
+            "tag": "信息整合能力",
+            "score": 15,
+            "evidence": "介绍日本院校选择、研究计划书、申请材料、签证和奖学金流程",
+            "confidence": 0.8
+          }
+        ],
+        "targetStudentsJson": [
+          "计划赴日读研/本科的学生",
+          "对日本留学感兴趣者"
+        ],
+        "learningOutcomesJson": [
+          "掌握日本留学申请全流程关键节点",
+          "了解研究计划书撰写要点",
+          "熟悉签证与奖学金申请逻辑"
+        ]
+      }
+    },
+    {
+      "id": 44,
+      "title": "中日文化节现场翻译协助",
+      "organizationName": "Kansai Culture Center",
+      "category": "CULTURE",
+      "startTime": "2026-08-22T09:00:00",
+      "endTime": "2026-08-22T18:00:00",
+      "location": "京都 东山区",
+      "content": "为中日文化节游客提供现场翻译、路线说明和活动引导，协助处理展位之间的沟通问题。",
+      "benefitType": "BOTH",
+      "skill": "中日翻译、公共沟通、活动执行",
+      "moneyAmount": 5000.0,
+      "qualityReport": {
+        "summary": "在京都东山区中日文化节现场提供中日双语翻译、游客引导及展位沟通协助，日薪5000日元。",
+        "difficulty": "intermediate",
+        "qualityLevel": "MEDIUM",
+        "qualityScore": 78,
+        "riskFlagsJson": [
+          "未明确报名方式与截止时间",
+          "未说明是否需面试或培训",
+          "报酬未注明货币单位（默认日元但未标注）"
+        ],
+        "extractedTagsJson": [
+          "文化活动",
+          "翻译实践",
+          "日本交流",
+          "志愿服务",
+          "跨文化沟通"
+        ],
+        "prerequisitesJson": [
+          "日语能力证明（如JLPT N2）",
+          "基础中文表达能力"
+        ],
+        "abilityImpactsJson": [
+          {
+            "tag": "语言表达",
+            "score": 24,
+            "evidence": "为中日文化节游客提供现场翻译、路线说明和活动引导",
+            "confidence": 0.92
+          },
+          {
+            "tag": "跨文化理解",
+            "score": 22,
+            "evidence": "中日文化节现场翻译协助，处理展位之间的沟通问题",
+            "confidence": 0.88
+          },
+          {
+            "tag": "组织协调",
+            "score": 16,
+            "evidence": "协助处理展位之间的沟通问题，活动引导",
+            "confidence": 0.75
+          }
+        ],
+        "targetStudentsJson": [
+          "日语N2及以上水平学生",
+          "有跨文化沟通经验者"
+        ],
+        "learningOutcomesJson": [
+          "实战口译能力提升",
+          "大型文化活动执行经验",
+          "跨文化服务意识"
+        ]
+      }
+    },
+    {
+      "id": 45,
+      "title": "社会调查问卷设计工作坊",
+      "organizationName": "Osaka Social Research Hub",
+      "category": "RESEARCH",
+      "startTime": "2026-07-20T13:00:00",
+      "endTime": "2026-07-20T18:00:00",
+      "location": "大阪 丰中",
+      "content": "从研究问题出发设计量表和问卷，学习抽样、问题措辞、偏差控制与小规模预测试。",
+      "benefitType": "SKILL",
+      "skill": "问卷设计、研究方法、抽样、偏差控制",
+      "moneyAmount": null,
+      "qualityReport": {
+        "summary": "学习从研究问题出发设计问卷，涵盖量表开发、抽样、措辞优化、偏差控制与预测试。",
+        "difficulty": "intermediate",
+        "qualityLevel": "HIGH",
+        "qualityScore": 82,
+        "riskFlagsJson": [],
+        "extractedTagsJson": [
+          "问卷设计",
+          "社会调查",
+          "研究方法",
+          "抽样",
+          "实证研究"
+        ],
+        "prerequisitesJson": [
+          "了解基本研究概念（如变量、假设）"
+        ],
+        "abilityImpactsJson": [
+          {
+            "tag": "研究设计能力",
+            "score": 26,
+            "evidence": "从研究问题出发设计量表和问卷",
+            "confidence": 0.92
+          },
+          {
+            "tag": "方法严谨性",
+            "score": 22,
+            "evidence": "学习抽样、问题措辞、偏差控制与小规模预测试",
+            "confidence": 0.88
+          },
+          {
+            "tag": "实证分析基础",
+            "score": 18,
+            "evidence": "涵盖抽样、预测试等实证环节",
+            "confidence": 0.8
+          }
+        ],
+        "targetStudentsJson": [
+          "社会学/心理学/教育学等社科专业学生",
+          "有初步研究兴趣的本科生"
+        ],
+        "learningOutcomesJson": [
+          "独立设计结构化问卷",
+          "识别并减少常见测量偏差",
+          "实施小规模预测试并迭代优化"
+        ]
+      }
+    },
+    {
+      "id": 46,
+      "title": "质性访谈与编码训练",
+      "organizationName": "Qualitative Methods Lab",
+      "category": "RESEARCH",
+      "startTime": "2026-07-22T18:30:00",
+      "endTime": "2026-08-05T20:30:00",
+      "location": "线上",
+      "content": "练习半结构化访谈提纲、追问、录音转录、开放编码和主题归纳，完成一份小型分析报告。",
+      "benefitType": "SKILL",
+      "skill": "用户访谈、质性研究、编码、主题分析",
+      "moneyAmount": null,
+      "qualityReport": {
+        "summary": "线上质性研究训练营，涵盖访谈提纲设计、追问技巧、转录、开放编码与主题归纳，并产出小型分析报告。",
+        "difficulty": "intermediate",
+        "qualityLevel": "HIGH",
+        "qualityScore": 86,
+        "riskFlagsJson": [],
+        "extractedTagsJson": [
+          "质性研究",
+          "用户访谈",
+          "编码分析",
+          "主题归纳",
+          "线上工作坊"
+        ],
+        "prerequisitesJson": [
+          "了解质性研究基本概念",
+          "具备基础访谈或写作经验"
+        ],
+        "abilityImpactsJson": [
+          {
+            "tag": "质性研究能力",
+            "score": 25,
+            "evidence": "练习半结构化访谈提纲、追问、录音转录、开放编码和主题归纳",
+            "confidence": 0.95
+          },
+          {
+            "tag": "学术写作能力",
+            "score": 18,
+            "evidence": "完成一份小型分析报告",
+            "confidence": 0.85
+          },
+          {
+            "tag": "沟通表达能力",
+            "score": 15,
+            "evidence": "练习追问、访谈提纲设计与执行",
+            "confidence": 0.8
+          }
+        ],
+        "targetStudentsJson": [
+          "社会学/心理学/教育学等人文社科专业学生",
+          "有初步研究兴趣的本科生或研究生"
+        ],
+        "learningOutcomesJson": [
+          "掌握半结构化访谈执行流程",
+          "熟练使用开放编码进行数据整理",
+          "独立完成小型质性分析报告"
+        ]
+      }
+    },
+    {
+      "id": 47,
+      "title": "Python 研究数据清洗助理",
+      "organizationName": "Urban Data Lab",
+      "category": "RESEARCH",
+      "startTime": "2026-08-04T10:00:00",
+      "endTime": "2026-09-04T17:00:00",
+      "location": "线上",
+      "content": "使用 Pandas 清理问卷数据，处理缺失值和异常值，并生成描述统计与数据质量说明。",
+      "benefitType": "BOTH",
+      "skill": "Python、Pandas、数据清洗、描述统计",
+      "moneyAmount": 10000.0,
+      "qualityReport": {
+        "summary": "线上Python数据清洗实践项目：用Pandas处理问卷缺失值、异常值，产出描述统计与数据质量说明。",
+        "difficulty": "intermediate",
+        "qualityLevel": "MEDIUM",
+        "qualityScore": 78,
+        "riskFlagsJson": [],
+        "extractedTagsJson": [
+          "Python",
+          "Pandas",
+          "数据清洗",
+          "描述统计",
+          "线上实践",
+          "社会科学研究"
+        ],
+        "prerequisitesJson": [
+          "掌握Python基础语法",
+          "了解DataFrame概念"
+        ],
+        "abilityImpactsJson": [
+          {
+            "tag": "数据清洗能力",
+            "score": 25,
+            "evidence": "明确要求使用Pandas清理问卷数据，处理缺失值和异常值",
+            "confidence": 0.95
+          },
+          {
+            "tag": "Python编程应用",
+            "score": 20,
+            "evidence": "内容指定使用Pandas，skill字段列出Python、Pandas",
+            "confidence": 0.9
+          },
+          {
+            "tag": "统计分析基础",
+            "score": 15,
+            "evidence": "要求生成描述统计与数据质量说明",
+            "confidence": 0.85
+          }
+        ],
+        "targetStudentsJson": [
+          "数据科学初学者",
+          "社会科学本科生",
+          "有基础Python编程经验者"
+        ],
+        "learningOutcomesJson": [
+          "提升真实问卷数据清洗能力",
+          "掌握Pandas数据质量诊断流程",
+          "产出可交付的数据质量说明文档"
+        ]
+      }
+    },
+    {
+      "id": 48,
+      "title": "大模型论文阅读小组",
+      "organizationName": "Osaka LLM Reading Group",
+      "category": "RESEARCH",
+      "startTime": "2026-07-16T19:00:00",
+      "endTime": "2026-09-17T21:00:00",
+      "location": "大阪 吹田",
+      "content": "每周阅读一篇 Agent、RAG 或模型评测论文，轮流进行论文讲解、方法批判和复现实验讨论。",
+      "benefitType": "SKILL",
+      "skill": "论文阅读、学术表达、Agent、RAG、实验分析",
+      "moneyAmount": null,
+      "qualityReport": {
+        "summary": "大阪LLM阅读组每周精读Agent/RAG/评测论文，含讲解、批判与复现实验讨论。",
+        "difficulty": "intermediate",
+        "qualityLevel": "MEDIUM",
+        "qualityScore": 78,
+        "riskFlagsJson": [],
+        "extractedTagsJson": [
+          "论文阅读",
+          "大模型",
+          "Agent",
+          "RAG",
+          "学术研讨",
+          "实验复现",
+          "日本"
+        ],
+        "prerequisitesJson": [
+          "了解机器学习基本概念",
+          "能阅读英文论文"
+        ],
+        "abilityImpactsJson": [
+          {
+            "tag": "论文阅读能力",
+            "score": 25,
+            "evidence": "每周阅读一篇Agent、RAG或模型评测论文",
+            "confidence": 0.95
+          },
+          {
+            "tag": "学术表达能力",
+            "score": 22,
+            "evidence": "轮流进行论文讲解、方法批判",
+            "confidence": 0.9
+          },
+          {
+            "tag": "实验分析能力",
+            "score": 18,
+            "evidence": "复现实验讨论",
+            "confidence": 0.85
+          }
+        ],
+        "targetStudentsJson": [
+          "计算机/人工智能方向本科生或研究生",
+          "具备基础机器学习知识者"
+        ],
+        "learningOutcomesJson": [
+          "提升论文精读与批判能力",
+          "锻炼学术表达与技术讨论能力",
+          "理解Agent/RAG核心方法与评测实践"
+        ]
+      }
+    },
+    {
+      "id": 49,
+      "title": "留学生展会现场运营",
+      "organizationName": "Mirai Career Lab",
+      "category": "COMPANY",
+      "startTime": "2026-08-08T08:30:00",
+      "endTime": "2026-08-08T18:00:00",
+      "location": "大阪 梅田",
+      "content": "负责签到、来宾引导、问卷收集、资料发放和会场整理，并在活动结束后提交现场问题复盘。",
+      "benefitType": "BOTH",
+      "skill": "现场运营、跨文化沟通、团队协作、问卷收集",
+      "moneyAmount": 8000.0,
+      "qualityReport": {
+        "summary": "在大阪梅田留学生展会现场负责签到、引导、问卷收集、资料发放及会场整理，并提交复盘报告。",
+        "difficulty": "basic",
+        "qualityLevel": "MEDIUM",
+        "qualityScore": 72,
+        "riskFlagsJson": [
+          "未说明报名方式或截止时间",
+          "未说明是否需日语/英语能力",
+          "报酬性质（时薪/日薪/一次性）不明确"
+        ],
+        "extractedTagsJson": [
+          "展会运营",
+          "跨文化沟通",
+          "现场执行",
+          "问卷调研",
+          "实习实践"
+        ],
+        "prerequisitesJson": [],
+        "abilityImpactsJson": [
+          {
+            "tag": "现场执行能力",
+            "score": 22,
+            "evidence": "负责签到、来宾引导、资料发放和会场整理",
+            "confidence": 0.95
+          },
+          {
+            "tag": "跨文化沟通",
+            "score": 18,
+            "evidence": "技能中明确列出‘跨文化沟通’，且场景为留学生展会",
+            "confidence": 0.9
+          },
+          {
+            "tag": "团队协作",
+            "score": 16,
+            "evidence": "技能中明确列出‘团队协作’，现场运营需多人协同",
+            "confidence": 0.85
+          }
+        ],
+        "targetStudentsJson": [
+          "留学生",
+          "对跨境活动运营感兴趣的学生"
+        ],
+        "learningOutcomesJson": [
+          "提升现场执行能力",
+          "锻炼跨文化沟通与团队协作",
+          "掌握基础活动复盘方法"
+        ]
+      }
+    },
+    {
+      "id": 50,
+      "title": "社区儿童日语阅读陪伴",
+      "organizationName": "Tokyo Bridge NPO",
+      "category": "PUBLIC_WELFARE",
+      "startTime": "2026-07-18T10:00:00",
+      "endTime": "2026-08-29T12:00:00",
+      "location": "东京 新宿区",
+      "content": "为社区儿童准备日语绘本、陪伴阅读、解释词汇并记录活动反馈，适合希望练习日语沟通的学生。",
+      "benefitType": "SKILL",
+      "skill": "日语沟通、儿童陪伴、活动记录",
+      "moneyAmount": null,
+      "qualityReport": {
+        "summary": "东京新宿区社区儿童日语阅读陪伴活动，含绘本共读、词汇讲解与反馈记录。",
+        "difficulty": "basic",
+        "qualityLevel": "MEDIUM",
+        "qualityScore": 78,
+        "riskFlagsJson": [
+          "时间跨度长（6周），但未说明单次时长与频次",
+          "未明确服务对象年龄范围",
+          "未说明是否需日语能力证明或面试"
+        ],
+        "extractedTagsJson": [
+          "日语",
+          "儿童教育",
+          "公益服务",
+          "阅读陪伴",
+          "跨文化实践"
+        ],
+        "prerequisitesJson": [],
+        "abilityImpactsJson": [
+          {
+            "tag": "日语沟通能力",
+            "score": 24,
+            "evidence": "为社区儿童准备日语绘本、陪伴阅读、解释词汇",
+            "confidence": 0.95
+          },
+          {
+            "tag": "儿童陪伴能力",
+            "score": 20,
+            "evidence": "陪伴阅读、解释词汇并记录活动反馈",
+            "confidence": 0.9
+          },
+          {
+            "tag": "活动记录能力",
+            "score": 16,
+            "evidence": "记录活动反馈",
+            "confidence": 0.85
+          }
+        ],
+        "targetStudentsJson": [
+          "日语初学者或中级学习者",
+          "对儿童教育或公益实践感兴趣的学生"
+        ],
+        "learningOutcomesJson": [
+          "提升日语实际沟通能力",
+          "积累儿童互动与活动执行经验",
+          "锻炼观察与基础教育记录能力"
+        ]
+      }
+    },
+    {
+      "id": 51,
+      "title": "线上中文社媒运营兼职",
+      "organizationName": "East Asia Media",
+      "category": "ONLINE",
+      "startTime": "2026-07-15T10:00:00",
+      "endTime": "2026-09-15T18:00:00",
+      "location": "线上",
+      "content": "撰写中文推文、整理活动资讯、制作发布计划并分析阅读数据，每周完成内容复盘。",
+      "benefitType": "BOTH",
+      "skill": "中文文案、社媒运营、内容策划、数据复盘",
+      "moneyAmount": 6000.0,
+      "qualityReport": {
+        "summary": "线上中文社媒运营兼职，含文案撰写、资讯整理、发布计划与数据复盘。",
+        "difficulty": "basic",
+        "qualityLevel": "MEDIUM",
+        "qualityScore": 62,
+        "riskFlagsJson": [
+          "未说明报名方式",
+          "未说明筛选/录用流程",
+          "未说明是否提供培训或指导",
+          "报酬未注明支付周期与方式"
+        ],
+        "extractedTagsJson": [
+          "线上兼职",
+          "中文文案",
+          "社交媒体运营",
+          "内容策划",
+          "数据分析入门"
+        ],
+        "prerequisitesJson": [],
+        "abilityImpactsJson": [
+          {
+            "tag": "中文书面表达",
+            "score": 22,
+            "evidence": "撰写中文推文",
+            "confidence": 0.95
+          },
+          {
+            "tag": "社交媒体运营基础",
+            "score": 18,
+            "evidence": "整理活动资讯、制作发布计划并分析阅读数据",
+            "confidence": 0.85
+          },
+          {
+            "tag": "数据解读入门",
+            "score": 12,
+            "evidence": "分析阅读数据，每周完成内容复盘",
+            "confidence": 0.7
+          }
+        ],
+        "targetStudentsJson": [
+          "对新媒体运营感兴趣的学生",
+          "中文表达能力较好的学生"
+        ],
+        "learningOutcomesJson": [
+          "基础社媒内容策划能力",
+          "中文推文写作实践",
+          "简单阅读数据观察经验"
+        ]
+      }
+    },
+    {
+      "id": 52,
+      "title": "AI 数据标注远程兼职",
+      "organizationName": "Model Quality Works",
+      "category": "COMPANY",
+      "startTime": "2026-07-21T10:00:00",
+      "endTime": "2026-08-21T18:00:00",
+      "location": "线上",
+      "content": "标注对话意图、检查模型回答事实性和格式，并按错误分类规范记录典型案例。",
+      "benefitType": "BOTH",
+      "skill": "数据标注、AI评测、错误分析、质量控制",
+      "moneyAmount": 7000.0,
+      "qualityReport": {
+        "summary": "AI数据标注远程兼职，需标注对话意图、检查模型回答事实性与格式，并分类记录错误案例。",
+        "difficulty": "basic",
+        "qualityLevel": "MEDIUM",
+        "qualityScore": 62,
+        "riskFlagsJson": [
+          "未说明工作时长与每周投入要求",
+          "未明确是否需培训或考核准入",
+          "报酬未注明结算周期与发放条件"
+        ],
+        "extractedTagsJson": [
+          "AI",
+          "数据标注",
+          "远程实习",
+          "人工智能评测",
+          "质量控制"
+        ],
+        "prerequisitesJson": [],
+        "abilityImpactsJson": [
+          {
+            "tag": "数据标注能力",
+            "score": 22,
+            "evidence": "标注对话意图、检查模型回答事实性和格式，并按错误分类规范记录典型案例",
+            "confidence": 0.95
+          },
+          {
+            "tag": "AI系统理解",
+            "score": 18,
+            "evidence": "检查模型回答事实性和格式",
+            "confidence": 0.8
+          },
+          {
+            "tag": "问题分析能力",
+            "score": 15,
+            "evidence": "按错误分类规范记录典型案例",
+            "confidence": 0.75
+          }
+        ],
+        "targetStudentsJson": [
+          "对AI基础感兴趣的学生",
+          "希望接触AI质量评估的初学者"
+        ],
+        "learningOutcomesJson": [
+          "掌握基础数据标注规范",
+          "理解AI模型输出评测维度",
+          "积累AI训练数据质量控制实践经验"
+        ]
+      }
+    },
+    {
+      "id": 53,
+      "title": "大阪马拉松志愿者",
+      "organizationName": "Osaka Sports Volunteers",
+      "category": "PUBLIC_WELFARE",
+      "startTime": "2026-09-06T06:30:00",
+      "endTime": "2026-09-06T16:00:00",
+      "location": "大阪市内",
+      "content": "负责物资发放、路线引导、补给站协助和参赛者服务，活动前提供安全与岗位培训。",
+      "benefitType": "SKILL",
+      "skill": "活动执行、公共沟通、志愿服务、团队协作",
+      "moneyAmount": null,
+      "qualityReport": {
+        "summary": "大阪马拉松志愿者活动，负责物资发放、路线引导、补给站协助及参赛者服务，含岗前安全与岗位培训。",
+        "difficulty": "basic",
+        "qualityLevel": "HIGH",
+        "qualityScore": 82,
+        "riskFlagsJson": [],
+        "extractedTagsJson": [
+          "志愿服务",
+          "马拉松",
+          "大型活动执行",
+          "公共沟通",
+          "团队协作",
+          "日本交流"
+        ],
+        "prerequisitesJson": [
+          "年满18周岁",
+          "能全程参与当日服务",
+          "具备基本日语或英语沟通能力"
+        ],
+        "abilityImpactsJson": [
+          {
+            "tag": "志愿服务",
+            "score": 25,
+            "evidence": "活动明确为大阪马拉松志愿者，内容包含物资发放、补给站协助、参赛者服务等典型志愿场景",
+            "confidence": 0.95
+          },
+          {
+            "tag": "公共沟通",
+            "score": 22,
+            "evidence": "岗位职责含路线引导、参赛者服务；content中提及‘公共沟通’为明确技能收益",
+            "confidence": 0.9
+          },
+          {
+            "tag": "团队协作",
+            "score": 20,
+            "evidence": "马拉松属高强度协同型活动，content中列出多项需配合完成的岗位任务，且注明‘团队协作’为技能收益",
+            "confidence": 0.85
+          }
+        ],
+        "targetStudentsJson": [
+          "对志愿服务感兴趣的学生",
+          "希望提升跨文化沟通能力者",
+          "日语基础或英语沟通能力良好者"
+        ],
+        "learningOutcomesJson": [
+          "大型赛事组织协作经验",
+          "现场应急响应能力",
+          "跨文化公共沟通实践",
+          "志愿服务认证经历"
+        ]
+      }
+    },
+    {
+      "id": 54,
+      "title": "大学生体能提升训练营",
+      "organizationName": "Campus Fitness Club",
+      "category": "CAMPUS",
+      "startTime": "2026-07-14T07:30:00",
+      "endTime": "2026-09-01T09:00:00",
+      "location": "大阪 吹田",
+      "content": "每周进行跑步、核心力量和基础体能训练，记录个人数据并完成阶段性体能测试。",
+      "benefitType": "SKILL",
+      "skill": "体能训练、运动习惯、目标管理",
+      "moneyAmount": null,
+      "qualityReport": {
+        "summary": "暑期校内体能训练营，含跑步、核心力量训练及阶段性体能测试，培养运动习惯与目标管理能力。",
+        "difficulty": "basic",
+        "qualityLevel": "MEDIUM",
+        "qualityScore": 72,
+        "riskFlagsJson": [],
+        "extractedTagsJson": [
+          "体能训练",
+          "运动习惯",
+          "目标管理",
+          "大学生",
+          "校内活动",
+          "暑期"
+        ],
+        "prerequisitesJson": [],
+        "abilityImpactsJson": [
+          {
+            "tag": "体能素质",
+            "score": 25,
+            "evidence": "每周进行跑步、核心力量和基础体能训练，记录个人数据并完成阶段性体能测试",
+            "confidence": 0.95
+          },
+          {
+            "tag": "目标管理能力",
+            "score": 18,
+            "evidence": "记录个人数据并完成阶段性体能测试",
+            "confidence": 0.9
+          },
+          {
+            "tag": "自律性",
+            "score": 15,
+            "evidence": "每周进行训练并完成阶段性测试，隐含持续行动要求",
+            "confidence": 0.85
+          }
+        ],
+        "targetStudentsJson": [
+          "在校大学生"
+        ],
+        "learningOutcomesJson": [
+          "基础体能提升",
+          "规律运动习惯养成",
+          "自我体能数据记录与分析能力",
+          "阶段性目标设定与达成经验"
+        ]
+      }
+    },
+    {
+      "id": 55,
+      "title": "CET-6 英语冲刺学习营",
+      "organizationName": "Global English Online",
+      "category": "ONLINE",
+      "startTime": "2026-07-17T19:00:00",
+      "endTime": "2026-09-04T21:00:00",
+      "location": "线上",
+      "content": "围绕大学英语六级听力、阅读、写作和真题进行训练，包含每周模考和错题复盘。",
+      "benefitType": "SKILL",
+      "skill": "CET-6、英语听力、阅读、写作",
+      "moneyAmount": null,
+      "qualityReport": {
+        "summary": "线上CET-6冲刺学习营，覆盖听、读、写及真题训练，含周模考与错题复盘。",
+        "difficulty": "intermediate",
+        "qualityLevel": "MEDIUM",
+        "qualityScore": 72,
+        "riskFlagsJson": [],
+        "extractedTagsJson": [
+          "CET-6",
+          "英语备考",
+          "线上学习",
+          "模考训练",
+          "错题复盘"
+        ],
+        "prerequisitesJson": [
+          "具备大学英语四级基础或相当水平"
+        ],
+        "abilityImpactsJson": [
+          {
+            "tag": "英语听力理解",
+            "score": 22,
+            "evidence": "围绕大学英语六级听力……进行训练",
+            "confidence": 0.95
+          },
+          {
+            "tag": "英语阅读理解",
+            "score": 22,
+            "evidence": "围绕大学英语六级阅读……进行训练",
+            "confidence": 0.95
+          },
+          {
+            "tag": "学术英语写作",
+            "score": 18,
+            "evidence": "围绕大学英语六级写作……进行训练",
+            "confidence": 0.9
+          }
+        ],
+        "targetStudentsJson": [
+          "备考CET-6的在校大学生"
+        ],
+        "learningOutcomesJson": [
+          "提升CET-6各题型应试能力",
+          "掌握真题解题策略",
+          "建立错题分析与复盘习惯"
+        ]
+      }
+    },
+    {
+      "id": 56,
+      "title": "IT 企业模拟面试活动",
+      "organizationName": "Kansai Career Tech",
+      "category": "COMPANY",
+      "startTime": "2026-08-12T13:00:00",
+      "endTime": "2026-08-12T18:00:00",
+      "location": "线上",
+      "content": "进行 Java 后端和 Agent 工程岗位模拟面试，覆盖项目深挖、系统设计、基础知识与行为问题，并提供逐项反馈。",
+      "benefitType": "SKILL",
+      "skill": "技术面试、Java后端、Agent工程、项目表达",
+      "moneyAmount": null,
+      "qualityReport": {
+        "summary": "线上IT企业模拟面试，聚焦Java后端与Agent工程岗，含项目深挖、系统设计等环节及逐项反馈。",
+        "difficulty": "intermediate",
+        "qualityLevel": "MEDIUM",
+        "qualityScore": 78,
+        "riskFlagsJson": [],
+        "extractedTagsJson": [
+          "模拟面试",
+          "Java后端",
+          "Agent工程",
+          "技术面试",
+          "线上活动"
+        ],
+        "prerequisitesJson": [
+          "具备Java基础",
+          "了解基本后端或Agent开发概念"
+        ],
+        "abilityImpactsJson": [
+          {
+            "tag": "技术面试能力",
+            "score": 25,
+            "evidence": "进行 Java 后端和 Agent 工程岗位模拟面试，覆盖项目深挖、系统设计、基础知识与行为问题，并提供逐项反馈",
+            "confidence": 0.95
+          },
+          {
+            "tag": "项目表达能力",
+            "score": 20,
+            "evidence": "覆盖项目深挖……并提供逐项反馈",
+            "confidence": 0.9
+          },
+          {
+            "tag": "系统设计能力",
+            "score": 18,
+            "evidence": "覆盖项目深挖、系统设计……",
+            "confidence": 0.85
+          }
+        ],
+        "targetStudentsJson": [
+          "计算机相关专业本科生",
+          "准备技术面试的求职者"
+        ],
+        "learningOutcomesJson": [
+          "提升技术面试应答能力",
+          "获得真实岗位面试反馈",
+          "强化项目表达与系统设计思维"
+        ]
+      }
+    }
+  ]
+}

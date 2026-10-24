@@ -39,6 +39,12 @@ public class UserProfileSnapshotEntity {
     @Column(name = "recent_signals_json", nullable = false, columnDefinition = "longtext")
     private String recentSignalsJson;
 
+    @Column(name = "recommendation_likes_json", columnDefinition = "longtext")
+    private String recommendationLikesJson;
+
+    @Column(name = "recommendation_avoids_json", columnDefinition = "longtext")
+    private String recommendationAvoidsJson;
+
     @Column(name = "completed_count", nullable = false)
     private long completedCount;
 
@@ -225,5 +231,21 @@ public class UserProfileSnapshotEntity {
 
     public Instant getUpdatedAt() {
         return updatedAt;
+    }
+
+    public String getRecommendationLikesJson() {
+        return recommendationLikesJson;
+    }
+
+    public void setRecommendationLikesJson(String recommendationLikesJson) {
+        this.recommendationLikesJson = recommendationLikesJson;
+    }
+
+    public String getRecommendationAvoidsJson() {
+        return recommendationAvoidsJson;
+    }
+
+    public void setRecommendationAvoidsJson(String recommendationAvoidsJson) {
+        this.recommendationAvoidsJson = recommendationAvoidsJson;
     }
 }

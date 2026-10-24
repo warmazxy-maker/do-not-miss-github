@@ -22,7 +22,9 @@ public class GuideDtos {
             boolean usedRag,
             List<AiDtos.RecommendedEvent> recommendations,
             GuideSessionView session,
-            McpDtos.ToolContextResponse toolContext
+            McpDtos.ToolContextResponse toolContext,
+            // Present when this turn produced recommendations; feedback refers to it.
+            Long recommendationRunId
     ) {
     }
 

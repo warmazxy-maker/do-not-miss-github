@@ -2,11 +2,8 @@ package com.donotmiss.backend.retrieval;
 
 import com.donotmiss.backend.ai.AiDtos;
 import com.donotmiss.backend.event.BenefitType;
-import com.donotmiss.backend.event.EventDtos;
 import com.donotmiss.backend.event.EventCategory;
 import com.donotmiss.backend.event.EventEntity;
-import com.donotmiss.backend.event.EventExpirationService;
-import com.donotmiss.backend.event.EventService;
 import com.donotmiss.backend.memory.UserMemoryDtos;
 import com.donotmiss.backend.mcp.McpDtos;
 import org.springframework.stereotype.Service;
@@ -31,16 +28,10 @@ public class HybridEventRetrievalService {
             "java", "spring", "后端", "编程", "程序设计", "开发", "项目", "外卖", "微信"
     );
 
-    private final EventService eventService;
-    private final EventExpirationService eventExpirationService;
-    private final EventSearchIndexService eventSearchIndexService;
+    private final EventCorpus liveCorpus;
 
-    public HybridEventRetrievalService(EventService eventService,
-                                       EventExpirationService eventExpirationService,
-                                       EventSearchIndexService eventSearchIndexService) {
-        this.eventService = eventService;
-        this.eventExpirationService = eventExpirationService;
-        this.eventSearchIndexService = eventSearchIndexService;
+    public HybridEventRetrievalService(LiveEventCorpus liveCorpus) {
+        this.liveCorpus = liveCorpus;
     }
 
     @Transactional(readOnly = true)
@@ -73,15 +64,28 @@ public class HybridEventRetrievalService {
                                          UserMemoryDtos.Profile memory,
                                          int limit,
                                          McpDtos.ToolContextResponse toolContext) {
-        eventExpirationService.expireOverdueEvents();
-        CandidatePool candidatePool = searchEngineCandidates(query, category, benefitType, location, limit);
+        return retrieve(query, category, benefitType, location, memory, limit, toolContext, liveCorpus);
+    }
+
+    /** Same retrieval and scoring over any corpus; evaluation passes a frozen one. */
+    @Transactional(readOnly = true)
+    public List<RetrievedEvent> retrieve(String query,
+                                         String category,
+                                         String benefitType,
+                                         String location,
+                                         UserMemoryDtos.Profile memory,
+                                         int limit,
+                                         McpDtos.ToolContextResponse toolContext,
+                                         EventCorpus corpus) {
+        corpus.beforeRetrieve();
+        CandidatePool candidatePool = searchEngineCandidates(corpus, query, category, benefitType, location, limit);
         List<EventEntity> candidates = candidatePool.events();
         Map<Long, Double> bm25Scores = candidatePool.bm25Scores();
         Map<Long, Double> semanticScores = candidatePool.semanticScores();
         Map<Long, Double> recallScores = candidatePool.recallScores();
         boolean searchBacked = !candidates.isEmpty();
         if (candidates.isEmpty()) {
-            candidates = databaseCandidates(category, benefitType, location);
+            candidates = databaseCandidates(corpus, category, benefitType, location);
             bm25Scores = Map.of();
             semanticScores = Map.of();
             recallScores = Map.of();
@@ -89,7 +93,7 @@ public class HybridEventRetrievalService {
         }
 
         if (candidates.isEmpty() && !hasHardFilter(category, benefitType, location)) {
-            candidates = eventService.searchEntities(new EventDtos.EventSearchRequest(null, null, null, null));
+            candidates = corpus.filtered(null, null, null);
             bm25Scores = Map.of();
             semanticScores = Map.of();
             recallScores = Map.of();
@@ -124,9 +128,21 @@ public class HybridEventRetrievalService {
                                                  UserMemoryDtos.Profile memory,
                                                  int limit,
                                                  McpDtos.ToolContextResponse toolContext) {
-        List<EventEntity> candidates = databaseCandidates(category, benefitType, location);
+        return retrieveBaseline(query, category, benefitType, location, memory, limit, toolContext, liveCorpus);
+    }
+
+    @Transactional(readOnly = true)
+    public List<RetrievedEvent> retrieveBaseline(String query,
+                                                 String category,
+                                                 String benefitType,
+                                                 String location,
+                                                 UserMemoryDtos.Profile memory,
+                                                 int limit,
+                                                 McpDtos.ToolContextResponse toolContext,
+                                                 EventCorpus corpus) {
+        List<EventEntity> candidates = databaseCandidates(corpus, category, benefitType, location);
         if (candidates.isEmpty() && !hasHardFilter(category, benefitType, location)) {
-            candidates = eventService.searchEntities(new EventDtos.EventSearchRequest(null, null, null, null));
+            candidates = corpus.filtered(null, null, null);
         }
 
         List<String> queryTerms = tokenize(query);
@@ -142,20 +158,20 @@ public class HybridEventRetrievalService {
                 .toList();
     }
 
-    private CandidatePool searchEngineCandidates(String query, String category, String benefitType, String location, int limit) {
-        if (!eventSearchIndexService.isEnabled()) {
+    private CandidatePool searchEngineCandidates(EventCorpus corpus, String query, String category, String benefitType, String location, int limit) {
+        if (!corpus.searchEnabled()) {
             return CandidatePool.empty();
         }
         int recallLimit = Math.max(limit * 4, 40);
-        List<EventSearchIndexService.SearchHit> bm25Hits = eventSearchIndexService.searchHits(query, blankToNull(category), blankToNull(benefitType), blankToNull(location), recallLimit);
-        List<EventSearchIndexService.SearchHit> vectorHits = eventSearchIndexService.vectorSearchHits(query, recallLimit);
+        List<EventSearchIndexService.SearchHit> bm25Hits = corpus.bm25Hits(query, blankToNull(category), blankToNull(benefitType), blankToNull(location), recallLimit);
+        List<EventSearchIndexService.SearchHit> vectorHits = corpus.vectorHits(query, recallLimit);
         List<Long> fusedIds = fuseRankedHits(bm25Hits, vectorHits, recallLimit);
         Map<Long, Double> bm25Scores = normalizeScores(bm25Hits);
         Map<Long, Double> semanticScores = normalizeScores(vectorHits);
         Map<Long, Double> recallScores = recallScores(fusedIds);
 
         List<EventEntity> events = fusedIds.stream()
-                .map(this::safeGetEvent)
+                .map(id -> corpus.find(id).orElse(null))
                 .filter(event -> event != null)
                 .filter(event -> !event.isExpired())
                 .filter(event -> matchesFilters(event, category, benefitType, location))
@@ -260,21 +276,8 @@ public class HybridEventRetrievalService {
         }
     }
 
-    private List<EventEntity> databaseCandidates(String category, String benefitType, String location) {
-        return eventService.searchEntities(new EventDtos.EventSearchRequest(
-                null,
-                blankToNull(category),
-                blankToNull(benefitType),
-                blankToNull(location)
-        ));
-    }
-
-    private EventEntity safeGetEvent(Long eventId) {
-        try {
-            return eventService.getEntity(eventId);
-        } catch (RuntimeException ex) {
-            return null;
-        }
+    private List<EventEntity> databaseCandidates(EventCorpus corpus, String category, String benefitType, String location) {
+        return corpus.filtered(blankToNull(category), blankToNull(benefitType), blankToNull(location));
     }
 
     private RetrievedEvent scoreFromRecall(EventEntity event,

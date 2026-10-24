@@ -5,6 +5,8 @@ import type {
   EventSearchFilters,
   FollowItem,
   GuideChatResponse,
+  RecommendationFeedbackState,
+  RecommendationFeedbackType,
   ImportPlanResponse,
   PlanRecommendationResponse,
   RecommendedPlan,
@@ -63,6 +65,15 @@ export const eventsApi = {
     toolContext: ToolContextRequest;
   }) {
     return api.post<GuideChatResponse>("/api/guide/chat", payload);
+  },
+  /** type null clears the student's verdict on that recommended event. */
+  recommendationFeedback(payload: {
+    runId: number;
+    eventId: number;
+    type: RecommendationFeedbackType | null;
+    reason?: string;
+  }) {
+    return api.post<RecommendationFeedbackState>("/api/recommendations/feedback", payload);
   },
   recommendPlans(payload: {
     goal: string;

@@ -169,6 +169,87 @@ export interface OpsUser {
   role: string | null;
 }
 
+export interface RecommendationFunnel {
+  impressions: number;
+  interested: number;
+  notRelevant: number;
+  reserved: number;
+  cancelled: number;
+  completed: number;
+  followed: number;
+  withExplicitFeedback: number;
+  interestedRate: number;
+  notRelevantRate: number;
+  reserveRate: number;
+  completeRate: number;
+  followRate: number;
+  explicitFeedbackRate: number;
+}
+
+export interface RecommendationDay {
+  date: string;
+  runs: number;
+  zeroResultRuns: number;
+  impressions: number;
+  interested: number;
+  notRelevant: number;
+  reserved: number;
+}
+
+export interface RecommendationStats {
+  windowDays: number;
+  runs: number;
+  failedRuns: number;
+  zeroResultRuns: number;
+  zeroResultRate: number;
+  avgMillis: number | null;
+  studentsReached: number;
+  suppressedByFeedback: number;
+  trackingSince: string | null;
+  funnel: RecommendationFunnel;
+  daily: RecommendationDay[];
+  notRelevantReasons: { eventId: number; eventTitle: string | null; userId: string; reason: string | null; at: string; runId: number | null }[];
+}
+
+export interface RecommendationRunRow {
+  runId: number;
+  userId: string;
+  need: string;
+  status: string;
+  startedAt: string;
+  durationMillis: number | null;
+  recommendationCount: number | null;
+  shown: { eventId: number; title: string | null; rank: number; score: number; feedback: string[] }[];
+}
+
+export interface EvalCandidateRow {
+  id: number;
+  runId: number | null;
+  userId: string;
+  eventId: number;
+  eventTitle: string | null;
+  needText: string | null;
+  reason: string | null;
+  status: "PENDING" | "APPROVED" | "REJECTED";
+  reviewerNote: string | null;
+  reviewedBy: string | null;
+  reviewedAt: string | null;
+  createdAt: string;
+  inCurrentEvalSet: boolean;
+}
+
+export interface EvalExport {
+  evalSetVersion: string;
+  corpusVersion: string;
+  newCaseIds: string[];
+  addedEventIds: number[];
+  warnings: string[];
+  evalSetFileName: string;
+  evalSetJson: string;
+  corpusFileName: string | null;
+  corpusJson: string | null;
+}
+
 function query(params: Record<string, string | number | undefined>) {
   const search = new URLSearchParams();
   Object.entries(params).forEach(([key, value]) => {
@@ -195,8 +276,15 @@ export const opsApi = {
   retryOutbox: (id: number) => api.post<OutboxRow>(`/api/ops/outbox/${id}/retry`),
   redis: () => api.get<RedisInfo>("/api/ops/redis"),
   database: () => api.get<DatabaseInfo>("/api/ops/database"),
+  recommendationStats: (days: number) => api.get<RecommendationStats>(`/api/ops/recommendations/stats${query({ days })}`),
+  recommendationRuns: (limit = 20) => api.get<RecommendationRunRow[]>(`/api/ops/recommendations/runs${query({ limit })}`),
+  evalCandidates: (status: string) => api.get<EvalCandidateRow[]>(`/api/ops/eval-candidates${query({ status })}`),
+  reviewEvalCandidate: (id: number, decision: "APPROVED" | "REJECTED", needText?: string, note?: string) =>
+    api.post<void>(`/api/ops/eval-candidates/${id}/review`, { decision, needText, note }),
+  exportEvalSet: () => api.get<EvalExport>("/api/ops/eval-candidates/export"),
   users: () => api.get<OpsUser[]>("/api/ops/users"),
-  journeys: (userId: string, limit = 15) => api.get<Journey[]>(`/api/ops/journeys${query({ userId, limit })}`)
+  journeys: (userId: string, limit = 15, kind: "achievement" | "resume" = "achievement") =>
+    api.get<Journey[]>(`/api/ops/journeys${query({ userId, kind, limit })}`)
 };
 
 export function formatMillis(value: number | null | undefined) {
@@ -207,6 +295,13 @@ export function formatMillis(value: number | null | undefined) {
     return `${value} ms`;
   }
   return `${(value / 1000).toFixed(value < 10_000 ? 1 : 0)} s`;
+}
+
+export function formatPercent(value: number | null | undefined) {
+  if (value === null || value === undefined) {
+    return "—";
+  }
+  return `${(value * 100).toFixed(1)}%`;
 }
 
 export function formatTime(value: string | null | undefined) {

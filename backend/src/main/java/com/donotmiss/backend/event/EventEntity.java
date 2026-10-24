@@ -65,6 +65,16 @@ public class EventEntity {
         }
     }
 
+    /**
+     * An event that only lives in memory, with a fixed id, for frozen evaluation corpora.
+     * It must never be saved: the id would collide with a real row.
+     */
+    public static EventEntity detached(Long id) {
+        EventEntity event = new EventEntity();
+        event.id = id;
+        return event;
+    }
+
     public Long getId() {
         return id;
     }

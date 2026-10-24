@@ -229,6 +229,8 @@ curl -X POST "http://localhost:8080/api/ai/retrieval/reindex" `
   -H "Authorization: Bearer $TOKEN"
 ```
 
+> 2026-10-24 起，`/reindex` 和 `/evaluation*` 只对运维管理员开放：需要 `OPS_CONSOLE_ENABLED=true`，并且 `$TOKEN` 对应的用户在 `OPS_ADMIN_USERS` 里，否则返回 404。
+
 启用后，事件检索会优先用 OpenSearch 的 BM25 候选召回；如果 OpenSearch 不可用，系统会自动退回本地检索逻辑。
 
 正常情况下会看到：

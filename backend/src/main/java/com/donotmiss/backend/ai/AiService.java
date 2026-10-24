@@ -20,6 +20,7 @@ import com.donotmiss.backend.memory.UserMemoryDtos;
 import com.donotmiss.backend.memory.UserMemoryService;
 import com.donotmiss.backend.mcp.McpDtos;
 import com.donotmiss.backend.mcp.McpToolContextService;
+import com.donotmiss.backend.recommendation.RecommendationFeedbackService;
 import com.donotmiss.backend.retrieval.HybridEventRetrievalService;
 import com.donotmiss.backend.retrieval.QueryRewriteService;
 import com.donotmiss.backend.retrieval.RetrievedEvent;
@@ -29,6 +30,8 @@ import com.donotmiss.backend.schedule.ScheduleDtos;
 import com.donotmiss.backend.schedule.ScheduleService;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -43,6 +46,7 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
@@ -67,8 +71,11 @@ public class AiService {
     private final McpToolContextService mcpToolContextService;
     private final AgentRunService agentRunService;
     private final AgentTraceArtifactService traceArtifactService;
+    private static final Logger log = LoggerFactory.getLogger(AiService.class);
+
     private final OpenAiCompatibleLlmClient llmClient;
     private final ObjectMapper objectMapper;
+    private final RecommendationFeedbackService recommendationFeedbackService;
     private final String aiMode;
 
     public AiService(EventService eventService,
@@ -86,6 +93,7 @@ public class AiService {
                      AgentTraceArtifactService traceArtifactService,
                      OpenAiCompatibleLlmClient llmClient,
                      ObjectMapper objectMapper,
+                     RecommendationFeedbackService recommendationFeedbackService,
                      @Value("${app.ai.provider:mock}") String aiMode) {
         this.eventService = eventService;
         this.achievementService = achievementService;
@@ -102,6 +110,7 @@ public class AiService {
         this.traceArtifactService = traceArtifactService;
         this.llmClient = llmClient;
         this.objectMapper = objectMapper;
+        this.recommendationFeedbackService = recommendationFeedbackService;
         this.aiMode = aiMode;
     }
 
@@ -162,6 +171,17 @@ public class AiService {
                     retrievalArtifact(retrievedEvents),
                     summarizeRetrievedEvents(retrievedEvents)
             );
+            // The student's explicit "not relevant" is a choice, not a semantic guess: drop those
+            // events before ranking so the model never sees them again.
+            Set<Long> suppressed = recommendationFeedbackService.suppressedEventIds(userId);
+            if (!suppressed.isEmpty()) {
+                List<Long> removed = retrievedEvents.stream().map(item -> item.event().getId()).filter(suppressed::contains).toList();
+                if (!removed.isEmpty()) {
+                    retrievedEvents = retrievedEvents.stream().filter(item -> !suppressed.contains(item.event().getId())).toList();
+                    recordArtifact(runId, AgentStepName.RETRIEVAL, "SUPPRESSED_BY_FEEDBACK",
+                            Map.of("eventIds", removed), removed.size() + " events marked not relevant by the student");
+                }
+            }
             List<EventEntity> candidates = retrievedEvents.stream().map(RetrievedEvent::event).toList();
             Map<Long, RetrievedEvent> retrievedById = retrievedEvents.stream()
                     .collect(Collectors.toMap(item -> item.event().getId(), Function.identity(), (left, right) -> left, LinkedHashMap::new));
@@ -210,9 +230,11 @@ public class AiService {
                             buildRecommendationMessage(recommendations, candidates.size()),
                             memory,
                             recommendations,
-                            toolContext
+                            toolContext,
+                            runId
                     ),
                     value -> "mode=" + value.mode() + ", " + summarizeRecommendations(value.recommendations()));
+            recordImpressionsQuietly(runId, userId, request.need(), recommendations);
             recordArtifact(
                     runId,
                     AgentStepName.RESPONSE_BUILD,
@@ -230,6 +252,47 @@ public class AiService {
             agentRunService.failRun(runId, ex);
             throw ex;
         }
+    }
+
+    /** Feedback bookkeeping must never fail the recommendation the student is waiting for. */
+    private void recordImpressionsQuietly(Long runId, String userId, String need, List<AiDtos.RecommendedEvent> recommendations) {
+        try {
+            recommendationFeedbackService.recordImpressions(runId, userId, need, recommendations);
+        } catch (RuntimeException ex) {
+            log.warn("Could not record recommendation impressions. runId={}, reason={}", runId, ex.getMessage());
+        }
+    }
+
+    /**
+     * The ranking half of {@link #recommendEvents} for offline evaluation: the same model prompt,
+     * validation, critique and rule fallback, over candidates the caller already retrieved.
+     * No agent run is recorded and no session state is written.
+     */
+    public EvaluationRanking rankForEvaluation(List<RetrievedEvent> retrievedEvents,
+                                               UserMemoryDtos.Profile memory,
+                                               AiDtos.EventRecommendationRequest request,
+                                               RetrievalDtos.QueryRewrite query,
+                                               McpDtos.ToolContextResponse toolContext,
+                                               Function<Long, Optional<EventQualityReportEntity>> qualityLookup) {
+        List<EventEntity> candidates = retrievedEvents.stream().map(RetrievedEvent::event).toList();
+        Map<Long, RetrievedEvent> retrievedById = retrievedEvents.stream()
+                .collect(Collectors.toMap(item -> item.event().getId(), Function.identity(), (left, right) -> left, LinkedHashMap::new));
+        List<Long> rawIds = new ArrayList<>();
+        Optional<List<AiDtos.RecommendedEvent>> model = recommendEventsWithModel(
+                candidates, List.of(), memory, retrievedById, request, query, toolContext, qualityLookup, rawIds::addAll);
+        if (model.isPresent() && !model.get().isEmpty()) {
+            return new EvaluationRanking(model.get(), llmClient.modeLabel(), List.copyOf(rawIds), false);
+        }
+        List<AiDtos.RecommendedEvent> fallback = rankEventsByRules(candidates, query.rewrittenQuery(), "", memory, retrievedById);
+        return new EvaluationRanking(fallback, model.isPresent() ? llmClient.modeLabel() + ":rule-fallback" : fallbackMode(),
+                List.copyOf(rawIds), true);
+    }
+
+    /** {@code modelEventIds} are the ids the model returned before validation, for hallucination checks. */
+    public record EvaluationRanking(List<AiDtos.RecommendedEvent> recommendations,
+                                    String mode,
+                                    List<Long> modelEventIds,
+                                    boolean ruleFallback) {
     }
 
     @Transactional(readOnly = true)
@@ -1063,6 +1126,25 @@ public class AiService {
                                                                       AiDtos.EventRecommendationRequest request,
                                                                       RetrievalDtos.QueryRewrite query,
                                                                       McpDtos.ToolContextResponse toolContext) {
+        return recommendEventsWithModel(candidates, history, memory, retrievedById, request, query, toolContext,
+                eventQualityReportRepository::findByEventId, null);
+    }
+
+    /**
+     * @param qualityLookup where quality reports come from: the repository for live requests, the
+     *                      frozen fixture for evaluation
+     * @param rawIdSink     receives the event ids exactly as the model returned them, before
+     *                      validation drops unknown ones; null when nobody is measuring that
+     */
+    private Optional<List<AiDtos.RecommendedEvent>> recommendEventsWithModel(List<EventEntity> candidates,
+                                                                            List<AchievementRecordEntity> history,
+                                                                            UserMemoryDtos.Profile memory,
+                                                                            Map<Long, RetrievedEvent> retrievedById,
+                                                                            AiDtos.EventRecommendationRequest request,
+                                                                            RetrievalDtos.QueryRewrite query,
+                                                                            McpDtos.ToolContextResponse toolContext,
+                                                                            Function<Long, Optional<EventQualityReportEntity>> qualityLookup,
+                                                                            Consumer<List<Long>> rawIdSink) {
         if (!llmClient.isEnabled() || candidates.isEmpty()) {
             return Optional.empty();
         }
@@ -1093,7 +1175,9 @@ public class AiService {
         ));
         context.put("mcpToolContext", mcpToolContextService.promptContext(toolContext));
         context.put("studentMemory", memory);
-        context.put("candidateEvents", modelCandidates.stream().map(event -> eventContext(event, retrievedById.get(event.getId()))).toList());
+        context.put("candidateEvents", modelCandidates.stream()
+                .map(event -> eventContext(event, retrievedById.get(event.getId()), qualityLookup))
+                .toList());
         context.put("studentHistory", history.stream().limit(12).map(this::historyContext).toList());
 
         String systemPrompt = """
@@ -1122,12 +1206,24 @@ public class AiService {
                 5. reason 用中文，控制在 100 字以内，说明为什么适合该学生，也可以说明边界。
                 6. evidence 必须引用候选事件、活动质量报告、召回证据、学生画像或历史经历中的具体字段。
                 7. semanticScore、bm25Score 和 finalScore 只能作为召回证据；最终排序要由你判断目标、能力阶段、活动质量和个人画像是否匹配。
+                8. studentMemory.recommendationLikes / recommendationAvoids 是学生对过往推荐的真实反应：与 Avoids 相似的活动应降低排序，
+                   如果仍然推荐，要在 reason 里说明它和之前被拒绝的活动有什么不同；与 Likes 相似的活动可以适当提前。
+                   但本次 studentNeed 的明确要求优先于历史反应，不要因为历史反应而推荐与本次需求无关的活动。
 
                 后端数据 JSON：
                 %s
                 """.formatted(toJson(context));
 
         return llmClient.chatForJson(systemPrompt, userPrompt, AiDtos.EventRecommendationModelResponse.class)
+                .map(output -> {
+                    if (rawIdSink != null) {
+                        rawIdSink.accept(output.recommendations() == null ? List.of() : output.recommendations().stream()
+                                .filter(item -> item != null && item.eventId() != null)
+                                .map(AiDtos.EventRecommendationModelItem::eventId)
+                                .toList());
+                    }
+                    return output;
+                })
                 .map(output -> normalizeModelRecommendations(output, modelCandidates, request.need(), textOfHistory(history), memory, retrievedById))
                 .map(recommendations -> critiqueRecommendations(recommendations, request.need(), memory))
                 .map(recommendations -> recommendations.stream().limit(MAX_RECOMMENDATIONS).toList());
@@ -1658,6 +1754,12 @@ public class AiService {
     }
 
     private Map<String, Object> eventContext(EventEntity event, RetrievedEvent retrievedEvent) {
+        return eventContext(event, retrievedEvent, eventQualityReportRepository::findByEventId);
+    }
+
+    private Map<String, Object> eventContext(EventEntity event,
+                                             RetrievedEvent retrievedEvent,
+                                             Function<Long, Optional<EventQualityReportEntity>> qualityLookup) {
         Map<String, Object> data = new LinkedHashMap<>();
         data.put("eventId", event.getId());
         data.put("title", event.getTitle());
@@ -1672,7 +1774,7 @@ public class AiService {
         data.put("skill", compact(event.getSkill(), 180));
         data.put("moneyAmount", event.getMoneyAmount());
         data.put("compressedContext", compressedEventContext(event, retrievedEvent));
-        eventQualityReportRepository.findByEventId(event.getId())
+        qualityLookup.apply(event.getId())
                 .ifPresent(report -> data.put("eventQualityReport", eventQualityReportContext(report)));
         if (retrievedEvent != null) {
             data.put("retrieval", Map.of(

@@ -1,6 +1,8 @@
 package com.donotmiss.backend.follow;
 
 import com.donotmiss.backend.organization.OrganizationService;
+import com.donotmiss.backend.recommendation.RecommendationActivityEvent;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -10,10 +12,14 @@ import java.util.List;
 public class FollowService {
     private final FollowRepository followRepository;
     private final OrganizationService organizationService;
+    private final ApplicationEventPublisher eventPublisher;
 
-    public FollowService(FollowRepository followRepository, OrganizationService organizationService) {
+    public FollowService(FollowRepository followRepository,
+                         OrganizationService organizationService,
+                         ApplicationEventPublisher eventPublisher) {
         this.followRepository = followRepository;
         this.organizationService = organizationService;
+        this.eventPublisher = eventPublisher;
     }
 
     @Transactional
@@ -25,7 +31,9 @@ public class FollowService {
                     FollowEntity follow = new FollowEntity();
                     follow.setUserId(userId);
                     follow.setOrganizationName(organizationName);
-                    return FollowDtos.FollowResponse.from(followRepository.save(follow));
+                    FollowEntity saved = followRepository.save(follow);
+                    eventPublisher.publishEvent(RecommendationActivityEvent.forOrganization(userId, organizationName));
+                    return FollowDtos.FollowResponse.from(saved);
                 });
     }
 

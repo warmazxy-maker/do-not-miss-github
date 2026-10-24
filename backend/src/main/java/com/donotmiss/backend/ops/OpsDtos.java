@@ -175,4 +175,120 @@ public final class OpsDtos {
 
     public record UserOption(String userId, String username, String role) {
     }
+
+    // ---- Recommendations: is what we recommend any good? ----
+
+    /** Counts per impression; rates use impressions as the denominator. */
+    public record RecommendationFunnel(
+            long impressions,
+            long interested,
+            long notRelevant,
+            long reserved,
+            long cancelled,
+            long completed,
+            long followed,
+            long withExplicitFeedback,
+            double interestedRate,
+            double notRelevantRate,
+            double reserveRate,
+            double completeRate,
+            double followRate,
+            double explicitFeedbackRate
+    ) {
+    }
+
+    public record RecommendationDay(
+            String date,
+            long runs,
+            long zeroResultRuns,
+            long impressions,
+            long interested,
+            long notRelevant,
+            long reserved
+    ) {
+    }
+
+    public record NotRelevantReason(
+            Long eventId,
+            String eventTitle,
+            String userId,
+            String reason,
+            Instant at,
+            Long runId
+    ) {
+    }
+
+    public record ShownEvent(
+            Long eventId,
+            String title,
+            int rank,
+            int score,
+            List<String> feedback
+    ) {
+    }
+
+    public record RecommendationRunRow(
+            Long runId,
+            String userId,
+            String need,
+            String status,
+            Instant startedAt,
+            Long durationMillis,
+            Integer recommendationCount,
+            List<ShownEvent> shown
+    ) {
+    }
+
+    public record RecommendationStats(
+            int windowDays,
+            long runs,
+            long failedRuns,
+            long zeroResultRuns,
+            double zeroResultRate,
+            Long avgMillis,
+            long studentsReached,
+            long suppressedByFeedback,
+            Instant trackingSince,
+            RecommendationFunnel funnel,
+            List<RecommendationDay> daily,
+            List<NotRelevantReason> notRelevantReasons
+    ) {
+    }
+
+    // ---- Evaluation candidates from feedback (B4) ----
+
+    public record EvalCandidateRow(
+            Long id,
+            Long runId,
+            String userId,
+            Long eventId,
+            String eventTitle,
+            String needText,
+            String reason,
+            String status,
+            String reviewerNote,
+            String reviewedBy,
+            Instant reviewedAt,
+            Instant createdAt,
+            boolean inCurrentEvalSet
+    ) {
+    }
+
+    /** {@code needText} replaces the recorded need on approval, e.g. with personal details removed. */
+    public record EvalCandidateReview(String decision, String needText, String note) {
+    }
+
+    /** The next evaluation set version, rendered as files for a developer to review and commit. */
+    public record EvalExport(
+            String evalSetVersion,
+            String corpusVersion,
+            List<String> newCaseIds,
+            List<Long> addedEventIds,
+            List<String> warnings,
+            String evalSetFileName,
+            String evalSetJson,
+            String corpusFileName,
+            String corpusJson
+    ) {
+    }
 }

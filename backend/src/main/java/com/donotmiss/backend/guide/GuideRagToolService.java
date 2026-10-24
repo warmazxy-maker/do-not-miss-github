@@ -32,7 +32,8 @@ public class GuideRagToolService {
         return new ToolResult(
                 response.message(),
                 response.recommendations(),
-                response.toolContext()
+                response.toolContext(),
+                response.runId()
         );
     }
 
@@ -53,7 +54,8 @@ public class GuideRagToolService {
     public record ToolResult(
             String message,
             List<AiDtos.RecommendedEvent> recommendations,
-            McpDtos.ToolContextResponse toolContext
+            McpDtos.ToolContextResponse toolContext,
+            Long runId
     ) {
     }
 }

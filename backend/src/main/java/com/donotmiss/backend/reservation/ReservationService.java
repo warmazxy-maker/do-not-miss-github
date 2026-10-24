@@ -1,5 +1,8 @@
 package com.donotmiss.backend.reservation;
 
+import com.donotmiss.backend.recommendation.RecommendationActivityEvent;
+import com.donotmiss.backend.recommendation.RecommendationFeedbackType;
+import org.springframework.context.ApplicationEventPublisher;
 import com.donotmiss.backend.achievement.AchievementService;
 import com.donotmiss.backend.common.ApiException;
 import com.donotmiss.backend.event.EventEntity;
@@ -27,19 +30,22 @@ public class ReservationService {
     private final ScheduleService scheduleService;
     private final StringRedisTemplate redisTemplate;
     private final Duration qrTokenTtl;
+    private final ApplicationEventPublisher eventPublisher;
 
     public ReservationService(ReservationRepository reservationRepository,
                               EventService eventService,
                               AchievementService achievementService,
                               ScheduleService scheduleService,
                               StringRedisTemplate redisTemplate,
-                              @Value("${app.qr.token-ttl-hours}") long ttlHours) {
+                              @Value("${app.qr.token-ttl-hours}") long ttlHours,
+                              ApplicationEventPublisher eventPublisher) {
         this.reservationRepository = reservationRepository;
         this.eventService = eventService;
         this.achievementService = achievementService;
         this.scheduleService = scheduleService;
         this.redisTemplate = redisTemplate;
         this.qrTokenTtl = Duration.ofHours(ttlHours);
+        this.eventPublisher = eventPublisher;
     }
 
     @Transactional
@@ -66,6 +72,7 @@ public class ReservationService {
         ReservationEntity saved = reservationRepository.save(reservation);
         cacheQrToken(saved);
         scheduleService.syncReservation(userId, saved);
+        eventPublisher.publishEvent(RecommendationActivityEvent.forEvent(userId, eventId, RecommendationFeedbackType.RESERVED));
         return ReservationDtos.ReservationResponse.from(saved);
     }
 
@@ -86,6 +93,8 @@ public class ReservationService {
         reservation.setStatus(ReservationStatus.CANCELLED);
         redisTemplate.delete(QR_PREFIX + reservation.getQrToken());
         scheduleService.cancelSource(userId, ScheduleItemType.RESERVATION, reservation.getId());
+        eventPublisher.publishEvent(RecommendationActivityEvent.forEvent(
+                userId, reservation.getEvent().getId(), RecommendationFeedbackType.RESERVATION_CANCELLED));
     }
 
     @Transactional
@@ -103,6 +112,8 @@ public class ReservationService {
         redisTemplate.delete(QR_PREFIX + reservation.getQrToken());
 
         achievementService.createIfAbsent(userId, reservation.getEvent());
+        eventPublisher.publishEvent(RecommendationActivityEvent.forEvent(
+                userId, reservation.getEvent().getId(), RecommendationFeedbackType.COMPLETED));
         return ReservationDtos.ReservationResponse.from(reservation);
     }
 
