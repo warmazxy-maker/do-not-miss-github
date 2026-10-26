@@ -291,4 +291,20 @@ public final class OpsDtos {
             String corpusJson
     ) {
     }
+
+    // ---- Audit log (D1) ----
+
+    public record AuditLogRow(
+            Long id,
+            String userId,
+            String roleCode,
+            String permission,
+            String action,
+            String httpMethod,
+            String path,
+            String outcome,
+            String detail,
+            Instant createdAt
+    ) {
+    }
 }

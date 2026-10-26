@@ -1,4 +1,8 @@
-export type UserRole = "STUDENT" | "SOCIAL";
+/** Built-in roles; roles are data on the backend, so an unknown code is still a valid role. */
+export type UserRole = "STUDENT" | "SOCIAL" | "OPERATOR" | "ADMIN" | "ADMIN_ZERO" | (string & {});
+
+/** The only roles the public sign-up form may request. */
+export type RegistrableRole = "STUDENT" | "SOCIAL";
 
 export interface User {
   userId: string;
@@ -23,5 +27,5 @@ export interface RegisterPayload {
   username: string;
   email: string;
   password: string;
-  role: UserRole;
+  role: RegistrableRole;
 }

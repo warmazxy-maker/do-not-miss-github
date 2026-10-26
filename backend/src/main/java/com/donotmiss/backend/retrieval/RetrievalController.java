@@ -1,7 +1,8 @@
 package com.donotmiss.backend.retrieval;
 
 import com.donotmiss.backend.common.CurrentUser;
-import com.donotmiss.backend.ops.OpsAccessGuard;
+import com.donotmiss.backend.access.Permission;
+import com.donotmiss.backend.access.RequirePermission;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import org.springframework.web.bind.annotation.*;
@@ -13,18 +14,15 @@ public class RetrievalController {
     private final RetrievalEvalService retrievalEvalService;
     private final EventSearchIndexService eventSearchIndexService;
     private final CurrentUser currentUser;
-    private final OpsAccessGuard opsAccessGuard;
 
     public RetrievalController(RetrievalTraceService retrievalTraceService,
                                RetrievalEvalService retrievalEvalService,
                                EventSearchIndexService eventSearchIndexService,
-                               CurrentUser currentUser,
-                               OpsAccessGuard opsAccessGuard) {
+                               CurrentUser currentUser) {
         this.retrievalTraceService = retrievalTraceService;
         this.retrievalEvalService = retrievalEvalService;
         this.eventSearchIndexService = eventSearchIndexService;
         this.currentUser = currentUser;
-        this.opsAccessGuard = opsAccessGuard;
     }
 
     @PostMapping("/trace")
@@ -38,27 +36,27 @@ public class RetrievalController {
      * action: same access rule as the operations console.
      */
     @GetMapping("/evaluation")
-    public RetrievalDtos.EvalResponse evaluate(HttpServletRequest servletRequest) {
-        opsAccessGuard.require(servletRequest);
+    @RequirePermission(Permission.OPS_ACTION)
+    public RetrievalDtos.EvalResponse evaluate() {
         return retrievalEvalService.evaluate();
     }
 
     @GetMapping("/evaluation/ab")
-    public RetrievalDtos.EvalAbResponse evaluateAb(HttpServletRequest servletRequest) {
-        opsAccessGuard.require(servletRequest);
+    @RequirePermission(Permission.OPS_ACTION)
+    public RetrievalDtos.EvalAbResponse evaluateAb() {
         return retrievalEvalService.evaluateAb();
     }
 
     @GetMapping("/evaluation/end-to-end")
-    public RetrievalDtos.EndToEndResponse evaluateEndToEnd(HttpServletRequest servletRequest) {
-        opsAccessGuard.require(servletRequest);
+    @RequirePermission(Permission.OPS_ACTION)
+    public RetrievalDtos.EndToEndResponse evaluateEndToEnd() {
         return retrievalEvalService.evaluateEndToEnd();
     }
 
-    /** Rebuilds the live index from MySQL. Was unauthenticated; now an operator action. */
+    /** Rebuilds the live index from MySQL. Was unauthenticated until B0; now needs OPS_ACTION. */
     @PostMapping("/reindex")
-    public RetrievalDtos.ReindexResponse reindex(HttpServletRequest servletRequest) {
-        opsAccessGuard.require(servletRequest);
+    @RequirePermission(value = Permission.OPS_ACTION, action = "search.reindex")
+    public RetrievalDtos.ReindexResponse reindex() {
         int indexedCount = eventSearchIndexService.reindexAll();
         boolean enabled = eventSearchIndexService.isEnabled();
         return new RetrievalDtos.ReindexResponse(

@@ -1,5 +1,7 @@
 package com.donotmiss.backend.capabilityv2;
 
+import com.donotmiss.backend.access.Permission;
+import com.donotmiss.backend.access.RequirePermission;
 import com.donotmiss.backend.abilityscore.JudgeDtos;
 import com.donotmiss.backend.common.CurrentUser;
 import jakarta.servlet.http.HttpServletRequest;
@@ -12,6 +14,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 /** Promotion review: the user explains a held promotion and the answers unlock the rank. */
 @RestController
+@RequirePermission(Permission.STUDENT_FEATURES)
 @RequestMapping("/api/capability-v2")
 public class CapabilityV2PromotionReviewController {
     private final CapabilityV2PromotionReviewService reviewService;

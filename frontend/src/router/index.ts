@@ -3,6 +3,7 @@ import { createRouter, createWebHistory, type RouteRecordRaw } from "vue-router"
 import { useAuthStore } from "@/stores/auth";
 import type { UserRole } from "@/types/auth";
 import AuthView from "@/views/AuthView.vue";
+import OperatorHomeView from "@/views/OperatorHomeView.vue";
 import OpsConsoleView from "@/views/OpsConsoleView.vue";
 import SocialLayout from "@/views/SocialLayout.vue";
 import SocialEventsView from "@/views/SocialEventsView.vue";
@@ -119,11 +120,17 @@ const router = createRouter({
       children: socialChildren
     },
     {
-      // Access is decided by the backend (OPS_ADMIN_USERS); the page shows a notice when refused.
+      // The backend decides (OPS_CONSOLE_VIEW permission + master switch); the route only routes.
       path: "/ops",
       name: "ops",
       component: OpsConsoleView,
-      meta: { requiresAuth: true, title: "运维观测面板" }
+      meta: { requiresAuth: true, roles: ["ADMIN", "ADMIN_ZERO"], title: "运维观测面板" }
+    },
+    {
+      path: "/operator",
+      name: "operator",
+      component: OperatorHomeView,
+      meta: { requiresAuth: true, roles: ["OPERATOR"], title: "运营后台" }
     },
     {
       path: "/:pathMatch(.*)*",

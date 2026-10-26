@@ -1,5 +1,7 @@
 package com.donotmiss.backend.ai;
 
+import com.donotmiss.backend.access.Permission;
+import com.donotmiss.backend.access.RequirePermission;
 import com.donotmiss.backend.common.CurrentUser;
 import com.donotmiss.backend.memory.UserMemoryDtos;
 import jakarta.servlet.http.HttpServletRequest;
@@ -7,6 +9,7 @@ import jakarta.validation.Valid;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
+@RequirePermission(Permission.STUDENT_FEATURES)
 @RequestMapping("/api/ai")
 public class AiController {
     private final AiService aiService;

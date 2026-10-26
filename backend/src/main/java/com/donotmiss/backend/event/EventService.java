@@ -3,7 +3,7 @@ package com.donotmiss.backend.event;
 import com.donotmiss.backend.common.ApiException;
 import com.donotmiss.backend.mq.DomainEventMessages;
 import com.donotmiss.backend.mq.DomainEventPublisher;
-import com.donotmiss.backend.organization.OrganizationService;
+import com.donotmiss.backend.organization.OrganizationMembershipService;
 import jakarta.persistence.criteria.Predicate;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
@@ -19,16 +19,16 @@ import java.util.Objects;
 public class EventService {
     private final EventRepository eventRepository;
     private final EventExpirationService eventExpirationService;
-    private final OrganizationService organizationService;
+    private final OrganizationMembershipService organizationMembershipService;
     private final DomainEventPublisher domainEventPublisher;
 
     public EventService(EventRepository eventRepository,
                         EventExpirationService eventExpirationService,
-                        OrganizationService organizationService,
+                        OrganizationMembershipService organizationMembershipService,
                         DomainEventPublisher domainEventPublisher) {
         this.eventRepository = eventRepository;
         this.eventExpirationService = eventExpirationService;
-        this.organizationService = organizationService;
+        this.organizationMembershipService = organizationMembershipService;
         this.domainEventPublisher = domainEventPublisher;
     }
 
@@ -38,7 +38,7 @@ public class EventService {
         validateBenefitPayload(benefitType, request.skill(), request.moneyAmount());
         validateTimeRange(request.startTime(), request.endTime());
 
-        organizationService.ensureOrganization(request.organizationName());
+        organizationMembershipService.ensureCanPublish(userId, request.organizationName().trim());
 
         EventEntity event = new EventEntity();
         event.setTitle(request.title().trim());

@@ -1,5 +1,7 @@
 package com.donotmiss.backend.achievement;
 
+import com.donotmiss.backend.access.Permission;
+import com.donotmiss.backend.access.RequirePermission;
 import com.donotmiss.backend.common.CurrentUser;
 import com.donotmiss.backend.common.PageResponse;
 import jakarta.servlet.http.HttpServletRequest;
@@ -9,6 +11,7 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 
 @RestController
+@RequirePermission(Permission.STUDENT_FEATURES)
 @RequestMapping("/api/achievements")
 public class AchievementController {
     private final AchievementService achievementService;

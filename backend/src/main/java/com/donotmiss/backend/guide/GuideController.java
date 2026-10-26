@@ -1,5 +1,7 @@
 package com.donotmiss.backend.guide;
 
+import com.donotmiss.backend.access.Permission;
+import com.donotmiss.backend.access.RequirePermission;
 import com.donotmiss.backend.ai.AiDtos;
 import com.donotmiss.backend.common.CurrentUser;
 import com.donotmiss.backend.mcp.McpDtos;
@@ -13,6 +15,7 @@ import org.springframework.web.bind.annotation.RestController;
 import java.util.List;
 
 @RestController
+@RequirePermission(Permission.STUDENT_FEATURES)
 @RequestMapping("/api/guide")
 public class GuideController {
     private final GuideSessionService guideSessionService;

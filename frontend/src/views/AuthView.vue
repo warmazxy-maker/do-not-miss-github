@@ -5,7 +5,7 @@ import { RouterLink, useRoute, useRouter } from "vue-router";
 
 import { ApiError } from "@/api/client";
 import { useAuthStore } from "@/stores/auth";
-import type { UserRole } from "@/types/auth";
+import type { RegistrableRole } from "@/types/auth";
 
 const props = defineProps<{
   mode: "login" | "register";
@@ -20,7 +20,7 @@ const form = reactive({
   username: "",
   email: "",
   password: "",
-  role: "STUDENT" as UserRole
+  role: "STUDENT" as RegistrableRole
 });
 
 const isLogin = computed(() => props.mode === "login");

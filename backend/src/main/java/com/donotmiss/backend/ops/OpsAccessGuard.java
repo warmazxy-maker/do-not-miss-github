@@ -1,51 +1,45 @@
 package com.donotmiss.backend.ops;
 
+import com.donotmiss.backend.access.AccessService;
+import com.donotmiss.backend.access.Permission;
 import com.donotmiss.backend.common.ApiException;
-import com.donotmiss.backend.common.CurrentUser;
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
-import java.util.Arrays;
-import java.util.Set;
-import java.util.stream.Collectors;
-
 /**
- * Gate for the operations console. It shows every user's agent runs, messages and records, so it is
- * off unless {@code app.ops.enabled=true} and the caller's public user id is in {@code app.ops.admin-users}.
+ * Gate for the operations console. Two independent layers (defence in depth):
+ * <ol>
+ *     <li>the master switch {@code app.ops.enabled}: closes the console for everyone without
+ *     touching any role;</li>
+ *     <li>the caller's role must have {@link Permission#OPS_CONSOLE_VIEW} (D1; replaced the
+ *     {@code OPS_ADMIN_USERS} allow-list).</li>
+ * </ol>
  * Refusals are 404, so the console's existence is not revealed to other users.
  */
 @Component
 public class OpsAccessGuard {
-    private final CurrentUser currentUser;
+    private final AccessService accessService;
     private final boolean enabled;
-    private final Set<String> adminUsers;
 
-    public OpsAccessGuard(CurrentUser currentUser,
-                          @Value("${app.ops.enabled:false}") boolean enabled,
-                          @Value("${app.ops.admin-users:}") String adminUsers) {
-        this.currentUser = currentUser;
+    public OpsAccessGuard(AccessService accessService, @Value("${app.ops.enabled:false}") boolean enabled) {
+        this.accessService = accessService;
         this.enabled = enabled;
-        this.adminUsers = Arrays.stream(adminUsers.split(","))
-                .map(String::trim)
-                .filter(value -> !value.isEmpty())
-                .collect(Collectors.toUnmodifiableSet());
     }
 
     public boolean allowed(HttpServletRequest request) {
-        if (!enabled || adminUsers.isEmpty()) {
-            return false;
-        }
-        try {
-            String userId = currentUser.id(request);
-            return userId != null && adminUsers.contains(userId);
-        } catch (RuntimeException notLoggedIn) {
-            return false;
-        }
+        return enabled && accessService.has(request, Permission.OPS_CONSOLE_VIEW);
     }
 
     public void require(HttpServletRequest request) {
         if (!allowed(request)) {
+            throw ApiException.notFound("页面不存在");
+        }
+    }
+
+    /** Master switch only; the permission is checked by {@code @RequirePermission} on the endpoint. */
+    public void requireEnabled() {
+        if (!enabled) {
             throw ApiException.notFound("页面不存在");
         }
     }

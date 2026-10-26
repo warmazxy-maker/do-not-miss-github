@@ -1,5 +1,8 @@
 package com.donotmiss.backend.ops;
 
+import com.donotmiss.backend.access.AuditLogService;
+import com.donotmiss.backend.access.Permission;
+import com.donotmiss.backend.access.RequirePermission;
 import com.donotmiss.backend.agentlog.AgentLogDtos;
 import com.donotmiss.backend.agentlog.AgentRunService;
 import com.donotmiss.backend.common.CurrentUser;
@@ -33,6 +36,7 @@ public class OpsController {
     private final AgentRunService agentRunService;
     private final OpsRecommendationService recommendationService;
     private final OpsEvalCandidateService evalCandidateService;
+    private final AuditLogService auditLogService;
 
     public OpsController(OpsAccessGuard guard,
                          CurrentUser currentUser,
@@ -42,7 +46,8 @@ public class OpsController {
                          OpsJourneyService journeyService,
                          AgentRunService agentRunService,
                          OpsRecommendationService recommendationService,
-                         OpsEvalCandidateService evalCandidateService) {
+                         OpsEvalCandidateService evalCandidateService,
+                         AuditLogService auditLogService) {
         this.guard = guard;
         this.currentUser = currentUser;
         this.healthService = healthService;
@@ -52,6 +57,7 @@ public class OpsController {
         this.agentRunService = agentRunService;
         this.recommendationService = recommendationService;
         this.evalCandidateService = evalCandidateService;
+        this.auditLogService = auditLogService;
     }
 
     /** Lets the frontend decide whether to show the entry; never fails. */
@@ -67,6 +73,7 @@ public class OpsController {
     }
 
     @PostMapping("/probe/models")
+    @RequirePermission(value = Permission.OPS_ACTION, action = "ops.probeModels")
     public List<OpsDtos.DependencyHealth> probeModels(HttpServletRequest request) {
         guard.require(request);
         return healthService.probeModels();
@@ -112,6 +119,7 @@ public class OpsController {
     }
 
     @PostMapping("/outbox/{id}/retry")
+    @RequirePermission(value = Permission.OPS_ACTION, action = "ops.retryOutbox")
     public OpsDtos.OutboxRow retryOutbox(@PathVariable Long id, HttpServletRequest request) {
         guard.require(request);
         return messagingService.retry(id, currentUser.id(request));
@@ -143,26 +151,43 @@ public class OpsController {
         return recommendationService.recentRuns(limit);
     }
 
+    /** Operators review candidates without console access, so only the master switch applies here. */
     @GetMapping("/eval-candidates")
-    public List<OpsDtos.EvalCandidateRow> evalCandidates(@RequestParam(defaultValue = "PENDING") String status,
-                                                         HttpServletRequest request) {
-        guard.require(request);
+    @RequirePermission(Permission.EVAL_CANDIDATE_REVIEW)
+    public List<OpsDtos.EvalCandidateRow> evalCandidates(@RequestParam(defaultValue = "PENDING") String status) {
+        guard.requireEnabled();
         return evalCandidateService.list(status);
     }
 
     @PostMapping("/eval-candidates/{id}/review")
+    @RequirePermission(value = Permission.EVAL_CANDIDATE_REVIEW, action = "eval.reviewCandidate")
     public void reviewEvalCandidate(@PathVariable Long id,
                                     @RequestBody OpsDtos.EvalCandidateReview review,
                                     HttpServletRequest request) {
-        guard.require(request);
+        guard.requireEnabled();
         evalCandidateService.review(id, EvalCandidateStatus.valueOf(review.decision().trim().toUpperCase()),
                 review.needText(), review.note(), currentUser.id(request));
     }
 
     @GetMapping("/eval-candidates/export")
-    public OpsDtos.EvalExport exportEvalSet(HttpServletRequest request) {
-        guard.require(request);
+    @RequirePermission(Permission.EVAL_CANDIDATE_REVIEW)
+    public OpsDtos.EvalExport exportEvalSet() {
+        guard.requireEnabled();
         return evalCandidateService.export();
+    }
+
+    @GetMapping("/audit-logs")
+    @RequirePermission(Permission.AUDIT_VIEW)
+    public List<OpsDtos.AuditLogRow> auditLogs(@RequestParam(required = false) String outcome,
+                                               @RequestParam(required = false) String userId,
+                                               @RequestParam(defaultValue = "100") int limit,
+                                               HttpServletRequest request) {
+        guard.require(request);
+        return auditLogService.search(outcome, userId, limit).stream()
+                .map(entry -> new OpsDtos.AuditLogRow(entry.getId(), entry.getUserId(), entry.getRoleCode(),
+                        entry.getPermission(), entry.getAction(), entry.getHttpMethod(), entry.getPath(),
+                        entry.getOutcome(), entry.getDetail(), entry.getCreatedAt()))
+                .toList();
     }
 
     @GetMapping("/users")

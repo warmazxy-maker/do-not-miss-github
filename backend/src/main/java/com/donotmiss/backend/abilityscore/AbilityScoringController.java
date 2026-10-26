@@ -1,5 +1,7 @@
 package com.donotmiss.backend.abilityscore;
 
+import com.donotmiss.backend.access.Permission;
+import com.donotmiss.backend.access.RequirePermission;
 import com.donotmiss.backend.common.CurrentUser;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
@@ -11,6 +13,7 @@ import java.time.Instant;
 import java.util.List;
 
 @RestController
+@RequirePermission(Permission.STUDENT_FEATURES)
 @RequestMapping("/api/ability-scoring")
 public class AbilityScoringController {
     private final EvidenceAssessmentAgentService assessmentAgentService;

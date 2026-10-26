@@ -1,5 +1,7 @@
 package com.donotmiss.backend.event;
 
+import com.donotmiss.backend.access.Permission;
+import com.donotmiss.backend.access.RequirePermission;
 import com.donotmiss.backend.common.CurrentUser;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
@@ -22,6 +24,7 @@ public class EventController {
      * 社会端发布事件。
      */
     @PostMapping
+    @RequirePermission(value = Permission.EVENT_PUBLISH, action = "event.publish")
     public EventDtos.EventResponse create(@Valid @RequestBody EventDtos.CreateEventRequest request,
                                           HttpServletRequest servletRequest) {
         return eventService.create(request, currentUser.id(servletRequest));
@@ -39,11 +42,13 @@ public class EventController {
     }
 
     @GetMapping("/mine")
+    @RequirePermission(Permission.EVENT_PUBLISH)
     public List<EventDtos.EventResponse> mine(HttpServletRequest request) {
         return eventService.mine(currentUser.id(request));
     }
 
     @DeleteMapping("/{eventId}")
+    @RequirePermission(value = Permission.EVENT_PUBLISH, action = "event.delete")
     public void delete(@PathVariable Long eventId, HttpServletRequest request) {
         eventService.delete(eventId, currentUser.id(request));
     }

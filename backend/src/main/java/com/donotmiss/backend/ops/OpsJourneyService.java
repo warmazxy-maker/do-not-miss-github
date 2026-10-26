@@ -413,6 +413,6 @@ public class OpsJourneyService {
     }
 
     private static String roleName(UserEntity user) {
-        return user.getRole() == null ? null : user.getRole().name();
+        return user.getRole();
     }
 }

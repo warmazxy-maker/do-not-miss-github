@@ -1,7 +1,6 @@
 package com.donotmiss.backend.ops;
 
 import com.donotmiss.backend.common.ApiException;
-import com.donotmiss.backend.common.CurrentUser;
 import com.donotmiss.backend.mq.DomainEventOutboxEntity;
 import com.donotmiss.backend.mq.DomainEventOutboxRepository;
 import com.donotmiss.backend.mq.DomainEventOutboxStatus;
@@ -35,8 +34,6 @@ import static org.mockito.Mockito.when;
 @ExtendWith(MockitoExtension.class)
 class OpsConsoleTest {
     @Mock
-    private CurrentUser currentUser;
-    @Mock
     private HttpServletRequest request;
     @Mock
     private OpsQueries queries;
@@ -47,38 +44,27 @@ class OpsConsoleTest {
     @Mock
     private ObjectProvider<RabbitListenerEndpointRegistry> listenerRegistry;
 
-    // ---- Access ----
+    // ---- Access: master switch + OPS_CONSOLE_VIEW permission (D1) ----
+
+    @Mock
+    private com.donotmiss.backend.access.AccessService accessService;
 
     @Test
-    void consoleIsClosedWhenDisabledEvenForListedUser() {
-        OpsAccessGuard guard = new OpsAccessGuard(currentUser, false, "demo-student");
+    void masterSwitchClosesTheConsoleEvenForAdmins() {
+        OpsAccessGuard guard = new OpsAccessGuard(accessService, false);
 
         assertFalse(guard.allowed(request));
         ApiException error = assertThrows(ApiException.class, () -> guard.require(request));
         assertEquals(HttpStatus.NOT_FOUND, error.getStatus());
+        assertThrows(ApiException.class, guard::requireEnabled);
     }
 
     @Test
-    void consoleOpensOnlyForListedUsers() {
-        OpsAccessGuard guard = new OpsAccessGuard(currentUser, true, " demo-student , ops-admin ");
-        when(currentUser.id(request)).thenReturn("demo-student", "someone-else");
+    void consoleOpensOnlyForRolesWithConsolePermission() {
+        OpsAccessGuard guard = new OpsAccessGuard(accessService, true);
+        when(accessService.has(request, com.donotmiss.backend.access.Permission.OPS_CONSOLE_VIEW)).thenReturn(true, false);
 
         assertTrue(guard.allowed(request));
-        assertFalse(guard.allowed(request));
-    }
-
-    @Test
-    void anonymousCallerIsRefusedWithoutError() {
-        OpsAccessGuard guard = new OpsAccessGuard(currentUser, true, "demo-student");
-        when(currentUser.id(request)).thenThrow(new ApiException(HttpStatus.UNAUTHORIZED, "请先登录"));
-
-        assertFalse(guard.allowed(request));
-    }
-
-    @Test
-    void emptyAdminListKeepsConsoleClosed() {
-        OpsAccessGuard guard = new OpsAccessGuard(currentUser, true, "");
-
         assertFalse(guard.allowed(request));
     }
 

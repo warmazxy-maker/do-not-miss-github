@@ -30,9 +30,9 @@ public class UserEntity {
     @Column(name = "password_hash", nullable = false, length = 100)
     private String passwordHash;
 
-    @Enumerated(EnumType.STRING)
+    /** Role code, a row in {@code roles}; exactly one role per user (D1). */
     @Column(nullable = false, length = 32)
-    private UserRole role;
+    private String role;
 
     @Column(nullable = false)
     private Instant createdAt;
@@ -80,11 +80,11 @@ public class UserEntity {
         this.passwordHash = passwordHash;
     }
 
-    public UserRole getRole() {
+    public String getRole() {
         return role;
     }
 
-    public void setRole(UserRole role) {
+    public void setRole(String role) {
         this.role = role;
     }
 

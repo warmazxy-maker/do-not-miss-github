@@ -1,5 +1,7 @@
 package com.donotmiss.backend.auth;
 
+import com.donotmiss.backend.access.RoleEntity;
+import com.donotmiss.backend.access.RoleRepository;
 import com.donotmiss.backend.common.ApiException;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.http.HttpStatus;
@@ -9,6 +11,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Duration;
 import java.time.Instant;
+import java.util.Locale;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -18,11 +21,13 @@ public class AuthService {
     private static final Duration SESSION_TTL = Duration.ofDays(7);
 
     private final UserRepository userRepository;
+    private final RoleRepository roleRepository;
     private final StringRedisTemplate redisTemplate;
     private final BCryptPasswordEncoder passwordEncoder = new BCryptPasswordEncoder();
 
-    public AuthService(UserRepository userRepository, StringRedisTemplate redisTemplate) {
+    public AuthService(UserRepository userRepository, RoleRepository roleRepository, StringRedisTemplate redisTemplate) {
         this.userRepository = userRepository;
+        this.roleRepository = roleRepository;
         this.redisTemplate = redisTemplate;
     }
 
@@ -43,8 +48,23 @@ public class AuthService {
         user.setUsername(username);
         user.setEmail(email);
         user.setPasswordHash(passwordEncoder.encode(request.password()));
-        user.setRole(UserRole.fromText(request.role()));
+        user.setRole(registrableRole(request.role()));
         return issueToken(userRepository.save(user));
+    }
+
+    /**
+     * Only roles marked self-registrable (student, organisation) can be chosen on sign-up. Before D1
+     * any value naming an existing role was accepted, which would have let anyone sign up as an
+     * administrator the moment such a role existed.
+     */
+    String registrableRole(String requested) {
+        String code = requested == null || requested.isBlank() ? RoleEntity.STUDENT : requested.trim().toUpperCase(Locale.ROOT);
+        RoleEntity role = roleRepository.findById(code)
+                .orElseThrow(() -> ApiException.badRequest("未知用户角色：" + requested));
+        if (!role.isSelfRegistrable()) {
+            throw ApiException.badRequest("该角色不能自行注册");
+        }
+        return role.getCode();
     }
 
     @Transactional(readOnly = true)

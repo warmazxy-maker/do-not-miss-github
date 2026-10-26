@@ -33,7 +33,7 @@ public class AuthDtos {
                     user.getPublicUserId(),
                     user.getUsername(),
                     user.getEmail(),
-                    user.getRole().name(),
+                    user.getRole(),
                     user.getCreatedAt()
             );
         }

@@ -1,5 +1,7 @@
 package com.donotmiss.backend.coach;
 
+import com.donotmiss.backend.access.Permission;
+import com.donotmiss.backend.access.RequirePermission;
 import com.donotmiss.backend.common.CurrentUser;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
@@ -9,6 +11,7 @@ import java.time.LocalDate;
 import java.util.List;
 
 @RestController
+@RequirePermission(Permission.STUDENT_FEATURES)
 @RequestMapping("/api/coach")
 public class CoachController {
     private final CoachService coachService;

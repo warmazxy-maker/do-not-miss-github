@@ -1,5 +1,7 @@
 package com.donotmiss.backend.capabilityv2;
 
+import com.donotmiss.backend.access.Permission;
+import com.donotmiss.backend.access.RequirePermission;
 import com.donotmiss.backend.common.CurrentUser;
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -9,6 +11,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 /** Authenticated portfolio read endpoints for the dual-label capability page. */
 @RestController
+@RequirePermission(Permission.STUDENT_FEATURES)
 @RequestMapping("/api/capability-v2")
 public class CapabilityV2ProfileController {
     private final CapabilityV2ProfileService profileService;
