@@ -1,6 +1,7 @@
 package com.donotmiss.backend.retrieval;
 
 import com.donotmiss.backend.event.EventEntity;
+import com.donotmiss.backend.event.EventReviewStatus;
 import com.donotmiss.backend.retrieval.eval.FrozenEventCorpus;
 import com.donotmiss.backend.retrieval.eval.RetrievalEvalSet;
 import com.donotmiss.backend.retrieval.eval.RetrievalEvalTestAccess;
@@ -77,7 +78,8 @@ class RetrievalEvalSetTest {
         assertEquals(55, events.size());
         assertTrue(events.stream().allMatch(event -> event.getEndTime().isAfter(clock)),
                 "asOf must precede every frozen event's end time");
-        assertTrue(events.stream().noneMatch(EventEntity::isExpired));
+        assertTrue(events.stream().allMatch(event -> event.getReviewStatus() == EventReviewStatus.APPROVED),
+                "a frozen corpus holds published events only");
     }
 
     @Test

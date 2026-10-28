@@ -6,11 +6,15 @@ import com.donotmiss.backend.agentlog.AgentStepName;
 import com.donotmiss.backend.ai.OpenAiCompatibleLlmClient;
 import com.donotmiss.backend.common.ApiException;
 import com.donotmiss.backend.event.BenefitType;
+import com.donotmiss.backend.event.EventActor;
+import com.donotmiss.backend.event.EventLifecycleAction;
+import com.donotmiss.backend.event.EventLifecycleService;
+import com.donotmiss.backend.event.EventReviewRoute;
 import com.donotmiss.backend.event.EventEntity;
 import com.donotmiss.backend.event.EventRepository;
 import com.donotmiss.backend.event.EventReviewStatus;
-import com.donotmiss.backend.mq.DomainEventMessages;
-import com.donotmiss.backend.mq.DomainEventPublisher;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -18,6 +22,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
@@ -28,6 +33,7 @@ import java.util.Optional;
 
 @Service
 public class EventQualityService {
+    private static final Logger log = LoggerFactory.getLogger(EventQualityService.class);
     private static final int MAX_LIST_SIZE = 8;
 
     private final EventRepository eventRepository;
@@ -35,20 +41,20 @@ public class EventQualityService {
     private final OpenAiCompatibleLlmClient llmClient;
     private final ObjectMapper objectMapper;
     private final AgentRunService agentRunService;
-    private final DomainEventPublisher domainEventPublisher;
+    private final EventLifecycleService lifecycleService;
 
     public EventQualityService(EventRepository eventRepository,
                                EventQualityReportRepository reportRepository,
                                OpenAiCompatibleLlmClient llmClient,
                                ObjectMapper objectMapper,
                                AgentRunService agentRunService,
-                               DomainEventPublisher domainEventPublisher) {
+                               EventLifecycleService lifecycleService) {
         this.eventRepository = eventRepository;
         this.reportRepository = reportRepository;
         this.llmClient = llmClient;
         this.objectMapper = objectMapper;
         this.agentRunService = agentRunService;
-        this.domainEventPublisher = domainEventPublisher;
+        this.lifecycleService = lifecycleService;
     }
 
     @Transactional
@@ -56,6 +62,13 @@ public class EventQualityService {
         EventEntity event = eventRepository.findById(eventId).orElse(null);
         if (event == null) {
             return false;
+        }
+        if (event.getReviewStatus() != EventReviewStatus.PENDING_REVIEW || event.getReviewRoute() != EventReviewRoute.AI) {
+            // A stale or duplicate message: the event was decided, edited or routed to a person since.
+            // Re-running the model would cost money and its verdict would have nowhere to go.
+            log.info("Skipped event quality analysis, event no longer awaits AI review. eventId={}, status={}, route={}",
+                    eventId, event.getReviewStatus(), event.getReviewRoute());
+            return true;
         }
 
         Long runId = agentRunService.startRun(
@@ -89,15 +102,11 @@ public class EventQualityService {
             Long indexStepId = agentRunService.startStep(
                     runId,
                     AgentStepName.EVENT_QUALITY_INDEX_TRIGGER,
-                    "Publish search index message based on review status."
+                    "Search index follows the state change (EventLifecycleService side effect)."
             );
-            if (status == EventReviewStatus.APPROVED && !event.isExpired()) {
-                domainEventPublisher.publishEventIndex(event.getId(), DomainEventMessages.EVENT_INDEX_UPSERT);
-                agentRunService.completeStep(indexStepId, "approved event queued for OpenSearch upsert");
-            } else {
-                domainEventPublisher.publishEventIndex(event.getId(), DomainEventMessages.EVENT_INDEX_DELETE);
-                agentRunService.completeStep(indexStepId, "non-approved or expired event queued for OpenSearch delete");
-            }
+            agentRunService.completeStep(indexStepId, status == EventReviewStatus.APPROVED
+                    ? "approved: lifecycle queued OpenSearch upsert"
+                    : "not approved: nothing to index");
 
             agentRunService.finishRun(runId,
                     "qualityScore=" + report.getQualityScore() + ", reviewStatus=" + status.name());
@@ -115,32 +124,26 @@ public class EventQualityService {
         return toResponse(report);
     }
 
+    /** Back to PENDING_REVIEW; the lifecycle sends the analysis message if the route is AI. */
     @Transactional
-    public void requestReanalysis(Long eventId) {
-        EventEntity event = eventRepository.findById(eventId)
-                .orElseThrow(() -> ApiException.notFound("事件不存在：" + eventId));
-        event.setReviewStatus(EventReviewStatus.PENDING_REVIEW);
-        domainEventPublisher.publishEventQualityAnalysis(event.getId());
+    public EventReviewStatus requestReanalysis(Long eventId, EventActor actor) {
+        return lifecycleService.transition(findEvent(eventId), EventLifecycleAction.REANALYZE, actor, null).getReviewStatus();
     }
 
     @Transactional
-    public EventReviewStatus approve(Long eventId) {
-        EventEntity event = eventRepository.findById(eventId)
-                .orElseThrow(() -> ApiException.notFound("事件不存在：" + eventId));
-        event.setReviewStatus(EventReviewStatus.APPROVED);
-        if (!event.isExpired()) {
-            domainEventPublisher.publishEventIndex(event.getId(), DomainEventMessages.EVENT_INDEX_UPSERT);
-        }
-        return event.getReviewStatus();
+    public EventReviewStatus approve(Long eventId, EventActor operator) {
+        return lifecycleService.transition(findEvent(eventId), EventLifecycleAction.MANUAL_APPROVE, operator, null).getReviewStatus();
     }
 
+    /** There is no final rejection any more: the organisation gets the note and can revise. */
     @Transactional
-    public EventReviewStatus reject(Long eventId) {
-        EventEntity event = eventRepository.findById(eventId)
+    public EventReviewStatus requestRevision(Long eventId, EventActor operator, String note) {
+        return lifecycleService.transition(findEvent(eventId), EventLifecycleAction.MANUAL_REQUEST_REVISION, operator, note).getReviewStatus();
+    }
+
+    private EventEntity findEvent(Long eventId) {
+        return eventRepository.findById(eventId)
                 .orElseThrow(() -> ApiException.notFound("事件不存在：" + eventId));
-        event.setReviewStatus(EventReviewStatus.REJECTED);
-        domainEventPublisher.publishEventIndex(event.getId(), DomainEventMessages.EVENT_INDEX_DELETE);
-        return event.getReviewStatus();
     }
 
     @Transactional(readOnly = true)
@@ -367,15 +370,34 @@ public class EventQualityService {
         return reportRepository.save(report);
     }
 
+    /**
+     * The AI decides (D2, option A), but only between approved and needs-revision: a REJECT
+     * suggestion also becomes a revision request, nothing is final. After three requests the next
+     * submission goes to a person (EventLifecycleRules.AI_REVISION_LIMIT).
+     */
     private EventReviewStatus applyReviewStatus(EventEntity event, EventQualityReportEntity report) {
-        EventReviewStatus status = switch (report.getReviewSuggestion()) {
-            case "APPROVE" -> EventReviewStatus.APPROVED;
-            case "REJECT" -> EventReviewStatus.REJECTED;
-            default -> EventReviewStatus.NEEDS_REVISION;
-        };
-        event.setReviewStatus(status);
-        eventRepository.save(event);
-        return status;
+        if ("APPROVE".equals(report.getReviewSuggestion())) {
+            return lifecycleService.transition(event, EventLifecycleAction.AI_APPROVE, EventActor.AI, null).getReviewStatus();
+        }
+        return lifecycleService.transition(event, EventLifecycleAction.AI_REQUEST_REVISION, EventActor.AI,
+                revisionNoteOf(report)).getReviewStatus();
+    }
+
+    /** What the organisation reads under "needs revision": missing fields and risk flags from the report. */
+    private String revisionNoteOf(EventQualityReportEntity report) {
+        List<String> parts = new ArrayList<>();
+        List<String> missing = readStringList(report.getMissingFieldsJson());
+        List<String> risks = readStringList(report.getRiskFlagsJson());
+        if (!missing.isEmpty()) {
+            parts.add("缺少信息：" + String.join("、", missing));
+        }
+        if (!risks.isEmpty()) {
+            parts.add("需要注意：" + String.join("、", risks));
+        }
+        String note = parts.isEmpty()
+                ? "AI 审核认为活动信息不够完整，请补充后重新提交"
+                : "AI 审核建议修改。" + String.join("；", parts);
+        return note.length() > 300 ? note.substring(0, 300) : note;
     }
 
     private List<Long> detectDuplicateEventIds(EventEntity event) {
@@ -383,7 +405,7 @@ public class EventQualityService {
         if (title.length() < 3) {
             return List.of();
         }
-        return eventRepository.findByExpiredFalseAndReviewStatus(EventReviewStatus.APPROVED).stream()
+        return eventRepository.findByReviewStatusAndEndTimeAfter(EventReviewStatus.APPROVED, LocalDateTime.now()).stream()
                 .filter(candidate -> !candidate.getId().equals(event.getId()))
                 .filter(candidate -> similarity(title, normalize(candidate.getTitle())) >= 0.72
                         || sharedMeaningfulTerms(textOf(event), textOf(candidate)) >= 3)

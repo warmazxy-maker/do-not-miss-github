@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import {
+  AlertTriangle,
   CalendarCheck2,
   CalendarDays,
   CheckCircle2,
@@ -86,21 +87,6 @@ async function cancel(item: ReservationItem) {
   }
 }
 
-async function complete(item: ReservationItem) {
-  if (!window.confirm(`模拟扫描「${item.event.title}」的签到凭证并完成活动？`)) return;
-  busyId.value = item.id;
-  try {
-    await eventsApi.completeReservation(item.qrToken);
-    selected.value = null;
-    reservations.value = reservations.value.filter((reservation) => reservation.id !== item.id);
-    showNotice("签到完成，活动已迁移到个人成就");
-  } catch (cause) {
-    showError(cause, "扫码完成失败");
-  } finally {
-    busyId.value = null;
-  }
-}
-
 async function copyToken(item: ReservationItem) {
   try {
     await navigator.clipboard.writeText(item.qrToken);
@@ -111,6 +97,8 @@ async function copyToken(item: ReservationItem) {
 }
 
 function status(item: ReservationItem) {
+  // The backend says when the event ended or was taken offline; the reservation itself stays.
+  if (item.notice) return { label: item.event.studentStatusLabel, tone: "late" };
   const start = new Date(item.event.startTime).getTime();
   const end = new Date(item.event.endTime).getTime();
   if (end < now.value) return { label: "待补签", tone: "late" };
@@ -156,7 +144,7 @@ function showError(cause: unknown, fallback: string) {
       <div>
         <p class="eyebrow">Reservations</p>
         <h2>已经决定参加的事情，都在这里</h2>
-        <p>预约会自动进入日程。到场后使用签到凭证完成活动，记录将迁移到个人成就。</p>
+        <p>预约会自动进入日程。到场后向组织方出示签到凭证，由组织方扫码签到，记录将迁移到个人成就。</p>
       </div>
       <RouterLink class="reservation-discover-link" to="/student/events">
         <Search :size="18" />
@@ -228,6 +216,7 @@ function showError(cause: unknown, fallback: string) {
             <small>预约于 {{ dateTime(item.reservedAt) }}</small>
           </header>
           <h3>{{ item.event.title }}</h3>
+          <p v-if="item.notice" class="reservation-event-notice"><AlertTriangle :size="17" />{{ item.notice }}</p>
           <p class="reservation-organization">{{ item.event.organizationName }}</p>
           <div class="reservation-facts">
             <span><Clock3 :size="16" />{{ dateTime(item.event.startTime) }} - {{ dateTime(item.event.endTime).split(" ").at(-1) }}</span>
@@ -266,12 +255,8 @@ function showError(cause: unknown, fallback: string) {
               <span>签到 token</span>
               <div><code>{{ selected.qrToken }}</code><button type="button" title="复制凭证" @click="copyToken(selected)"><Copy :size="17" /></button></div>
             </label>
-            <p class="reservation-ticket-help">当前为开发环境，点击下方按钮模拟现场扫码。正式环境可由组织端扫描该凭证。</p>
-            <button class="reservation-complete-button" type="button" :disabled="busyId === selected.id" @click="complete(selected)">
-              <LoaderCircle v-if="busyId === selected.id" class="spin" :size="18" />
-              <CheckCircle2 v-else :size="18" />
-              模拟扫码并完成活动
-            </button>
+            <p v-if="selected.notice" class="reservation-event-notice"><AlertTriangle :size="17" />{{ selected.notice }}</p>
+            <p class="reservation-ticket-help">到场后请向组织方出示此凭证，由组织方扫码或输入 token 完成签到。</p>
           </section>
         </div>
       </Transition>

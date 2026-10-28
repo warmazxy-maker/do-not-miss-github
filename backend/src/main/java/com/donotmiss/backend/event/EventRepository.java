@@ -7,11 +7,11 @@ import java.time.LocalDateTime;
 import java.util.List;
 
 public interface EventRepository extends JpaRepository<EventEntity, Long>, JpaSpecificationExecutor<EventEntity> {
-    List<EventEntity> findByExpiredFalse();
+    /** Published and not yet ended: what students can find. */
+    List<EventEntity> findByReviewStatusAndEndTimeAfter(EventReviewStatus reviewStatus, LocalDateTime now);
 
-    List<EventEntity> findByExpiredFalseAndReviewStatus(EventReviewStatus reviewStatus);
-
-    List<EventEntity> findByExpiredFalseAndEndTimeBefore(LocalDateTime now);
+    /** Published but already ended: what the expiry job takes offline. */
+    List<EventEntity> findByReviewStatusAndEndTimeLessThanEqual(EventReviewStatus reviewStatus, LocalDateTime now);
 
     List<EventEntity> findByCreatedByUserIdOrderByCreatedAtDesc(String userId);
 }

@@ -6,9 +6,13 @@ export interface EventItem {
   categoryCode: string;
   startTime: string;
   endTime: string;
-  expired: boolean;
-  reviewStatus: string;
-  reviewStatusLabel: string;
+  /** Time dimension, derived by the backend: NOT_STARTED / ONGOING / ENDED. */
+  timePhase: string;
+  timePhaseLabel: string;
+  /** What a student sees: the time phase, or OFFLINE; studentNotice says why. */
+  studentStatus: string;
+  studentStatusLabel: string;
+  studentNotice: string | null;
   location: string;
   content: string;
   benefitType: string;
@@ -16,6 +20,34 @@ export interface EventItem {
   skill: string | null;
   moneyAmount: number | null;
   createdByUserId: string;
+  createdAt: string;
+}
+
+/** The organisation's view of its own event: publication state and the actions open now. */
+export interface OrganizerEventItem extends EventItem {
+  reviewStatus: "DRAFT" | "PENDING_REVIEW" | "NEEDS_REVISION" | "APPROVED" | "OFFLINE" | "REJECTED";
+  reviewStatusLabel: string;
+  reviewRoute: "AI" | "MANUAL";
+  offlineReasonCode: "ORGANIZER" | "OPERATOR" | "ENDED" | "DISCARDED" | null;
+  offlineReason: string | null;
+  revisionNote: string | null;
+  aiRevisionCount: number;
+  version: number;
+  canEdit: boolean;
+  canSubmit: boolean;
+  canTakeOffline: boolean;
+  canDiscard: boolean;
+  canCheckIn: boolean;
+}
+
+export interface EventHistoryItem {
+  fromStatus: string | null;
+  fromStatusLabel: string | null;
+  toStatus: string;
+  toStatusLabel: string;
+  action: string;
+  actorType: "SYSTEM" | "AI" | "ORGANIZER" | "OPERATOR";
+  reason: string | null;
   createdAt: string;
 }
 
@@ -39,6 +71,8 @@ export interface ReservationItem {
   qrToken: string;
   reservedAt: string;
   completedAt: string | null;
+  /** Set when the event ended or was taken offline; the reservation itself is kept. */
+  notice: string | null;
 }
 
 export interface ToolContextRequest {

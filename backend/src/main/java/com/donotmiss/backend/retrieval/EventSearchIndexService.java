@@ -19,6 +19,7 @@ import org.springframework.web.client.RestClient;
 import org.springframework.web.client.RestClientException;
 
 import java.math.BigDecimal;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -65,12 +66,17 @@ public class EventSearchIndexService {
         return enabled && vectorEnabled && llmClient.isEnabled();
     }
 
+    /** Only published events that have not ended belong in the index. */
+    private static boolean isSearchable(EventEntity event) {
+        return event.getReviewStatus() == EventReviewStatus.APPROVED && !event.hasEnded(LocalDateTime.now());
+    }
+
     public int reindexAll() {
         if (!enabled) {
             return 0;
         }
         recreateIndex();
-        List<EventEntity> events = eventRepository.findByExpiredFalseAndReviewStatus(EventReviewStatus.APPROVED);
+        List<EventEntity> events = eventRepository.findByReviewStatusAndEndTimeAfter(EventReviewStatus.APPROVED, LocalDateTime.now());
         for (EventEntity event : events) {
             indexOrThrow(event);
         }
@@ -94,7 +100,7 @@ public class EventSearchIndexService {
             return;
         }
         EventEntity event = eventRepository.findById(eventId).orElse(null);
-        if (event == null || event.isExpired() || event.getReviewStatus() != EventReviewStatus.APPROVED) {
+        if (event == null || !isSearchable(event)) {
             deleteOrThrow(eventId);
             return;
         }
@@ -105,7 +111,7 @@ public class EventSearchIndexService {
         if (!enabled || event == null || event.getId() == null) {
             return;
         }
-        if (event.isExpired() || event.getReviewStatus() != EventReviewStatus.APPROVED) {
+        if (!isSearchable(event)) {
             deleteOrThrow(event.getId());
             return;
         }

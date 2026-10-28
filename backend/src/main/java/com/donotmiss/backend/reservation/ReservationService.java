@@ -5,7 +5,9 @@ import com.donotmiss.backend.recommendation.RecommendationFeedbackType;
 import org.springframework.context.ApplicationEventPublisher;
 import com.donotmiss.backend.achievement.AchievementService;
 import com.donotmiss.backend.common.ApiException;
+import com.donotmiss.backend.event.EventDtos;
 import com.donotmiss.backend.event.EventEntity;
+import com.donotmiss.backend.event.EventReviewStatus;
 import com.donotmiss.backend.event.EventService;
 import com.donotmiss.backend.schedule.ScheduleItemType;
 import com.donotmiss.backend.schedule.ScheduleService;
@@ -17,7 +19,9 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Duration;
 import java.time.Instant;
+import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Objects;
 import java.util.UUID;
 
 @Service
@@ -63,6 +67,12 @@ public class ReservationService {
             return ReservationDtos.ReservationResponse.from(existing);
         }
 
+        // Before D2 any event id could be reserved, including drafts, events under review and
+        // events that had already ended.
+        if (event.getReviewStatus() != EventReviewStatus.APPROVED || event.hasEnded(LocalDateTime.now())) {
+            throw ApiException.badRequest("活动未上架或已结束，不能预约");
+        }
+
         ReservationEntity reservation = existing == null ? new ReservationEntity() : existing;
         reservation.setUserId(userId);
         reservation.setEvent(event);
@@ -97,16 +107,31 @@ public class ReservationService {
                 userId, reservation.getEvent().getId(), RecommendationFeedbackType.RESERVATION_CANCELLED));
     }
 
+    /**
+     * Check-in at the venue: the organisation scans the student's QR code (D2, L7). Before D2 the
+     * student called this on their own code, so "completed" proved nothing. Allowed while the event
+     * is published and right after it ended (the expiry job may already have taken it offline).
+     */
     @Transactional
-    public ReservationDtos.ReservationResponse scanComplete(String userId, String qrToken) {
-        Long reservationId = resolveReservationId(qrToken);
-        ReservationEntity reservation = reservationRepository.findByIdAndUserId(reservationId, userId)
-                .orElseThrow(() -> ApiException.forbidden("二维码不属于当前学生"));
-
+    public ReservationDtos.CheckInResponse checkIn(Long eventId, String organizerUserId, String qrToken) {
+        EventEntity event = eventService.getEntity(eventId);
+        if (!Objects.equals(event.getCreatedByUserId(), organizerUserId)) {
+            throw ApiException.forbidden("只能为自己发布的活动签到");
+        }
+        if (!EventDtos.OrganizerEventResponse.canCheckIn(event)) {
+            throw ApiException.badRequest("活动当前不能签到（未上架或已下架）");
+        }
+        Long reservationId = resolveReservationId(qrToken.trim());
+        ReservationEntity reservation = reservationRepository.findById(reservationId)
+                .orElseThrow(() -> ApiException.badRequest("二维码无效或已过期"));
+        if (!Objects.equals(reservation.getEvent().getId(), eventId)) {
+            throw ApiException.badRequest("这个二维码不是本活动的预约");
+        }
         if (reservation.getStatus() != ReservationStatus.RESERVED) {
-            throw ApiException.badRequest("这个预约不是可完成状态");
+            throw ApiException.badRequest("这个预约不是可签到状态（已签到或已取消）");
         }
 
+        String userId = reservation.getUserId();
         reservation.setStatus(ReservationStatus.COMPLETED);
         reservation.setCompletedAt(Instant.now());
         redisTemplate.delete(QR_PREFIX + reservation.getQrToken());
@@ -114,7 +139,7 @@ public class ReservationService {
         achievementService.createIfAbsent(userId, reservation.getEvent());
         eventPublisher.publishEvent(RecommendationActivityEvent.forEvent(
                 userId, reservation.getEvent().getId(), RecommendationFeedbackType.COMPLETED));
-        return ReservationDtos.ReservationResponse.from(reservation);
+        return new ReservationDtos.CheckInResponse(reservation.getId(), userId, reservation.getCompletedAt());
     }
 
     private Long resolveReservationId(String qrToken) {

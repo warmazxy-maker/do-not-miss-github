@@ -4,6 +4,7 @@ import com.donotmiss.backend.ai.AiDtos;
 import com.donotmiss.backend.event.BenefitType;
 import com.donotmiss.backend.event.EventCategory;
 import com.donotmiss.backend.event.EventEntity;
+import com.donotmiss.backend.event.EventReviewStatus;
 import com.donotmiss.backend.memory.UserMemoryDtos;
 import com.donotmiss.backend.mcp.McpDtos;
 import org.springframework.stereotype.Service;
@@ -173,7 +174,7 @@ public class HybridEventRetrievalService {
         List<EventEntity> events = fusedIds.stream()
                 .map(id -> corpus.find(id).orElse(null))
                 .filter(event -> event != null)
-                .filter(event -> !event.isExpired())
+                .filter(HybridEventRetrievalService::isPublished)
                 .filter(event -> matchesFilters(event, category, benefitType, location))
                 .toList();
         return new CandidatePool(events, bm25Scores, semanticScores, recallScores);
@@ -244,8 +245,16 @@ public class HybridEventRetrievalService {
         return scores;
     }
 
+    /**
+     * Publication only. Whether it has ended is judged against the request's clock in isExpired,
+     * so the frozen evaluation corpus can be replayed at its fixed asOf time.
+     */
+    private static boolean isPublished(EventEntity event) {
+        return event.getReviewStatus() == EventReviewStatus.APPROVED;
+    }
+
     private boolean matchesFilters(EventEntity event, String category, String benefitType, String location) {
-        if (event.isExpired()) {
+        if (!isPublished(event)) {
             return false;
         }
         if (blankToNull(category) != null && !matchesCategory(event, category)) {
@@ -467,13 +476,9 @@ public class HybridEventRetrievalService {
     }
 
     private boolean isExpired(EventEntity event, McpDtos.ToolContextResponse toolContext) {
-        if (event.isExpired()) {
-            return true;
-        }
-        if (toolContext == null || toolContext.currentTime() == null) {
-            return false;
-        }
-        LocalDateTime now = toolContext.currentTime().serverTime().toLocalDateTime();
+        LocalDateTime now = toolContext == null || toolContext.currentTime() == null
+                ? LocalDateTime.now()
+                : toolContext.currentTime().serverTime().toLocalDateTime();
         LocalDateTime effectiveEnd = event.getEndTime() == null ? event.getStartTime() : event.getEndTime();
         return effectiveEnd != null && effectiveEnd.isBefore(now);
     }

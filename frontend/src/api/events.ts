@@ -47,9 +47,6 @@ export const eventsApi = {
   cancelReservation(reservationId: number) {
     return api.delete<void>(`/api/reservations/${reservationId}`);
   },
-  completeReservation(qrToken: string) {
-    return api.post<ReservationItem>("/api/reservations/scan-complete", { qrToken });
-  },
   recommendEvents(payload: {
     need: string;
     category?: string;

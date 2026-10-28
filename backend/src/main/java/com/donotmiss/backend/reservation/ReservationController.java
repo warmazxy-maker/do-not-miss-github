@@ -37,12 +37,6 @@ public class ReservationController {
         reservationService.cancel(currentUser.id(request), reservationId);
     }
 
-    /**
-     * 模拟扫码完成：真实产品里二维码内容就是 qrToken。
-     */
-    @PostMapping("/scan-complete")
-    public ReservationDtos.ReservationResponse scanComplete(@Valid @RequestBody ReservationDtos.ScanCompleteRequest request,
-                                                            HttpServletRequest servletRequest) {
-        return reservationService.scanComplete(currentUser.id(servletRequest), request.qrToken());
-    }
+    // The student self-scan endpoint (/scan-complete) was removed in D2: check-in is done by the
+    // organisation, see EventCheckInController.
 }

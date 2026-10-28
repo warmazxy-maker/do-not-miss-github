@@ -29,12 +29,35 @@ public class EventEntity {
     @Column(nullable = false)
     private LocalDateTime endTime;
 
-    @Column(nullable = false)
-    private boolean expired = false;
-
+    /**
+     * Publication dimension. Changed only by EventLifecycleService; the time dimension
+     * (not started / ongoing / ended) is never stored, see {@link EventTimePhase}.
+     */
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 32)
-    private EventReviewStatus reviewStatus = EventReviewStatus.APPROVED;
+    private EventReviewStatus reviewStatus = EventReviewStatus.DRAFT;
+
+    @Enumerated(EnumType.STRING)
+    @Column(length = 24)
+    private EventOfflineReason offlineReasonCode;
+
+    @Column(length = 300)
+    private String offlineReason;
+
+    @Column(length = 500)
+    private String revisionNote;
+
+    @Column(nullable = false)
+    private int aiRevisionCount;
+
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false, length = 16)
+    private EventReviewRoute reviewRoute = EventReviewRoute.AI;
+
+    /** Optimistic lock: two concurrent decisions on one event cannot both win. */
+    @Version
+    @Column(nullable = false)
+    private long version;
 
     @Column(nullable = false, length = 160)
     private String location;
@@ -67,11 +90,13 @@ public class EventEntity {
 
     /**
      * An event that only lives in memory, with a fixed id, for frozen evaluation corpora.
-     * It must never be saved: the id would collide with a real row.
+     * It must never be saved: the id would collide with a real row. A frozen corpus only holds
+     * published events, so it starts APPROVED without going through the lifecycle.
      */
     public static EventEntity detached(Long id) {
         EventEntity event = new EventEntity();
         event.id = id;
+        event.reviewStatus = EventReviewStatus.APPROVED;
         return event;
     }
 
@@ -119,19 +144,20 @@ public class EventEntity {
         this.endTime = endTime;
     }
 
-    public boolean isExpired() {
-        return expired;
+    public boolean hasEnded(LocalDateTime now) {
+        return endTime != null && !endTime.isAfter(now);
     }
 
-    public void setExpired(boolean expired) {
-        this.expired = expired;
+    public EventTimePhase timePhase(LocalDateTime now) {
+        return EventTimePhase.of(this, now);
     }
 
     public EventReviewStatus getReviewStatus() {
         return reviewStatus;
     }
 
-    public void setReviewStatus(EventReviewStatus reviewStatus) {
+    /** Package-private: only the lifecycle may move an event between states. */
+    void setReviewStatus(EventReviewStatus reviewStatus) {
         this.reviewStatus = reviewStatus;
     }
 
@@ -185,5 +211,49 @@ public class EventEntity {
 
     public Instant getCreatedAt() {
         return createdAt;
+    }
+
+    public EventOfflineReason getOfflineReasonCode() {
+        return offlineReasonCode;
+    }
+
+    void setOfflineReasonCode(EventOfflineReason offlineReasonCode) {
+        this.offlineReasonCode = offlineReasonCode;
+    }
+
+    public String getOfflineReason() {
+        return offlineReason;
+    }
+
+    void setOfflineReason(String offlineReason) {
+        this.offlineReason = offlineReason;
+    }
+
+    public String getRevisionNote() {
+        return revisionNote;
+    }
+
+    void setRevisionNote(String revisionNote) {
+        this.revisionNote = revisionNote;
+    }
+
+    public int getAiRevisionCount() {
+        return aiRevisionCount;
+    }
+
+    void setAiRevisionCount(int aiRevisionCount) {
+        this.aiRevisionCount = aiRevisionCount;
+    }
+
+    public EventReviewRoute getReviewRoute() {
+        return reviewRoute;
+    }
+
+    void setReviewRoute(EventReviewRoute reviewRoute) {
+        this.reviewRoute = reviewRoute;
+    }
+
+    public long getVersion() {
+        return version;
     }
 }

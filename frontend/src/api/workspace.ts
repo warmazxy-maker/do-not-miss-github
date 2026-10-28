@@ -1,5 +1,5 @@
 import { api } from "@/api/client";
-import type { EventItem, FollowItem } from "@/types/events";
+import type { EventHistoryItem, FollowItem, OrganizerEventItem } from "@/types/events";
 import type {
   Challenge,
   ChallengePage,
@@ -79,25 +79,47 @@ export const organizationsApi = {
   }
 };
 
+export interface EventPayload {
+  title: string;
+  organizationName: string;
+  category: string;
+  startTime: string;
+  endTime: string;
+  location: string;
+  content: string;
+  benefitType: string;
+  skill: string | null;
+  moneyAmount: number | null;
+  /** false: only save ("已保存"); true: save and send to review. */
+  submit: boolean;
+}
+
 export const socialApi = {
   mine() {
-    return api.get<EventItem[]>("/api/events/mine");
+    return api.get<OrganizerEventItem[]>("/api/events/mine");
   },
-  create(payload: {
-    title: string;
-    organizationName: string;
-    category: string;
-    startTime: string;
-    endTime: string;
-    location: string;
-    content: string;
-    benefitType: string;
-    skill: string | null;
-    moneyAmount: number | null;
-  }) {
-    return api.post<EventItem>("/api/events", payload);
+  create(payload: EventPayload) {
+    return api.post<OrganizerEventItem>("/api/events", payload);
   },
-  remove(eventId: number) {
+  /** Editing a published event sends it back to review whatever submit says. */
+  update(eventId: number, payload: EventPayload) {
+    return api.put<OrganizerEventItem>(`/api/events/${eventId}`, payload);
+  },
+  submit(eventId: number) {
+    return api.post<OrganizerEventItem>(`/api/events/${eventId}/submit`);
+  },
+  takeOffline(eventId: number, reason: string) {
+    return api.post<OrganizerEventItem>(`/api/events/${eventId}/offline`, { reason });
+  },
+  history(eventId: number) {
+    return api.get<EventHistoryItem[]>(`/api/events/${eventId}/history`);
+  },
+  checkIn(eventId: number, qrToken: string) {
+    return api.post<{ reservationId: number; studentUserId: string; completedAt: string }>(
+      `/api/events/${eventId}/check-in`, { qrToken });
+  },
+  /** Discard a never-published event (soft: nothing is deleted). */
+  discard(eventId: number) {
     return api.delete<void>(`/api/events/${eventId}`);
   },
   report(eventId: number) {

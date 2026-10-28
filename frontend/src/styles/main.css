@@ -6494,6 +6494,96 @@ button.portfolio-heatmap-cell:focus-visible {
   color: #176e5e;
 }
 
+.social-event-top span.status-draft {
+  background: #eef1f6;
+  color: #4b5870;
+}
+
+.social-event-top span.status-needs_revision {
+  background: #fde8e6;
+  color: #a5352a;
+}
+
+.social-event-top span.status-offline {
+  background: #ececec;
+  color: #5c5c5c;
+}
+
+.event-state-note {
+  margin: 8px 0;
+  padding: 8px 10px;
+  border-radius: 6px;
+  background: #f4f6fa;
+  color: #3f4a5e;
+  font-size: 13px;
+}
+
+.event-state-note.is-revision {
+  background: #fdf0ee;
+  color: #8c2f25;
+}
+
+.event-state-note.is-warning {
+  background: #fff6e0;
+  color: #7f5410;
+}
+
+.event-state-note.is-offline {
+  background: #f1f1f1;
+  color: #555;
+}
+
+.publish-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.publish-save-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.event-history-list {
+  margin: 0;
+  padding: 0 0 0 18px;
+  display: grid;
+  gap: 10px;
+}
+
+.event-history-list span {
+  display: block;
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.event-history-list p {
+  margin: 4px 0 0;
+}
+
+.event-check-in-form {
+  display: flex;
+  gap: 8px;
+}
+
+.event-check-in-form input {
+  flex: 1;
+  min-width: 0;
+}
+
+.reservation-event-notice {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin: 6px 0;
+  padding: 8px 10px;
+  border-radius: 6px;
+  background: #fde8e6;
+  color: #a5352a;
+  font-weight: 800;
+}
+
 .social-event-top small {
   color: var(--muted);
 }

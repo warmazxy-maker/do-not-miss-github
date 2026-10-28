@@ -2,7 +2,6 @@ package com.donotmiss.backend.retrieval;
 
 import com.donotmiss.backend.event.EventDtos;
 import com.donotmiss.backend.event.EventEntity;
-import com.donotmiss.backend.event.EventExpirationService;
 import com.donotmiss.backend.event.EventService;
 import org.springframework.stereotype.Component;
 
@@ -13,14 +12,11 @@ import java.util.Optional;
 @Component
 public class LiveEventCorpus implements EventCorpus {
     private final EventService eventService;
-    private final EventExpirationService eventExpirationService;
     private final EventSearchIndexService eventSearchIndexService;
 
     public LiveEventCorpus(EventService eventService,
-                           EventExpirationService eventExpirationService,
                            EventSearchIndexService eventSearchIndexService) {
         this.eventService = eventService;
-        this.eventExpirationService = eventExpirationService;
         this.eventSearchIndexService = eventSearchIndexService;
     }
 
@@ -58,8 +54,11 @@ public class LiveEventCorpus implements EventCorpus {
         return eventService.searchEntities(new EventDtos.EventSearchRequest(null, category, benefitType, location));
     }
 
+    /**
+     * Used to end overdue events here, a write hidden inside every read. Since D2 "ended" is
+     * computed from end time wherever it matters, so there is nothing to refresh first.
+     */
     @Override
     public void beforeRetrieve() {
-        eventExpirationService.expireOverdueEvents();
     }
 }

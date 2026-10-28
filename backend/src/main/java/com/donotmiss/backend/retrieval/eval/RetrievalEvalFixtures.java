@@ -202,7 +202,6 @@ public class RetrievalEvalFixtures {
         event.setSkill(node.path("skill").isNull() ? null : node.path("skill").asText());
         event.setMoneyAmount(node.path("moneyAmount").isNull() || node.path("moneyAmount").isMissingNode()
                 ? null : new BigDecimal(node.path("moneyAmount").asText()));
-        event.setExpired(false);
         return event;
     }
 

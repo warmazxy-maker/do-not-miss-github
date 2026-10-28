@@ -1,16 +1,16 @@
 package com.donotmiss.backend.event;
 
 import com.donotmiss.backend.common.ApiException;
-import com.donotmiss.backend.mq.DomainEventMessages;
-import com.donotmiss.backend.mq.DomainEventPublisher;
 import com.donotmiss.backend.organization.OrganizationMembershipService;
 import jakarta.persistence.criteria.Predicate;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
@@ -18,46 +18,112 @@ import java.util.Objects;
 @Service
 public class EventService {
     private final EventRepository eventRepository;
-    private final EventExpirationService eventExpirationService;
+    private final EventLifecycleService lifecycleService;
+    private final EventStatusHistoryRepository historyRepository;
     private final OrganizationMembershipService organizationMembershipService;
-    private final DomainEventPublisher domainEventPublisher;
 
     public EventService(EventRepository eventRepository,
-                        EventExpirationService eventExpirationService,
-                        OrganizationMembershipService organizationMembershipService,
-                        DomainEventPublisher domainEventPublisher) {
+                        EventLifecycleService lifecycleService,
+                        EventStatusHistoryRepository historyRepository,
+                        OrganizationMembershipService organizationMembershipService) {
         this.eventRepository = eventRepository;
-        this.eventExpirationService = eventExpirationService;
+        this.lifecycleService = lifecycleService;
+        this.historyRepository = historyRepository;
         this.organizationMembershipService = organizationMembershipService;
-        this.domainEventPublisher = domainEventPublisher;
+    }
+
+    /** Saves a new event as DRAFT ("已保存"), then submits it unless the organiser only wants to save. */
+    @Transactional
+    public EventDtos.OrganizerEventResponse create(EventDtos.CreateEventRequest request, String userId) {
+        EventEntity event = new EventEntity();
+        event.setCreatedByUserId(userId);
+        applyFields(event, request, userId);
+        EventEntity saved = eventRepository.save(event);
+
+        EventActor organizer = EventActor.organizer(userId);
+        lifecycleService.recordCreated(saved, organizer);
+        if (!Boolean.FALSE.equals(request.submit())) {
+            saved = lifecycleService.transition(saved, EventLifecycleAction.SUBMIT, organizer, null);
+        }
+        return EventDtos.OrganizerEventResponse.from(saved);
+    }
+
+    /**
+     * Edits an event. Allowed in every state except "审核中" (the reviewer would be judging content
+     * that changes underneath) and a discarded event. Editing a published event takes it back to
+     * review: REVISE_PUBLISHED, and students see "已下架：活动重新上架审核中" until it is approved again.
+     */
+    @Transactional
+    public EventDtos.OrganizerEventResponse update(Long eventId, EventDtos.CreateEventRequest request, String userId) {
+        EventEntity event = getEntity(eventId);
+        if (!Objects.equals(event.getCreatedByUserId(), userId)) {
+            throw ApiException.forbidden("只能修改自己发布的活动");
+        }
+        if (event.getReviewStatus() == EventReviewStatus.PENDING_REVIEW) {
+            throw new ApiException(HttpStatus.CONFLICT, "活动正在审核中，审核结束后才能修改");
+        }
+        if (event.getOfflineReasonCode() == EventOfflineReason.DISCARDED) {
+            throw new ApiException(HttpStatus.CONFLICT, "已放弃的活动不能修改，请重新发布");
+        }
+        EventReviewStatus before = event.getReviewStatus();
+        applyFields(event, request, userId);
+
+        EventActor organizer = EventActor.organizer(userId);
+        EventEntity saved = eventRepository.save(event);
+        if (before == EventReviewStatus.APPROVED) {
+            saved = lifecycleService.transition(saved, EventLifecycleAction.REVISE_PUBLISHED, organizer, null);
+        } else if (Boolean.TRUE.equals(request.submit())) {
+            saved = lifecycleService.transition(saved, EventLifecycleAction.SUBMIT, organizer, null);
+        }
+        return EventDtos.OrganizerEventResponse.from(saved);
     }
 
     @Transactional
-    public EventDtos.EventResponse create(EventDtos.CreateEventRequest request, String userId) {
-        BenefitType benefitType = BenefitType.fromText(request.benefitType());
-        validateBenefitPayload(benefitType, request.skill(), request.moneyAmount());
-        validateTimeRange(request.startTime(), request.endTime());
+    public EventDtos.OrganizerEventResponse submit(Long eventId, String userId) {
+        EventEntity event = getEntity(eventId);
+        return EventDtos.OrganizerEventResponse.from(
+                lifecycleService.transition(event, EventLifecycleAction.SUBMIT, EventActor.organizer(userId), null));
+    }
 
-        organizationMembershipService.ensureCanPublish(userId, request.organizationName().trim());
+    /** Organisation (own event) or operator; reservations are kept, students see the reason. */
+    @Transactional
+    public EventDtos.OrganizerEventResponse takeOffline(Long eventId, EventActor actor, String reason) {
+        EventEntity event = getEntity(eventId);
+        return EventDtos.OrganizerEventResponse.from(
+                lifecycleService.transition(event, EventLifecycleAction.TAKE_OFFLINE, actor, reason));
+    }
 
-        EventEntity event = new EventEntity();
-        event.setTitle(request.title().trim());
-        event.setOrganizationName(request.organizationName().trim());
-        event.setCategory(EventCategory.fromText(request.category()));
-        event.setStartTime(request.startTime());
-        event.setEndTime(normalizeEndTime(request.startTime(), request.endTime()));
-        event.setExpired(event.getEndTime().isBefore(java.time.LocalDateTime.now()));
-        event.setReviewStatus(EventReviewStatus.PENDING_REVIEW);
-        event.setLocation(request.location().trim());
-        event.setContent(request.content().trim());
-        event.setBenefitType(benefitType);
-        event.setSkill(blankToNull(request.skill()));
-        event.setMoneyAmount(request.moneyAmount());
-        event.setCreatedByUserId(userId);
+    /** Operators only: straight back to published. Organisations edit and resubmit instead. */
+    @Transactional
+    public EventDtos.OrganizerEventResponse relist(Long eventId, EventActor actor) {
+        EventEntity event = getEntity(eventId);
+        return EventDtos.OrganizerEventResponse.from(
+                lifecycleService.transition(event, EventLifecycleAction.RELIST, actor, null));
+    }
 
-        EventEntity saved = eventRepository.save(event);
-        domainEventPublisher.publishEventQualityAnalysis(saved.getId());
-        return EventDtos.EventResponse.from(saved);
+    /**
+     * What used to be a hard delete. Nothing is ever removed from the database: reservations and
+     * achievements still point at the row. Only events that were never published can be discarded;
+     * a published one is taken offline with a reason instead.
+     */
+    @Transactional
+    public void discard(Long eventId, String userId) {
+        EventEntity event = getEntity(eventId);
+        if (event.getReviewStatus() == EventReviewStatus.APPROVED) {
+            throw new ApiException(HttpStatus.CONFLICT, "已上架的活动请使用“下架”，并填写原因");
+        }
+        lifecycleService.transition(event, EventLifecycleAction.DISCARD, EventActor.organizer(userId), null);
+    }
+
+    @Transactional(readOnly = true)
+    public List<EventDtos.HistoryResponse> history(Long eventId, EventActor actor) {
+        EventEntity event = getEntity(eventId);
+        if (actor.type() == EventActorType.ORGANIZER && !Objects.equals(event.getCreatedByUserId(), actor.userId())) {
+            throw ApiException.forbidden("只能查看自己发布的活动");
+        }
+        return historyRepository.findByEventIdOrderByIdAsc(eventId).stream()
+                .map(EventDtos.HistoryResponse::from)
+                .toList();
     }
 
     @Transactional(readOnly = true)
@@ -66,44 +132,57 @@ public class EventService {
                 .orElseThrow(() -> ApiException.notFound("事件不存在：" + eventId));
     }
 
-    @Transactional
+    /** Pure read: no "expire overdue events first" any more, the time filter is part of the query. */
+    @Transactional(readOnly = true)
     public List<EventDtos.EventResponse> search(EventDtos.EventSearchRequest request) {
-        eventExpirationService.expireOverdueEvents();
-        return searchEntities(request).stream()
-                .map(EventDtos.EventResponse::from)
+        LocalDateTime now = LocalDateTime.now();
+        return searchEntities(request, now).stream()
+                .map(event -> EventDtos.EventResponse.from(event, now))
                 .toList();
     }
 
+    /** Discarded drafts are hidden from the organisation's own list. */
     @Transactional(readOnly = true)
-    public List<EventDtos.EventResponse> mine(String userId) {
+    public List<EventDtos.OrganizerEventResponse> mine(String userId) {
         return eventRepository.findByCreatedByUserIdOrderByCreatedAtDesc(userId).stream()
-                .map(EventDtos.EventResponse::from)
+                .filter(event -> event.getOfflineReasonCode() != EventOfflineReason.DISCARDED)
+                .map(EventDtos.OrganizerEventResponse::from)
                 .toList();
     }
 
     @Transactional(readOnly = true)
     public List<EventEntity> searchEntities(EventDtos.EventSearchRequest request) {
-        Specification<EventEntity> spec = buildSpecification(request);
+        return searchEntities(request, LocalDateTime.now());
+    }
+
+    private List<EventEntity> searchEntities(EventDtos.EventSearchRequest request, LocalDateTime now) {
+        Specification<EventEntity> spec = buildSpecification(request, now);
         return eventRepository.findAll(spec, Sort.by(Sort.Direction.ASC, "startTime"));
     }
 
-    @Transactional
-    public void delete(Long eventId, String userId) {
-        EventEntity event = getEntity(eventId);
+    private void applyFields(EventEntity event, EventDtos.CreateEventRequest request, String userId) {
+        BenefitType benefitType = BenefitType.fromText(request.benefitType());
+        validateBenefitPayload(benefitType, request.skill(), request.moneyAmount());
+        validateTimeRange(request.startTime(), request.endTime());
+        organizationMembershipService.ensureCanPublish(userId, request.organizationName().trim());
 
-        if (!Objects.equals(event.getCreatedByUserId(), userId)) {
-            throw ApiException.forbidden("只能删除自己发布的事件");
-        }
-
-        eventRepository.delete(event);
-        domainEventPublisher.publishEventIndex(eventId, DomainEventMessages.EVENT_INDEX_DELETE);
+        event.setTitle(request.title().trim());
+        event.setOrganizationName(request.organizationName().trim());
+        event.setCategory(EventCategory.fromText(request.category()));
+        event.setStartTime(request.startTime());
+        event.setEndTime(normalizeEndTime(request.startTime(), request.endTime()));
+        event.setLocation(request.location().trim());
+        event.setContent(request.content().trim());
+        event.setBenefitType(benefitType);
+        event.setSkill(blankToNull(request.skill()));
+        event.setMoneyAmount(request.moneyAmount());
     }
 
-    private Specification<EventEntity> buildSpecification(EventDtos.EventSearchRequest request) {
+    private Specification<EventEntity> buildSpecification(EventDtos.EventSearchRequest request, LocalDateTime now) {
         return (root, query, builder) -> {
             List<Predicate> predicates = new ArrayList<>();
-            predicates.add(builder.isFalse(root.get("expired")));
             predicates.add(builder.equal(root.get("reviewStatus"), EventReviewStatus.APPROVED));
+            predicates.add(builder.greaterThan(root.get("endTime"), now));
 
             if (request.keyword() != null && !request.keyword().isBlank()) {
                 String pattern = "%" + request.keyword().trim().toLowerCase() + "%";
@@ -148,14 +227,14 @@ public class EventService {
         }
     }
 
-    private void validateTimeRange(java.time.LocalDateTime startTime, java.time.LocalDateTime endTime) {
-        java.time.LocalDateTime normalizedEndTime = normalizeEndTime(startTime, endTime);
+    private void validateTimeRange(LocalDateTime startTime, LocalDateTime endTime) {
+        LocalDateTime normalizedEndTime = normalizeEndTime(startTime, endTime);
         if (!normalizedEndTime.isAfter(startTime)) {
             throw ApiException.badRequest("结束时间必须晚于开始时间。");
         }
     }
 
-    private java.time.LocalDateTime normalizeEndTime(java.time.LocalDateTime startTime, java.time.LocalDateTime endTime) {
+    private LocalDateTime normalizeEndTime(LocalDateTime startTime, LocalDateTime endTime) {
         return endTime == null ? startTime.plusHours(2) : endTime;
     }
 
