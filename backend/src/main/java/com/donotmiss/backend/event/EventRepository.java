@@ -14,4 +14,7 @@ public interface EventRepository extends JpaRepository<EventEntity, Long>, JpaSp
     List<EventEntity> findByReviewStatusAndEndTimeLessThanEqual(EventReviewStatus reviewStatus, LocalDateTime now);
 
     List<EventEntity> findByCreatedByUserIdOrderByCreatedAtDesc(String userId);
+
+    /** D3 manual review queue. */
+    List<EventEntity> findByReviewStatusAndReviewRoute(EventReviewStatus reviewStatus, EventReviewRoute reviewRoute);
 }

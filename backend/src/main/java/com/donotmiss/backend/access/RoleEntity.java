@@ -13,6 +13,7 @@ import java.time.Instant;
 public class RoleEntity {
     public static final String STUDENT = "STUDENT";
     public static final String SOCIAL = "SOCIAL";
+    public static final String OPERATOR = "OPERATOR";
     public static final String ADMIN_ZERO = "ADMIN_ZERO";
 
     @Id

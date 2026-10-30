@@ -49,6 +49,18 @@ public class EventController {
         return eventService.mine(currentUser.id(request));
     }
 
+    @GetMapping("/mine/attention")
+    @RequirePermission(Permission.EVENT_PUBLISH)
+    public java.util.Map<String, Long> attention(HttpServletRequest request) {
+        return java.util.Map.of("count", eventService.attentionCount(currentUser.id(request)));
+    }
+
+    @PostMapping("/mine/seen")
+    @RequirePermission(Permission.EVENT_PUBLISH)
+    public void seen(HttpServletRequest request) {
+        eventService.markEventsSeen(currentUser.id(request));
+    }
+
     @PutMapping("/{eventId}")
     @RequirePermission(value = Permission.EVENT_PUBLISH, action = "event.edit")
     public EventDtos.OrganizerEventResponse update(@PathVariable Long eventId,

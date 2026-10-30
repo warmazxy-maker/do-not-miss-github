@@ -7,6 +7,7 @@ import com.donotmiss.backend.common.CurrentUser;
 import jakarta.servlet.http.HttpServletRequest;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Service;
@@ -36,6 +37,8 @@ public class AccessService {
     private final Clock clock;
     private final Map<String, CachedPermissions> cache = new ConcurrentHashMap<>();
 
+    /** With two constructors Spring needs to be told which one to use; the other is the test seam with a clock. */
+    @Autowired
     public AccessService(CurrentUser currentUser, UserRepository userRepository, JdbcTemplate jdbcTemplate) {
         this(currentUser, userRepository, jdbcTemplate, Clock.systemUTC());
     }

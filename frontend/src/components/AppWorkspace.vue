@@ -17,6 +17,8 @@ export interface WorkspaceNavigationItem {
   to: string;
   label: string;
   icon: LucideIcon;
+  /** Shown as a red dot with this number when above 0. */
+  badge?: number;
 }
 
 const props = defineProps<{
@@ -84,6 +86,7 @@ async function logout() {
           >
             <component :is="item.icon" :size="19" />
             <span>{{ item.label }}</span>
+            <em v-if="item.badge" class="nav-badge" :aria-label="`${item.badge} 项有更新`">{{ item.badge }}</em>
             <ChevronRight class="nav-chevron" :size="16" />
           </RouterLink>
         </nav>

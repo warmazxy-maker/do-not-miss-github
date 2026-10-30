@@ -261,6 +261,25 @@ function query(params: Record<string, string | number | undefined>) {
   return text ? `?${text}` : "";
 }
 
+export interface AuditLogRow {
+  id: number;
+  userId: string | null;
+  roleCode: string | null;
+  permission: string;
+  action: string;
+  httpMethod: string | null;
+  path: string | null;
+  outcome: "ALLOWED" | "FAILED" | "DENIED";
+  detail: string | null;
+  createdAt: string;
+}
+
+export interface OperatorAccount {
+  publicUserId: string;
+  username: string;
+  createdAt: string;
+}
+
 export const opsApi = {
   access: () => api.get<{ allowed: boolean }>("/api/ops/access"),
   overview: () => api.get<OpsOverview>("/api/ops/overview"),
@@ -283,6 +302,11 @@ export const opsApi = {
     api.post<void>(`/api/ops/eval-candidates/${id}/review`, { decision, needText, note }),
   exportEvalSet: () => api.get<EvalExport>("/api/ops/eval-candidates/export"),
   users: () => api.get<OpsUser[]>("/api/ops/users"),
+  auditLogs: (filters: { outcome?: string; userId?: string; limit?: number }) =>
+    api.get<AuditLogRow[]>(`/api/ops/audit-logs${query(filters)}`),
+  operators: () => api.get<OperatorAccount[]>("/api/ops/operators"),
+  createOperator: (username: string) =>
+    api.post<{ publicUserId: string; username: string; initialPassword: string }>("/api/ops/operators", { username }),
   journeys: (userId: string, limit = 15, kind: "achievement" | "resume" = "achievement") =>
     api.get<Journey[]>(`/api/ops/journeys${query({ userId, kind, limit })}`)
 };

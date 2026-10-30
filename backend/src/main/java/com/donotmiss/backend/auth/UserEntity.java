@@ -37,6 +37,10 @@ public class UserEntity {
     @Column(nullable = false)
     private Instant createdAt;
 
+    /** Organisation accounts: when "my events" was last opened (D3 red dot). */
+    @Column(name = "events_seen_at")
+    private Instant eventsSeenAt;
+
     @PrePersist
     void prePersist() {
         if (createdAt == null) {
@@ -90,5 +94,13 @@ public class UserEntity {
 
     public Instant getCreatedAt() {
         return createdAt;
+    }
+
+    public Instant getEventsSeenAt() {
+        return eventsSeenAt;
+    }
+
+    public void setEventsSeenAt(Instant eventsSeenAt) {
+        this.eventsSeenAt = eventsSeenAt;
     }
 }

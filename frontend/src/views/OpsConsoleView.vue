@@ -1,10 +1,12 @@
 <script setup lang="ts">
-import { Activity, ArrowLeft, Bot, Database, GitBranch, LogOut, MessagesSquare, ThumbsUp } from "@lucide/vue";
+import { Activity, ArrowLeft, Bot, ClipboardList, Database, GitBranch, LogOut, MessagesSquare, ScrollText, ThumbsUp, UserPlus } from "@lucide/vue";
 import { computed, onMounted, ref } from "vue";
 import { RouterLink, useRouter } from "vue-router";
 
 import { opsApi } from "@/api/ops";
 import OpsAgentRuns from "@/components/ops/OpsAgentRuns.vue";
+import OpsAuditLogs from "@/components/ops/OpsAuditLogs.vue";
+import OpsOperatorAccounts from "@/components/ops/OpsOperatorAccounts.vue";
 import OpsJourneys from "@/components/ops/OpsJourneys.vue";
 import OpsMessaging from "@/components/ops/OpsMessaging.vue";
 import OpsOverview from "@/components/ops/OpsOverview.vue";
@@ -13,7 +15,7 @@ import OpsStorage from "@/components/ops/OpsStorage.vue";
 import { useAuthStore } from "@/stores/auth";
 import "@/styles/ops.css";
 
-type TabKey = "overview" | "journeys" | "agents" | "recommendations" | "messaging" | "storage";
+type TabKey = "overview" | "journeys" | "agents" | "recommendations" | "messaging" | "storage" | "audit" | "operators";
 
 const authStore = useAuthStore();
 const router = useRouter();
@@ -22,14 +24,18 @@ async function logout() {
   await authStore.logout();
   await router.replace("/login");
 }
-const tabs: { key: TabKey; label: string; hint: string; icon: unknown }[] = [
+const allTabs: { key: TabKey; label: string; hint: string; icon: unknown }[] = [
   { key: "overview", label: "总览", hint: "依赖健康与关键计数", icon: Activity },
   { key: "journeys", label: "链路追踪", hint: "一条成果从 SQL → MQ → Agent 的全过程", icon: GitBranch },
   { key: "agents", label: "Agent 运行", hint: "所有用户的 Agent 运行、步骤耗时与产物", icon: Bot },
   { key: "recommendations", label: "推荐", hint: "推荐效果：零结果率、反馈漏斗、不相关原因、最近的推荐", icon: ThumbsUp },
   { key: "messaging", label: "消息队列", hint: "Outbox 待发消息与 RabbitMQ 队列", icon: MessagesSquare },
-  { key: "storage", label: "Redis / 数据库", hint: "键空间、连接池、迁移与表大小", icon: Database }
+  { key: "storage", label: "Redis / 数据库", hint: "键空间、连接池、迁移与表大小", icon: Database },
+  { key: "audit", label: "审计日志", hint: "敏感操作和被拒绝的越权尝试（D1）", icon: ScrollText },
+  { key: "operators", label: "运营账号", hint: "只有超级管理员能创建运营账号（D3）", icon: UserPlus }
 ];
+// Creating operator accounts needs ROLE_ASSIGN, which only admin_zero has.
+const tabs = computed(() => allTabs.filter((tab) => tab.key !== "operators" || authStore.user?.role === "ADMIN_ZERO"));
 
 const active = ref<TabKey>("overview");
 const allowed = ref<boolean | null>(null);
@@ -43,7 +49,7 @@ onMounted(async () => {
     allowed.value = false;
   }
   const saved = sessionStorage.getItem("ops-tab");
-  if (saved && tabs.some((tab) => tab.key === saved)) {
+  if (saved && tabs.value.some((tab) => tab.key === saved)) {
     active.value = saved as TabKey;
   }
 });
@@ -74,6 +80,10 @@ function openRun(runId: number) {
         <p class="eyebrow">Operations</p>
         <h1>运维观测面板</h1>
       </div>
+      <RouterLink class="ops-back" to="/operator">
+        <ClipboardList :size="17" />
+        <span>运营后台</span>
+      </RouterLink>
     </header>
 
     <section v-if="allowed === null" class="ops-empty">正在确认权限…</section>
@@ -96,7 +106,7 @@ function openRun(runId: number) {
           <span>{{ tab.label }}</span>
         </button>
       </nav>
-      <p class="ops-tab-hint">{{ tabs.find((tab) => tab.key === active)?.hint }}</p>
+      <p class="ops-tab-hint">{{ allTabs.find((tab) => tab.key === active)?.hint }}</p>
 
       <main class="ops-main">
         <OpsOverview v-if="active === 'overview'" @navigate="select" />
@@ -104,6 +114,8 @@ function openRun(runId: number) {
         <OpsAgentRuns v-else-if="active === 'agents'" :focus-run-id="focusRunId" @consumed="focusRunId = null" />
         <OpsRecommendations v-else-if="active === 'recommendations'" @open-run="openRun" />
         <OpsMessaging v-else-if="active === 'messaging'" />
+        <OpsAuditLogs v-else-if="active === 'audit'" />
+        <OpsOperatorAccounts v-else-if="active === 'operators'" />
         <OpsStorage v-else />
       </main>
     </template>

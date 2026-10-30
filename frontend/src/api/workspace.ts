@@ -118,6 +118,13 @@ export const socialApi = {
     return api.post<{ reservationId: number; studentUserId: string; completedAt: string }>(
       `/api/events/${eventId}/check-in`, { qrToken });
   },
+  /** Red dot: events the AI or an operator changed since "my events" was last opened. */
+  attention() {
+    return api.get<{ count: number }>("/api/events/mine/attention");
+  },
+  markSeen() {
+    return api.post<void>("/api/events/mine/seen");
+  },
   /** Discard a never-published event (soft: nothing is deleted). */
   discard(eventId: number) {
     return api.delete<void>(`/api/events/${eventId}`);

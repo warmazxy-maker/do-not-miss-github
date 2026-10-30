@@ -294,6 +294,9 @@ public final class OpsDtos {
 
     // ---- Audit log (D1) ----
 
+    public record CreateOperator(String username) {
+    }
+
     public record AuditLogRow(
             Long id,
             String userId,

@@ -1,6 +1,7 @@
 package com.donotmiss.backend.ops;
 
 import com.donotmiss.backend.access.AuditLogService;
+import com.donotmiss.backend.access.OperatorAccountService;
 import com.donotmiss.backend.access.Permission;
 import com.donotmiss.backend.access.RequirePermission;
 import com.donotmiss.backend.agentlog.AgentLogDtos;
@@ -37,6 +38,7 @@ public class OpsController {
     private final OpsRecommendationService recommendationService;
     private final OpsEvalCandidateService evalCandidateService;
     private final AuditLogService auditLogService;
+    private final OperatorAccountService operatorAccountService;
 
     public OpsController(OpsAccessGuard guard,
                          CurrentUser currentUser,
@@ -47,7 +49,8 @@ public class OpsController {
                          AgentRunService agentRunService,
                          OpsRecommendationService recommendationService,
                          OpsEvalCandidateService evalCandidateService,
-                         AuditLogService auditLogService) {
+                         AuditLogService auditLogService,
+                         OperatorAccountService operatorAccountService) {
         this.guard = guard;
         this.currentUser = currentUser;
         this.healthService = healthService;
@@ -58,6 +61,7 @@ public class OpsController {
         this.recommendationService = recommendationService;
         this.evalCandidateService = evalCandidateService;
         this.auditLogService = auditLogService;
+        this.operatorAccountService = operatorAccountService;
     }
 
     /** Lets the frontend decide whether to show the entry; never fails. */
@@ -188,6 +192,22 @@ public class OpsController {
                         entry.getPermission(), entry.getAction(), entry.getHttpMethod(), entry.getPath(),
                         entry.getOutcome(), entry.getDetail(), entry.getCreatedAt()))
                 .toList();
+    }
+
+    /** D3: only admin_zero (ROLE_ASSIGN) sees and creates operator accounts. */
+    @GetMapping("/operators")
+    @RequirePermission(Permission.ROLE_ASSIGN)
+    public List<OperatorAccountService.OperatorAccount> operators(HttpServletRequest request) {
+        guard.require(request);
+        return operatorAccountService.list();
+    }
+
+    @PostMapping("/operators")
+    @RequirePermission(value = Permission.ROLE_ASSIGN, action = "role.createOperator")
+    public OperatorAccountService.CreatedOperator createOperator(@RequestBody OpsDtos.CreateOperator body,
+                                                                 HttpServletRequest request) {
+        guard.require(request);
+        return operatorAccountService.create(body.username());
     }
 
     @GetMapping("/users")

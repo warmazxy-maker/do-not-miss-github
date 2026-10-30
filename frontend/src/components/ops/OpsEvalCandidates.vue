@@ -5,6 +5,8 @@ import { onMounted, ref, watch } from "vue";
 import { formatTime, opsApi, type EvalCandidateRow, type EvalExport } from "@/api/ops";
 
 const emit = defineEmits<{ "open-run": [runId: number] }>();
+/** The operator console cannot open agent runs (that is the ops console), so it hides the link. */
+const props = withDefaults(defineProps<{ showRunLinks?: boolean }>(), { showRunLinks: true });
 
 const status = ref<"PENDING" | "APPROVED" | "REJECTED">("PENDING");
 const rows = ref<EvalCandidateRow[]>([]);
@@ -142,7 +144,7 @@ watch(status, load);
             <td>#{{ row.eventId }} {{ row.eventTitle ?? "" }}</td>
             <td class="ops-wrap">{{ row.reason || "（未填写）" }}</td>
             <td class="ops-actions">
-              <button v-if="row.runId" type="button" class="ops-link" @click="emit('open-run', row.runId)">看那次推荐</button>
+              <button v-if="row.runId && props.showRunLinks" type="button" class="ops-link" @click="emit('open-run', row.runId)">看那次推荐</button>
               <template v-if="row.status === 'PENDING'">
                 <button type="button" class="ops-button small" :disabled="busy === row.id" @click="startApprove(row)">采纳</button>
                 <button type="button" class="ops-button small" :disabled="busy === row.id" @click="review(row, 'REJECTED')">驳回</button>

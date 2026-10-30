@@ -10,6 +10,7 @@ import { ApiError } from "@/api/client";
 import { socialApi } from "@/api/workspace";
 import type { EventHistoryItem, OrganizerEventItem } from "@/types/events";
 import type { EventQualityReport } from "@/types/workspace";
+import { useOrganizerAttention } from "@/stores/organizerAttention";
 
 const router = useRouter();
 const events = ref<OrganizerEventItem[]>([]);
@@ -26,7 +27,9 @@ const historyFor = ref<OrganizerEventItem | null>(null);
 const checkInFor = ref<OrganizerEventItem | null>(null);
 const checkInToken = ref("");
 
-onMounted(load);
+const attention = useOrganizerAttention();
+// Opening this page is what "seen" means: the red dot clears.
+onMounted(() => { load(); attention.markSeen(); });
 
 async function load() {
   loading.value = true;

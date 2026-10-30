@@ -8994,3 +8994,19 @@ button.portfolio-heatmap-cell:focus-visible {
     transition: none;
   }
 }
+
+/* D3: red dot on a sidebar entry (organisation "我的事件"). */
+.nav-badge {
+  min-width: 18px;
+  height: 18px;
+  margin-left: auto;
+  padding: 0 5px;
+  border-radius: 9px;
+  background: #d93a2b;
+  color: #fff;
+  font-size: 11px;
+  font-style: normal;
+  font-weight: 800;
+  line-height: 18px;
+  text-align: center;
+}

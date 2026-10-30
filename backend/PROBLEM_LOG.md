@@ -2933,3 +2933,23 @@ Outbox、Agent trace 等基础设施只做了“记录”，没有做“查看�
 ### 结果
 
 新增 22 个单测，全量 220 个通过；前端类型检查和构建通过。**V33 没有在真实 MySQL 上执行过**（Docker 未开）。实现说明见 `D:\warma\Documents\func_report\D2_活动生命周期状态机.md`。
+
+## 071. 后端启动失败：AccessService 有两个构造器，Spring 不知道用哪个
+
+### 发生了什么问题
+
+2026-10-30 第一次在真实环境启动 D1、D2 之后的后端，Maven 只报 `Process terminated with exit code: 1`。真正的错误在上面的日志里：`Error creating bean with name 'accessService' ... No default constructor found`。
+
+### 原因
+
+D1 的 `AccessService` 有两个构造器：一个公开的给 Spring 用，另一个包级可见、多一个 `Clock` 参数，给单测注入固定时钟用。类只有一个构造器时，Spring 会自动用它；有多个而且都没有标 `@Autowired` 时，Spring 会去找无参构造器，找不到就报错。单测是直接 `new` 出来的，不经过 Spring 容器，所以 220 个测试全部通过，也没发现这个问题。D1 完成时 Docker 没开，一直没有真正启动过。
+
+### 解决方式
+
+在公开构造器上加 `@Autowired`。扫描了其他 Spring Bean，没有同样的问题。
+
+### 结果
+
+后端正常启动；Flyway 显示数据库已经在版本 33；Hibernate `validate` 通过，说明 V32、V33 的表结构和实体一致；`admin_zero` 账号已创建；学生搜索接口返回 200。V33 把 55 个已过期的旧测试活动转成了“已下架（活动已结束）”。
+
+**教训**：单测只能证明逻辑正确，证明不了“容器能把它组装起来”。至少要有一次真正的启动，或者一个 `@SpringBootTest` 的冒烟测试。

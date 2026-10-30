@@ -982,3 +982,45 @@ button.ops-counter:hover {
   border-radius: 7px;
   font: inherit;
 }
+
+/* Operator console (/operator, D3). Shares the ops layout. */
+
+.operator-detail section {
+  margin-top: 18px;
+}
+
+.operator-actions {
+  display: grid;
+  gap: 10px;
+}
+
+.operator-content {
+  margin: 8px 0 0;
+  padding: 10px 12px;
+  border-radius: 8px;
+  background: var(--surface-soft);
+  white-space: pre-wrap;
+}
+
+.operator-notes {
+  margin: 0;
+  padding-left: 18px;
+  display: grid;
+  gap: 8px;
+}
+
+.operator-notes p {
+  margin: 2px 0 0;
+}
+
+.operator-pager {
+  justify-content: center;
+  align-items: center;
+  margin-top: 12px;
+}
+
+.operator-password {
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 16px;
+  user-select: all;
+}

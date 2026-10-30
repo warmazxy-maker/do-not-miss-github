@@ -130,7 +130,8 @@ const router = createRouter({
       path: "/operator",
       name: "operator",
       component: OperatorHomeView,
-      meta: { requiresAuth: true, roles: ["OPERATOR"], title: "运营后台" }
+      // Admins have the review permissions too, so they can open it from the ops console.
+      meta: { requiresAuth: true, roles: ["OPERATOR", "ADMIN", "ADMIN_ZERO"], title: "运营后台" }
     },
     {
       path: "/:pathMatch(.*)*",

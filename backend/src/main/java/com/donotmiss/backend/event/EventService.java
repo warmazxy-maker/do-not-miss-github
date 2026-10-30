@@ -1,5 +1,7 @@
 package com.donotmiss.backend.event;
 
+import com.donotmiss.backend.auth.UserEntity;
+import com.donotmiss.backend.auth.UserRepository;
 import com.donotmiss.backend.common.ApiException;
 import com.donotmiss.backend.organization.OrganizationMembershipService;
 import jakarta.persistence.criteria.Predicate;
@@ -10,6 +12,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
+import java.time.Instant;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -21,15 +24,38 @@ public class EventService {
     private final EventLifecycleService lifecycleService;
     private final EventStatusHistoryRepository historyRepository;
     private final OrganizationMembershipService organizationMembershipService;
+    private final UserRepository userRepository;
 
     public EventService(EventRepository eventRepository,
                         EventLifecycleService lifecycleService,
                         EventStatusHistoryRepository historyRepository,
-                        OrganizationMembershipService organizationMembershipService) {
+                        OrganizationMembershipService organizationMembershipService,
+                        UserRepository userRepository) {
         this.eventRepository = eventRepository;
         this.lifecycleService = lifecycleService;
         this.historyRepository = historyRepository;
         this.organizationMembershipService = organizationMembershipService;
+        this.userRepository = userRepository;
+    }
+
+    /**
+     * Red dot on "我的事件" (D3, L5): how many of this publisher's events the AI or an operator
+     * changed since the page was last opened. Counted from the status history, so it covers every
+     * kind of change (approved, revision requested, taken offline) without a notification table.
+     */
+    @Transactional(readOnly = true)
+    public long attentionCount(String userId) {
+        Instant since = userRepository.findByPublicUserId(userId)
+                .map(UserEntity::getEventsSeenAt)
+                .orElse(null);
+        return historyRepository.countChangedEventsSince(userId,
+                List.of(EventActorType.AI, EventActorType.OPERATOR),
+                since == null ? Instant.EPOCH : since);
+    }
+
+    @Transactional
+    public void markEventsSeen(String userId) {
+        userRepository.findByPublicUserId(userId).ifPresent(user -> user.setEventsSeenAt(Instant.now()));
     }
 
     /** Saves a new event as DRAFT ("已保存"), then submits it unless the organiser only wants to save. */
