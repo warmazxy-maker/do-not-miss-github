@@ -39,6 +39,7 @@ public class OpsController {
     private final OpsEvalCandidateService evalCandidateService;
     private final AuditLogService auditLogService;
     private final OperatorAccountService operatorAccountService;
+    private final OpsRateLimitService rateLimitService;
 
     public OpsController(OpsAccessGuard guard,
                          CurrentUser currentUser,
@@ -50,7 +51,8 @@ public class OpsController {
                          OpsRecommendationService recommendationService,
                          OpsEvalCandidateService evalCandidateService,
                          AuditLogService auditLogService,
-                         OperatorAccountService operatorAccountService) {
+                         OperatorAccountService operatorAccountService,
+                         OpsRateLimitService rateLimitService) {
         this.guard = guard;
         this.currentUser = currentUser;
         this.healthService = healthService;
@@ -62,6 +64,7 @@ public class OpsController {
         this.evalCandidateService = evalCandidateService;
         this.auditLogService = auditLogService;
         this.operatorAccountService = operatorAccountService;
+        this.rateLimitService = rateLimitService;
     }
 
     /** Lets the frontend decide whether to show the entry; never fails. */
@@ -192,6 +195,13 @@ public class OpsController {
                         entry.getPermission(), entry.getAction(), entry.getHttpMethod(), entry.getPath(),
                         entry.getOutcome(), entry.getDetail(), entry.getCreatedAt()))
                 .toList();
+    }
+
+    /** D4: today's model calls against the display-only budget, and who hit a limit. */
+    @GetMapping("/rate-limits")
+    public OpsDtos.RateLimitOverview rateLimits(HttpServletRequest request) {
+        guard.require(request);
+        return rateLimitService.today();
     }
 
     /** D3: only admin_zero (ROLE_ASSIGN) sees and creates operator accounts. */

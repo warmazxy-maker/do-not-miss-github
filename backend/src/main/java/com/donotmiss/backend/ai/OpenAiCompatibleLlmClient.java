@@ -1,10 +1,12 @@
 package com.donotmiss.backend.ai;
 
+import com.donotmiss.backend.ratelimit.ModelUsageMeter;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
@@ -34,6 +36,7 @@ public class OpenAiCompatibleLlmClient {
     private final String apiKey;
     private final String embeddingApiKey;
     private final boolean qwenThinkingEnabled;
+    private ModelUsageMeter usageMeter;
 
     public OpenAiCompatibleLlmClient(ObjectMapper objectMapper,
                                      @Value("${app.ai.provider:mock}") String provider,
@@ -75,6 +78,18 @@ public class OpenAiCompatibleLlmClient {
                         .build();
     }
 
+    /** D4: counts each request sent to the model. A setter, so tests can build the client without it. */
+    @Autowired(required = false)
+    void setUsageMeter(ModelUsageMeter usageMeter) {
+        this.usageMeter = usageMeter;
+    }
+
+    private void count(String kind) {
+        if (usageMeter != null) {
+            usageMeter.record(kind);
+        }
+    }
+
     public boolean isEnabled() {
         return !"mock".equalsIgnoreCase(provider) && !apiKey.isBlank();
     }
@@ -95,6 +110,7 @@ public class OpenAiCompatibleLlmClient {
         if (!isEnabled()) {
             return Optional.empty();
         }
+        count(ModelUsageMeter.CHAT);
 
         Map<String, Object> requestBody = chatRequestBody(List.of(
                 Map.of("role", "user", "content", userPrompt)
@@ -129,6 +145,7 @@ public class OpenAiCompatibleLlmClient {
         if (!isEnabled()) {
             return Optional.empty();
         }
+        count(ModelUsageMeter.CHAT);
 
         Map<String, Object> requestBody = chatRequestBody(List.of(
                 Map.of("role", "system", "content", systemPrompt),
@@ -165,6 +182,7 @@ public class OpenAiCompatibleLlmClient {
         if (!isEmbeddingEnabled() || input == null || input.isBlank()) {
             return Optional.empty();
         }
+        count(ModelUsageMeter.EMBEDDING);
 
         Map<String, Object> requestBody = Map.of(
                 "model", embeddingModel,
@@ -212,6 +230,7 @@ public class OpenAiCompatibleLlmClient {
                 || inputs.stream().anyMatch(input -> input == null || input.isBlank())) {
             return Optional.empty();
         }
+        count(ModelUsageMeter.EMBEDDING);
         try {
             JsonNode response = embeddingRestClient.post()
                     .uri("/embeddings")

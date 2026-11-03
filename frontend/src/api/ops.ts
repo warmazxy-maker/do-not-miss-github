@@ -261,6 +261,16 @@ function query(params: Record<string, string | number | undefined>) {
   return text ? `?${text}` : "";
 }
 
+/** D4 ops card. */
+export interface RateLimitOverview {
+  date: string;
+  chatCalls: number;
+  embeddingCalls: number;
+  dailyModelBudget: number;
+  rejections: { code: string; label: string; count: number }[];
+  mostRejected: { code: string; label: string; subject: string; count: number }[];
+}
+
 export interface AuditLogRow {
   id: number;
   userId: string | null;
@@ -304,6 +314,7 @@ export const opsApi = {
   users: () => api.get<OpsUser[]>("/api/ops/users"),
   auditLogs: (filters: { outcome?: string; userId?: string; limit?: number }) =>
     api.get<AuditLogRow[]>(`/api/ops/audit-logs${query(filters)}`),
+  rateLimits: () => api.get<RateLimitOverview>("/api/ops/rate-limits"),
   operators: () => api.get<OperatorAccount[]>("/api/ops/operators"),
   createOperator: (username: string) =>
     api.post<{ publicUserId: string; username: string; initialPassword: string }>("/api/ops/operators", { username }),

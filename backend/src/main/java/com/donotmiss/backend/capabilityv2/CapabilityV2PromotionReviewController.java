@@ -1,5 +1,7 @@
 package com.donotmiss.backend.capabilityv2;
 
+import com.donotmiss.backend.ratelimit.RateLimitTier;
+import com.donotmiss.backend.ratelimit.RateLimited;
 import com.donotmiss.backend.access.Permission;
 import com.donotmiss.backend.access.RequirePermission;
 import com.donotmiss.backend.abilityscore.JudgeDtos;
@@ -27,11 +29,13 @@ public class CapabilityV2PromotionReviewController {
     }
 
     @PostMapping("/buckets/{bucketId}/promotion-review")
+    @RateLimited(RateLimitTier.AI_LIGHT)
     public CapabilityPromotionReviews.View start(@PathVariable Long bucketId, HttpServletRequest request) {
         return reviewService.start(currentUser.id(request), bucketId);
     }
 
     @PostMapping("/promotion-reviews/{reviewId}/submit")
+    @RateLimited(RateLimitTier.AI_LIGHT)
     public CapabilityPromotionReviews.View submit(@PathVariable Long reviewId,
                                                   @Valid @RequestBody JudgeDtos.SubmitRequest body,
                                                   HttpServletRequest request) {

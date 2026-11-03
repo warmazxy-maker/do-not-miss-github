@@ -1,5 +1,7 @@
 server:
   port: ${SERVER_PORT:8080}
+  # D4: behind nginx, read the client IP from X-Forwarded-For (trusted only from private-network proxies).
+  forward-headers-strategy: ${SERVER_FORWARD_HEADERS_STRATEGY:native}
 
 spring:
   config:
@@ -54,6 +56,9 @@ app:
     # Master switch for the operations console (/api/ops, frontend /ops). Who may use it is decided by
     # role permissions (D1); this switch can close it for everyone without touching any role.
     enabled: ${OPS_CONSOLE_ENABLED:false}
+  rate-limit:
+    # D4: shown on the ops console next to today's model call count. Display only; nothing is paused.
+    daily-model-budget: ${AI_DAILY_MODEL_BUDGET:2000}
   admin-zero:
     # Password of the super administrator created at startup (D1). Keep it only in the local .env.
     password: ${ADMIN_ZERO_PASSWORD:}

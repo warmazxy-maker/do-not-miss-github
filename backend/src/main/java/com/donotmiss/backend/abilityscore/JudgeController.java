@@ -1,5 +1,7 @@
 package com.donotmiss.backend.abilityscore;
 
+import com.donotmiss.backend.ratelimit.RateLimitTier;
+import com.donotmiss.backend.ratelimit.RateLimited;
 import com.donotmiss.backend.access.Permission;
 import com.donotmiss.backend.access.RequirePermission;
 import com.donotmiss.backend.common.CurrentUser;
@@ -38,12 +40,14 @@ public class JudgeController {
     }
 
     @PostMapping("/{judgeId}/start")
+    @RateLimited(RateLimitTier.AI_LIGHT)
     public JudgeDtos.AssessmentResponse start(@PathVariable Long judgeId,
                                               HttpServletRequest request) {
         return judgeService.start(currentUser.id(request), judgeId);
     }
 
     @PostMapping("/{judgeId}/submit")
+    @RateLimited(RateLimitTier.AI_LIGHT)
     public JudgeDtos.AssessmentResponse submit(@PathVariable Long judgeId,
                                                @Valid @RequestBody JudgeDtos.SubmitRequest body,
                                                HttpServletRequest request) {

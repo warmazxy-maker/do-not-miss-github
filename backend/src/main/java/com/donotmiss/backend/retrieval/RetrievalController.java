@@ -1,5 +1,7 @@
 package com.donotmiss.backend.retrieval;
 
+import com.donotmiss.backend.ratelimit.RateLimitTier;
+import com.donotmiss.backend.ratelimit.RateLimited;
 import com.donotmiss.backend.common.CurrentUser;
 import com.donotmiss.backend.access.Permission;
 import com.donotmiss.backend.access.RequirePermission;
@@ -26,6 +28,7 @@ public class RetrievalController {
     }
 
     @PostMapping("/trace")
+    @RateLimited(RateLimitTier.AI_LIGHT)
     public RetrievalDtos.TraceResponse trace(@Valid @RequestBody RetrievalDtos.TraceRequest request,
                                              HttpServletRequest servletRequest) {
         return retrievalTraceService.trace(currentUser.id(servletRequest), request);

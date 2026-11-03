@@ -7,6 +7,7 @@ import org.aspectj.lang.annotation.Around;
 import org.aspectj.lang.annotation.Aspect;
 import org.aspectj.lang.reflect.MethodSignature;
 import org.springframework.core.annotation.AnnotatedElementUtils;
+import org.springframework.core.annotation.Order;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Component;
 import org.springframework.web.context.request.RequestContextHolder;
@@ -27,9 +28,12 @@ import java.util.stream.Collectors;
  * </ol>
  * Authorisation that depends on the data (e.g. "only the publisher of this event") cannot be
  * expressed by an annotation and stays in code, see {@code EventReviewAccess}.
+ *
+ * <p>Ordered before {@code RateLimitAspect}: a caller without permission gets 403 and is not counted.</p>
  */
 @Aspect
 @Component
+@Order(10)
 public class PermissionAspect {
     private static final Set<String> WRITE_METHODS = Set.of("POST", "PUT", "PATCH", "DELETE");
 

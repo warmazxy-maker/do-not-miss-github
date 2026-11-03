@@ -1,6 +1,9 @@
 package com.donotmiss.backend.auth;
 
 import com.donotmiss.backend.common.CurrentUser;
+import com.donotmiss.backend.ratelimit.ClientIp;
+import com.donotmiss.backend.ratelimit.RateLimitTier;
+import com.donotmiss.backend.ratelimit.RateLimited;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import org.springframework.web.bind.annotation.*;
@@ -17,13 +20,15 @@ public class AuthController {
     }
 
     @PostMapping("/register")
+    @RateLimited(RateLimitTier.REGISTER)
     public AuthDtos.AuthResponse register(@Valid @RequestBody AuthDtos.RegisterRequest request) {
         return authService.register(request);
     }
 
     @PostMapping("/login")
-    public AuthDtos.AuthResponse login(@Valid @RequestBody AuthDtos.LoginRequest request) {
-        return authService.login(request);
+    @RateLimited(RateLimitTier.LOGIN)
+    public AuthDtos.AuthResponse login(@Valid @RequestBody AuthDtos.LoginRequest request, HttpServletRequest servletRequest) {
+        return authService.login(request, ClientIp.of(servletRequest));
     }
 
     @GetMapping("/me")

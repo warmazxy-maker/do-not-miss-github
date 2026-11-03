@@ -2,6 +2,9 @@ package com.donotmiss.backend.event;
 
 import com.donotmiss.backend.mq.DomainEventMessages;
 import com.donotmiss.backend.mq.DomainEventPublisher;
+import com.donotmiss.backend.ratelimit.RateLimitTier;
+import com.donotmiss.backend.ratelimit.RateLimitedException;
+import com.donotmiss.backend.ratelimit.RateLimiter;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
@@ -18,6 +21,7 @@ class EventLifecycleServiceTest {
     private EventRepository eventRepository;
     private EventStatusHistoryRepository historyRepository;
     private DomainEventPublisher publisher;
+    private RateLimiter rateLimiter;
     private EventLifecycleService service;
 
     @BeforeEach
@@ -26,7 +30,8 @@ class EventLifecycleServiceTest {
         historyRepository = mock(EventStatusHistoryRepository.class);
         publisher = mock(DomainEventPublisher.class);
         when(eventRepository.save(any())).thenAnswer(invocation -> invocation.getArgument(0));
-        service = new EventLifecycleService(eventRepository, historyRepository, publisher);
+        rateLimiter = mock(RateLimiter.class);
+        service = new EventLifecycleService(eventRepository, historyRepository, publisher, rateLimiter);
     }
 
     private static EventEntity event(EventReviewStatus status) {
@@ -56,6 +61,31 @@ class EventLifecycleServiceTest {
         assertEquals(EventReviewStatus.DRAFT, row.getFromStatus());
         assertEquals(EventReviewStatus.PENDING_REVIEW, row.getToStatus());
         assertEquals(EventActorType.ORGANIZER, row.getActorType());
+    }
+
+    @Test
+    void onlyAnOrganiserSendingToTheAiIsCharged() {
+        service.transition(event(EventReviewStatus.DRAFT), EventLifecycleAction.SUBMIT, EventActor.organizer("org-1"), null);
+        verify(rateLimiter).consume(RateLimitTier.EVENT_SUBMIT, "org-1");
+
+        EventEntity manual = event(EventReviewStatus.NEEDS_REVISION);
+        manual.setAiRevisionCount(EventLifecycleRules.AI_REVISION_LIMIT);
+        service.transition(manual, EventLifecycleAction.SUBMIT, EventActor.organizer("org-1"), null);
+        service.transition(event(EventReviewStatus.NEEDS_REVISION), EventLifecycleAction.REANALYZE, EventActor.operator("op-1"), null);
+        verify(rateLimiter, times(1)).consume(any(), any());
+    }
+
+    @Test
+    void aFullQuotaStopsTheSubmitBeforeAnythingChanges() {
+        doThrow(new RateLimitedException("今天的提交活动审核次数已用完", 60))
+                .when(rateLimiter).consume(RateLimitTier.EVENT_SUBMIT, "org-1");
+        EventEntity event = event(EventReviewStatus.DRAFT);
+
+        assertThrows(RateLimitedException.class,
+                () -> service.transition(event, EventLifecycleAction.SUBMIT, EventActor.organizer("org-1"), null));
+        assertEquals(EventReviewStatus.DRAFT, event.getReviewStatus());
+        verify(publisher, never()).publishEventQualityAnalysis(anyLong());
+        verify(historyRepository, never()).save(any());
     }
 
     @Test

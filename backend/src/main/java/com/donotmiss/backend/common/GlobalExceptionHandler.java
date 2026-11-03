@@ -4,6 +4,8 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.ConstraintViolationException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import com.donotmiss.backend.ratelimit.RateLimitedException;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;
@@ -22,6 +24,14 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(ApiException.class)
     public ResponseEntity<Map<String, Object>> handleApiException(ApiException exception) {
         return ResponseEntity.status(exception.getStatus()).body(body(exception.getStatus(), exception.getMessage()));
+    }
+
+    /** D4: 429 tells the client how long to wait in the standard header as well as in the message. */
+    @ExceptionHandler(RateLimitedException.class)
+    public ResponseEntity<Map<String, Object>> handleRateLimited(RateLimitedException exception) {
+        return ResponseEntity.status(exception.getStatus())
+                .header(HttpHeaders.RETRY_AFTER, String.valueOf(exception.getRetryAfterSeconds()))
+                .body(body(exception.getStatus(), exception.getMessage()));
     }
 
     @ExceptionHandler(MethodArgumentNotValidException.class)

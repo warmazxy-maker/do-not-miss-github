@@ -3,6 +3,7 @@ package com.donotmiss.backend.auth;
 import com.donotmiss.backend.access.RoleEntity;
 import com.donotmiss.backend.access.RoleRepository;
 import com.donotmiss.backend.common.ApiException;
+import com.donotmiss.backend.ratelimit.LoginGuard;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
@@ -23,12 +24,15 @@ public class AuthService {
     private final UserRepository userRepository;
     private final RoleRepository roleRepository;
     private final StringRedisTemplate redisTemplate;
+    private final LoginGuard loginGuard;
     private final BCryptPasswordEncoder passwordEncoder = new BCryptPasswordEncoder();
 
-    public AuthService(UserRepository userRepository, RoleRepository roleRepository, StringRedisTemplate redisTemplate) {
+    public AuthService(UserRepository userRepository, RoleRepository roleRepository, StringRedisTemplate redisTemplate,
+                       LoginGuard loginGuard) {
         this.userRepository = userRepository;
         this.roleRepository = roleRepository;
         this.redisTemplate = redisTemplate;
+        this.loginGuard = loginGuard;
     }
 
     @Transactional
@@ -67,16 +71,17 @@ public class AuthService {
         return role.getCode();
     }
 
+    /** D4: a wrong password counts towards the account + IP lock, an unknown account too. */
     @Transactional(readOnly = true)
-    public AuthDtos.AuthResponse login(AuthDtos.LoginRequest request) {
-        UserEntity user = findByAccount(request.account())
-                .orElseThrow(() -> new ApiException(HttpStatus.UNAUTHORIZED, "账号或密码错误"));
-
-        if (!matchesPassword(request.password(), user.getPasswordHash())) {
+    public AuthDtos.AuthResponse login(AuthDtos.LoginRequest request, String clientIp) {
+        loginGuard.checkNotLocked(request.account(), clientIp);
+        Optional<UserEntity> user = findByAccount(request.account());
+        if (user.isEmpty() || !matchesPassword(request.password(), user.get().getPasswordHash())) {
+            loginGuard.recordFailure(request.account(), clientIp);
             throw new ApiException(HttpStatus.UNAUTHORIZED, "账号或密码错误");
         }
-
-        return issueToken(user);
+        loginGuard.recordSuccess(request.account(), clientIp);
+        return issueToken(user.get());
     }
 
     public void logout(String token) {

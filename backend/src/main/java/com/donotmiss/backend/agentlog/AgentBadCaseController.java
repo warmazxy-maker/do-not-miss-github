@@ -1,5 +1,7 @@
 package com.donotmiss.backend.agentlog;
 
+import com.donotmiss.backend.ratelimit.RateLimitTier;
+import com.donotmiss.backend.ratelimit.RateLimited;
 import com.donotmiss.backend.common.CurrentUser;
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.web.bind.annotation.*;
@@ -18,6 +20,7 @@ public class AgentBadCaseController {
     }
 
     @PostMapping
+    @RateLimited(RateLimitTier.AI_LIGHT)
     public AgentBadCaseDtos.Response create(@RequestBody AgentBadCaseDtos.CreateRequest request,
                                             HttpServletRequest servletRequest) {
         return badCaseService.create(currentUser.id(servletRequest), request);

@@ -1,5 +1,7 @@
 package com.donotmiss.backend.abilityscore;
 
+import com.donotmiss.backend.ratelimit.RateLimitTier;
+import com.donotmiss.backend.ratelimit.RateLimited;
 import com.donotmiss.backend.access.Permission;
 import com.donotmiss.backend.access.RequirePermission;
 import com.donotmiss.backend.common.CurrentUser;
@@ -41,6 +43,7 @@ public class AbilityScoringController {
     }
 
     @PostMapping("/records/{recordId}/assess")
+    @RateLimited(RateLimitTier.AI_LIGHT)
     public EvidenceAssessmentDtos.AssessmentResponse assess(@PathVariable Long recordId,
                                                             HttpServletRequest request) {
         return assessmentAgentService.assessRecord(recordId, currentUser.id(request));

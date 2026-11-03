@@ -45,7 +45,9 @@ public class OpsHealthService {
     static final List<String[]> REDIS_PREFIXES = List.of(
             new String[]{"auth:session:", "登录会话（只计数，不展示键名）"},
             new String[]{"reservation:qr:", "预约签到二维码"},
-            new String[]{"search:session:", "AI 搜索多轮上下文"}
+            new String[]{"search:session:", "AI 搜索多轮上下文"},
+            new String[]{"rl:", "限流计数（D4）"},
+            new String[]{"ai:calls:", "每日模型调用计数（D4）"}
     );
     private static final int REDIS_SCAN_CAP = 10_000;
     private static final Duration HTTP_TIMEOUT = Duration.ofSeconds(3);

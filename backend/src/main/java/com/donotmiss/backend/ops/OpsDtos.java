@@ -310,4 +310,21 @@ public final class OpsDtos {
             Instant createdAt
     ) {
     }
+
+    /** D4: today's model usage against the display-only budget, and who was refused. */
+    public record RateLimitOverview(
+            String date,
+            long chatCalls,
+            long embeddingCalls,
+            long dailyModelBudget,
+            List<RateLimitCount> rejections,
+            List<RateLimitSubject> mostRejected
+    ) {
+    }
+
+    public record RateLimitCount(String code, String label, long count) {
+    }
+
+    public record RateLimitSubject(String code, String label, String subject, long count) {
+    }
 }

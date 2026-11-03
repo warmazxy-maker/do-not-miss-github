@@ -2,6 +2,8 @@ package com.donotmiss.backend.event;
 
 import com.donotmiss.backend.mq.DomainEventMessages;
 import com.donotmiss.backend.mq.DomainEventPublisher;
+import com.donotmiss.backend.ratelimit.RateLimitTier;
+import com.donotmiss.backend.ratelimit.RateLimiter;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -27,13 +29,16 @@ public class EventLifecycleService {
     private final EventRepository eventRepository;
     private final EventStatusHistoryRepository historyRepository;
     private final DomainEventPublisher domainEventPublisher;
+    private final RateLimiter rateLimiter;
 
     public EventLifecycleService(EventRepository eventRepository,
                                  EventStatusHistoryRepository historyRepository,
-                                 DomainEventPublisher domainEventPublisher) {
+                                 DomainEventPublisher domainEventPublisher,
+                                 RateLimiter rateLimiter) {
         this.eventRepository = eventRepository;
         this.historyRepository = historyRepository;
         this.domainEventPublisher = domainEventPublisher;
+        this.rateLimiter = rateLimiter;
     }
 
     /** First history row of a new event (it starts as DRAFT; nothing else happens). */
@@ -49,6 +54,11 @@ public class EventLifecycleService {
         EventReviewStatus from = event.getReviewStatus();
         EventReviewStatus to = EventLifecycleRules.check(event, action, actor, reason, now);
         String note = reason == null || reason.isBlank() ? null : reason.trim();
+        if (to == EventReviewStatus.PENDING_REVIEW && actor.type() == EventActorType.ORGANIZER
+                && EventLifecycleRules.routeFor(event, action, actor) == EventReviewRoute.AI) {
+            // D4: only the step that really sends the event to the AI is charged, not saving a draft.
+            rateLimiter.consume(RateLimitTier.EVENT_SUBMIT, actor.userId());
+        }
 
         if (from == EventReviewStatus.OFFLINE && to != EventReviewStatus.OFFLINE) {
             event.setOfflineReasonCode(null);

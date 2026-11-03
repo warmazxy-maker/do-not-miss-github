@@ -1,5 +1,7 @@
 package com.donotmiss.backend.guide;
 
+import com.donotmiss.backend.ratelimit.RateLimitTier;
+import com.donotmiss.backend.ratelimit.RateLimited;
 import com.donotmiss.backend.access.Permission;
 import com.donotmiss.backend.access.RequirePermission;
 import com.donotmiss.backend.ai.AiDtos;
@@ -37,6 +39,7 @@ public class GuideController {
     }
 
     @PostMapping("/actions")
+    @RateLimited(RateLimitTier.AI_LIGHT)
     public GuideDtos.GuideDecisionResponse decideAction(@Valid @RequestBody GuideDtos.GuideChatRequest request,
                                                         HttpServletRequest servletRequest) {
         String userId = currentUser.id(servletRequest);
@@ -56,6 +59,7 @@ public class GuideController {
     }
 
     @PostMapping("/chat")
+    @RateLimited(RateLimitTier.AI_HEAVY)
     public GuideDtos.GuideChatResponse chat(@Valid @RequestBody GuideDtos.GuideChatRequest request,
                                             HttpServletRequest servletRequest) {
         String userId = currentUser.id(servletRequest);

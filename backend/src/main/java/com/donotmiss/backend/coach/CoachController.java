@@ -1,5 +1,7 @@
 package com.donotmiss.backend.coach;
 
+import com.donotmiss.backend.ratelimit.RateLimitTier;
+import com.donotmiss.backend.ratelimit.RateLimited;
 import com.donotmiss.backend.access.Permission;
 import com.donotmiss.backend.access.RequirePermission;
 import com.donotmiss.backend.common.CurrentUser;
@@ -29,6 +31,7 @@ public class CoachController {
     }
 
     @PostMapping("/chat")
+    @RateLimited(RateLimitTier.AI_LIGHT)
     public CoachDtos.ChatResponse chat(@Valid @RequestBody CoachDtos.ChatRequest request,
                                        HttpServletRequest servletRequest) {
         return coachService.chat(currentUser.id(servletRequest), request);
@@ -45,6 +48,7 @@ public class CoachController {
     }
 
     @PostMapping("/logs/generate")
+    @RateLimited(RateLimitTier.AI_LIGHT)
     public CoachDtos.CoachLogResponse generateLog(@RequestBody(required = false) CoachDtos.GenerateLogRequest request,
                                                   HttpServletRequest servletRequest) {
         CoachDtos.GenerateLogRequest body = request == null ? new CoachDtos.GenerateLogRequest(null) : request;

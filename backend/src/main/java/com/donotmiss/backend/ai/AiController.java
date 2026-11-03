@@ -1,5 +1,7 @@
 package com.donotmiss.backend.ai;
 
+import com.donotmiss.backend.ratelimit.RateLimitTier;
+import com.donotmiss.backend.ratelimit.RateLimited;
 import com.donotmiss.backend.access.Permission;
 import com.donotmiss.backend.access.RequirePermission;
 import com.donotmiss.backend.common.CurrentUser;
@@ -21,18 +23,21 @@ public class AiController {
     }
 
     @PostMapping("/event-recommendations")
+    @RateLimited(RateLimitTier.AI_HEAVY)
     public AiDtos.EventRecommendationResponse recommendEvents(@Valid @RequestBody AiDtos.EventRecommendationRequest request,
                                                               HttpServletRequest servletRequest) {
         return aiService.recommendEvents(currentUser.id(servletRequest), request);
     }
 
     @PostMapping("/action-plans")
+    @RateLimited(RateLimitTier.AI_HEAVY)
     public AiDtos.PlanRecommendationResponse recommendPlans(@Valid @RequestBody AiDtos.PlanRecommendationRequest request,
                                                             HttpServletRequest servletRequest) {
         return aiService.recommendPlans(currentUser.id(servletRequest), request);
     }
 
     @PostMapping("/self-analysis")
+    @RateLimited(RateLimitTier.AI_LIGHT)
     public AiDtos.SelfAnalysisResponse selfAnalysis(HttpServletRequest servletRequest) {
         return aiService.selfAnalysis(currentUser.id(servletRequest));
     }

@@ -1,5 +1,7 @@
 package com.donotmiss.backend.resumeinterview;
 
+import com.donotmiss.backend.ratelimit.RateLimitTier;
+import com.donotmiss.backend.ratelimit.RateLimited;
 import com.donotmiss.backend.access.Permission;
 import com.donotmiss.backend.access.RequirePermission;
 import com.donotmiss.backend.common.CurrentUser;
@@ -54,18 +56,21 @@ public class ResumeInterviewController {
     }
 
     @PostMapping("/{sessionId}/parse")
+    @RateLimited(RateLimitTier.AI_LIGHT)
     public ResumeInterviewDtos.ResumeAssessmentDetailResponse parseResume(@PathVariable Long sessionId,
                                                                           HttpServletRequest request) {
         return resumeParserAgentService.parse(currentUser.id(request), sessionId);
     }
 
     @PostMapping("/{sessionId}/questions")
+    @RateLimited(RateLimitTier.AI_LIGHT)
     public ResumeInterviewDtos.ResumeAssessmentDetailResponse generateQuestions(@PathVariable Long sessionId,
                                                                                 HttpServletRequest request) {
         return resumeInterviewerAgentService.generateQuestions(currentUser.id(request), sessionId);
     }
 
     @PostMapping("/{sessionId}/questions/{questionId}/answer")
+    @RateLimited(RateLimitTier.AI_LIGHT)
     public ResumeInterviewDtos.ResumeAssessmentDetailResponse answerQuestion(
             @PathVariable Long sessionId,
             @PathVariable Long questionId,

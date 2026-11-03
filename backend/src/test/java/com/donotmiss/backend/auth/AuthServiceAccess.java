@@ -8,6 +8,6 @@ public final class AuthServiceAccess {
     }
 
     public static String registrableRole(RoleRepository roleRepository, String requested) {
-        return new AuthService(null, roleRepository, null).registrableRole(requested);
+        return new AuthService(null, roleRepository, null, null).registrableRole(requested);
     }
 }
