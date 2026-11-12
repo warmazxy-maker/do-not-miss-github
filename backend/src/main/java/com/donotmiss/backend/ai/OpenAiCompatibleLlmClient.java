@@ -178,6 +178,109 @@ public class OpenAiCompatibleLlmClient {
         }
     }
 
+    /**
+     * F0: one round of a chat with native tool calling. Unlike the other methods this one does not
+     * fall back silently: the agent loop must tell the student honestly when the model is down, so
+     * every failure becomes a {@link ToolChat.UnavailableException} with a plain-language message.
+     * An empty {@code tools} list asks for a final text answer.
+     */
+    public ToolChat.Turn chatWithTools(List<ToolChat.Message> messages, List<ToolChat.Tool> tools) {
+        if (!isEnabled()) {
+            throw new ToolChat.UnavailableException("没有配置真实的 AI 模型（当前是本地模拟模式）");
+        }
+        count(ModelUsageMeter.CHAT);
+
+        Map<String, Object> requestBody = new LinkedHashMap<>();
+        requestBody.put("model", model);
+        requestBody.put("temperature", 0.2);
+        requestBody.put("messages", messages.stream().map(this::toWire).toList());
+        if (tools != null && !tools.isEmpty()) {
+            requestBody.put("tools", tools.stream().map(tool -> Map.of(
+                    "type", "function",
+                    "function", Map.of(
+                            "name", tool.name(),
+                            "description", tool.description(),
+                            "parameters", tool.parameters()))).toList());
+        }
+        if (provider.toLowerCase(Locale.ROOT).contains("qwen")) {
+            requestBody.put("enable_thinking", qwenThinkingEnabled);
+        }
+
+        JsonNode response;
+        try {
+            response = restClient.post()
+                    .uri("/chat/completions")
+                    .header(HttpHeaders.AUTHORIZATION, "Bearer " + apiKey)
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .body(requestBody)
+                    .retrieve()
+                    .body(JsonNode.class);
+        } catch (RestClientException ex) {
+            log.warn("Tool-calling chat request failed: {}", ex.getMessage());
+            throw new ToolChat.UnavailableException("AI 模型暂时连不上（" + shortReason(ex) + "）", ex);
+        }
+        return parseTurn(response);
+    }
+
+    /** Package-private so the wire format can be tested without a network. */
+    static ToolChat.Turn parseTurn(JsonNode response) {
+        JsonNode choice = response == null ? null : response.path("choices").path(0);
+        if (choice == null || choice.isMissingNode()) {
+            throw new ToolChat.UnavailableException("AI 模型返回了空结果");
+        }
+        JsonNode message = choice.path("message");
+        List<ToolChat.Call> calls = new ArrayList<>();
+        for (JsonNode call : message.path("tool_calls")) {
+            JsonNode function = call.path("function");
+            String name = function.path("name").asText("");
+            if (name.isBlank()) {
+                continue;
+            }
+            JsonNode arguments = function.path("arguments");
+            String argumentsJson = arguments.isTextual() ? arguments.asText() : arguments.toString();
+            String id = call.path("id").asText("");
+            calls.add(new ToolChat.Call(id.isBlank() ? "call_" + calls.size() : id, name,
+                    argumentsJson == null || argumentsJson.isBlank() ? "{}" : argumentsJson));
+        }
+        String content = message.path("content").isTextual() ? message.path("content").asText().trim() : "";
+        if (content.isEmpty() && calls.isEmpty()) {
+            throw new ToolChat.UnavailableException("AI 模型这次没有给出任何内容");
+        }
+        return new ToolChat.Turn(content, List.copyOf(calls), choice.path("finish_reason").asText(""));
+    }
+
+    private Map<String, Object> toWire(ToolChat.Message message) {
+        Map<String, Object> wire = new LinkedHashMap<>();
+        wire.put("role", message.role().name().toLowerCase(Locale.ROOT));
+        wire.put("content", message.content() == null ? "" : message.content());
+        if (message.role() == ToolChat.Role.ASSISTANT && !message.toolCalls().isEmpty()) {
+            wire.put("tool_calls", message.toolCalls().stream().map(call -> Map.of(
+                    "id", call.id(),
+                    "type", "function",
+                    "function", Map.of("name", call.name(), "arguments", call.argumentsJson()))).toList());
+        }
+        if (message.role() == ToolChat.Role.TOOL) {
+            wire.put("tool_call_id", message.toolCallId());
+        }
+        return wire;
+    }
+
+    /** Shown to students, so it never carries the gateway address or response body. */
+    private static String shortReason(RestClientException ex) {
+        if (ex instanceof org.springframework.web.client.RestClientResponseException response) {
+            return "模型服务返回错误 " + response.getStatusCode().value();
+        }
+        String text = ex.getMessage() == null ? "" : ex.getMessage().toLowerCase(Locale.ROOT);
+        if (text.contains("timed out") || text.contains("timeout")) {
+            return "请求超时";
+        }
+        if (text.contains("extracting response")) {
+            // Seen on 2026-11-12: the gateway answered with a non-JSON error page.
+            return "模型服务返回了无法识别的内容";
+        }
+        return "网络错误";
+    }
+
     public Optional<List<Double>> embedding(String input) {
         if (!isEmbeddingEnabled() || input == null || input.isBlank()) {
             return Optional.empty();

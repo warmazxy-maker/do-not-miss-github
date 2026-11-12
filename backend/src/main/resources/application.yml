@@ -59,6 +59,9 @@ app:
   rate-limit:
     # D4: shown on the ops console next to today's model call count. Display only; nothing is paused.
     daily-model-budget: ${AI_DAILY_MODEL_BUDGET:2000}
+  agent:
+    # F0: comma-separated tool names to switch off without a code change (restart needed).
+    disabled-tools: ${AGENT_DISABLED_TOOLS:}
   admin-zero:
     # Password of the super administrator created at startup (D1). Keep it only in the local .env.
     password: ${ADMIN_ZERO_PASSWORD:}

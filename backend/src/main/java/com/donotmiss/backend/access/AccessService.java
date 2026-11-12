@@ -67,6 +67,19 @@ public class AccessService {
         }
     }
 
+    /**
+     * F0: permissions of a user by id, for work that runs on a user's behalf outside their own
+     * request (agent tools). Unknown users have none.
+     */
+    public Set<Permission> permissionsOfUser(String userId) {
+        if (userId == null || userId.isBlank()) {
+            return Set.of();
+        }
+        return userRepository.findByPublicUserId(userId)
+                .map(user -> permissionsOf(user.getRole()))
+                .orElse(Set.of());
+    }
+
     public Set<Permission> permissionsOf(String roleCode) {
         if (roleCode == null) {
             return Set.of();

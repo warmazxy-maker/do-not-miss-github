@@ -13,6 +13,11 @@ import java.util.List;
 public enum RateLimitTier {
     /** Several model calls per request: action plans, guide chat, event recommendations. */
     AI_HEAVY("重 AI 功能", Subject.USER, true, Window.minutes(3), Window.days(30)),
+    /**
+     * F0: one user turn of a tool-using agent (several model rounds plus tools). Tools that call a
+     * model are charged again under their own tier.
+     */
+    AGENT_TURN("Agent 对话", Subject.USER, true, Window.minutes(5), Window.days(60)),
     /** About one model call per request. */
     AI_LIGHT("AI 功能", Subject.USER, true, Window.minutes(10), Window.days(100)),
     /** An organiser sending an event to the AI review. Charged in the lifecycle, not on an endpoint. */

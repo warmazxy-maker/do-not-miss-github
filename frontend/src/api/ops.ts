@@ -262,6 +262,62 @@ function query(params: Record<string, string | number | undefined>) {
 }
 
 /** D4 ops card. */
+/** F0: one registered agent tool. */
+export interface AgentToolRow {
+  name: string;
+  version: number;
+  title: string;
+  description: string;
+  risk: Record<string, string>;
+  permission: string;
+  rateLimitTier: string | null;
+  timeoutSeconds: number;
+  enabled: boolean;
+  usedBy: string[];
+  parameters: unknown;
+}
+
+export interface AgentSpecRow {
+  name: string;
+  title: string;
+  promptVersion: string;
+  maxSteps: number;
+  rateLimitTier: string;
+  tools: string[];
+}
+
+export interface AgentToolCatalog {
+  tools: AgentToolRow[];
+  agents: AgentSpecRow[];
+}
+
+export interface AgentToolTrace {
+  round: number;
+  toolName: string;
+  title: string;
+  argumentsJson: string;
+  status: "OK" | "ERROR" | "DENIED" | "PENDING_CONFIRMATION";
+  summaryForUser: string;
+  messageForModel: string | null;
+  data: unknown;
+  durationMillis: number;
+}
+
+export interface AgentPlaygroundResult {
+  agent: string;
+  username: string;
+  role: string;
+  reply: {
+    runId: number | null;
+    reply: string;
+    toolCalls: AgentToolTrace[];
+    notices: string[];
+    degraded: boolean;
+    modelRounds: number;
+    stopReason: "ANSWERED" | "STEP_LIMIT" | "TIME_LIMIT" | "MODEL_UNAVAILABLE";
+  };
+}
+
 export interface RateLimitOverview {
   date: string;
   chatCalls: number;
@@ -315,6 +371,9 @@ export const opsApi = {
   auditLogs: (filters: { outcome?: string; userId?: string; limit?: number }) =>
     api.get<AuditLogRow[]>(`/api/ops/audit-logs${query(filters)}`),
   rateLimits: () => api.get<RateLimitOverview>("/api/ops/rate-limits"),
+  agentTools: () => api.get<AgentToolCatalog>("/api/ops/agent-tools"),
+  agentPlayground: (agent: string, username: string, message: string) =>
+    api.post<AgentPlaygroundResult>("/api/ops/agent-tools/playground", { agent, username, message }),
   operators: () => api.get<OperatorAccount[]>("/api/ops/operators"),
   createOperator: (username: string) =>
     api.post<{ publicUserId: string; username: string; initialPassword: string }>("/api/ops/operators", { username }),

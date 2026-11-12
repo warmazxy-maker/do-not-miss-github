@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { Activity, ArrowLeft, Bot, ClipboardList, Database, GitBranch, LogOut, MessagesSquare, ScrollText, ThumbsUp, Timer, UserPlus } from "@lucide/vue";
+import { Activity, ArrowLeft, Bot, ClipboardList, Database, GitBranch, LogOut, MessagesSquare, ScrollText, ThumbsUp, Timer, UserPlus, Wrench, FlaskConical } from "@lucide/vue";
 import { computed, onMounted, ref } from "vue";
 import { RouterLink, useRouter } from "vue-router";
 
@@ -11,12 +11,14 @@ import OpsJourneys from "@/components/ops/OpsJourneys.vue";
 import OpsMessaging from "@/components/ops/OpsMessaging.vue";
 import OpsOverview from "@/components/ops/OpsOverview.vue";
 import OpsRateLimits from "@/components/ops/OpsRateLimits.vue";
+import OpsAgentTools from "@/components/ops/OpsAgentTools.vue";
+import OpsAgentPlayground from "@/components/ops/OpsAgentPlayground.vue";
 import OpsRecommendations from "@/components/ops/OpsRecommendations.vue";
 import OpsStorage from "@/components/ops/OpsStorage.vue";
 import { useAuthStore } from "@/stores/auth";
 import "@/styles/ops.css";
 
-type TabKey = "overview" | "journeys" | "agents" | "recommendations" | "messaging" | "storage" | "audit" | "rateLimits" | "operators";
+type TabKey = "overview" | "journeys" | "agents" | "recommendations" | "messaging" | "storage" | "audit" | "rateLimits" | "agentTools" | "playground" | "operators";
 
 const authStore = useAuthStore();
 const router = useRouter();
@@ -34,6 +36,8 @@ const allTabs: { key: TabKey; label: string; hint: string; icon: unknown }[] = [
   { key: "storage", label: "Redis / 数据库", hint: "键空间、连接池、迁移与表大小", icon: Database },
   { key: "audit", label: "审计日志", hint: "敏感操作和被拒绝的越权尝试（D1）", icon: ScrollText },
   { key: "rateLimits", label: "限流", hint: "今天的模型调用量和被限流的对象（D4）", icon: Timer },
+  { key: "agentTools", label: "工具", hint: "Agent 工具注册表：每个工具的风险、权限、被哪些 Agent 使用（F0）", icon: Wrench },
+  { key: "playground", label: "调试台", hint: "用某个用户的真实数据试跑 Agent，看它调了哪些工具（F0）", icon: FlaskConical },
   { key: "operators", label: "运营账号", hint: "只有超级管理员能创建运营账号（D3）", icon: UserPlus }
 ];
 // Creating operator accounts needs ROLE_ASSIGN, which only admin_zero has.
@@ -118,6 +122,8 @@ function openRun(runId: number) {
         <OpsMessaging v-else-if="active === 'messaging'" />
         <OpsAuditLogs v-else-if="active === 'audit'" />
         <OpsRateLimits v-else-if="active === 'rateLimits'" />
+        <OpsAgentTools v-else-if="active === 'agentTools'" />
+        <OpsAgentPlayground v-else-if="active === 'playground'" @open-run="openRun" />
         <OpsOperatorAccounts v-else-if="active === 'operators'" />
         <OpsStorage v-else />
       </main>

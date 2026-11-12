@@ -15,5 +15,9 @@ public enum AgentRunType {
     RESUME_INTERVIEWER,
     RESUME_ANSWER_EVALUATOR,
     RESUME_ABILITY_SCORING,
-    CAPABILITY_V2_PIPELINE
+    CAPABILITY_V2_PIPELINE,
+    /** F0: an admin trying an agent in the ops playground. */
+    AGENT_PLAYGROUND,
+    /** F1: a student talking to the master agent. */
+    MASTER_AGENT
 }
