@@ -16,6 +16,11 @@ public class QueryRewriteService {
     private static final int MAX_SKILLS = 6;
     private static final int MAX_CATEGORIES = 3;
     private static final int MAX_CONSTRAINTS = 5;
+    /** Constraints the keyword rules derive from location words; ignored once the model answered. */
+    private static final List<String> RULE_LOCATION_CONSTRAINTS = List.of("线上可参与");
+    /** Evidence of keyword guesses that no longer apply when the model decides location and benefit. */
+    private static final List<String> RULE_PREFERENCE_EVIDENCE = List.of(
+            "rule: location", "rule: online preference", "rule: money benefit", "rule: skill benefit");
     private static final List<String> AI_AGENT_TERMS = List.of(
             "ai", "agent", "llm", "大模型", "人工智能", "智能体", "tool calling", "rag"
     );
@@ -49,6 +54,7 @@ public class QueryRewriteService {
                 你同时负责短期检索上下文的动作选择：判断当前输入是延续上一轮、细化上一轮，还是开启新话题。
                 只抽取用户明确表达或规则兜底已经识别出的信息，不要把用户画像里的长期偏好强行写进本次查询。
                 不要编造活动，不要生成推荐结果，只做需求理解和检索条件抽取。
+                注意否定：学生说“不想参加线上”，preferredLocation 不能填“线上”，应填“线下”或留空，并在 constraints 里写“不要线上活动”。
                 contextDecision.action 只能取 MERGE、KEEP、CLEAR：
                 - MERGE：当前输入是在上一轮目标上补充地点、时间、难度、收益等条件，例如“最好线上”。
                 - KEEP：当前输入没有新增稳定条件，但仍然围绕上一轮搜索，例如“还有吗”“再推荐一点”。
@@ -62,9 +68,9 @@ public class QueryRewriteService {
                   "intentTags": ["意图标签，最多6个"],
                   "skills": ["技能词，最多6个"],
                   "preferredCategories": ["偏好类别，最多3个"],
-                  "preferredLocation": "地点偏好；没有明确地点就留空",
+                  "preferredLocation": "学生想要的地点，例如“大阪”“线下”“线上”；没有明确想要的地点就留空",
                   "benefitPreference": "skill/money/both/unknown",
-                  "constraints": ["时间、地点、难度等约束，最多5个"]
+                  "constraints": ["时间、地点、难度等约束，最多5个；学生明确不想要的也写进来，例如“不要线上活动”"]
                 }
                 """;
         String userPrompt = """
@@ -102,23 +108,36 @@ public class QueryRewriteService {
         LinkedHashSet<String> mergedIntentTags = merge(output.intentTags(), fallback.intentTags());
         LinkedHashSet<String> mergedSkills = merge(output.skills(), fallback.skills());
         LinkedHashSet<String> mergedCategories = merge(output.preferredCategories(), fallback.preferredCategories());
-        LinkedHashSet<String> mergedConstraints = merge(output.constraints(), fallback.constraints());
+        // Keyword rules may not decide location or benefit when the model answered: "不想参加线上"
+        // contains "线上" (PROBLEM_LOG 075). Their location-derived constraint is dropped too.
+        List<String> ruleConstraints = fallback.constraints().stream()
+                .filter(constraint -> !RULE_LOCATION_CONSTRAINTS.contains(constraint))
+                .toList();
+        LinkedHashSet<String> mergedConstraints = merge(output.constraints(), ruleConstraints);
 
         LinkedHashSet<String> intentTags = constrainTerms(need, mergedIntentTags, fallback.intentTags(), MAX_INTENT_TAGS);
         LinkedHashSet<String> skills = constrainTerms(need, mergedSkills, fallback.skills(), MAX_SKILLS);
         LinkedHashSet<String> categories = constrainTerms(need, mergedCategories, fallback.preferredCategories(), MAX_CATEGORIES);
-        LinkedHashSet<String> constraints = constrainTerms(need, mergedConstraints, fallback.constraints(), MAX_CONSTRAINTS);
+        // Constraints are the model's reading of the need, negations included ("不要线上活动" is not a
+        // substring of "不怎么想参加线上活动"), so they are not checked against the wording; only counted.
+        LinkedHashSet<String> constraints = modelConstraints(output.constraints(), ruleConstraints, MAX_CONSTRAINTS);
+        // The BM25 text only takes constraints worded like the need: a paraphrase dilutes the keywords,
+        // and a negation ("不要线上活动") would even boost what the student does not want.
+        LinkedHashSet<String> queryConstraints = constrainTerms(need, mergedConstraints, ruleConstraints, MAX_CONSTRAINTS);
 
         String rawGoal = firstPresent(output.goal(), fallback.goal(), nullToEmpty(need));
         String goal = constrainGoal(rawGoal, need, fallback.goal());
         String level = firstPresent(output.level(), fallback.level(), "unknown");
-        String location = constrainOptional(firstPresent(output.preferredLocation(), fallback.preferredLocation(), ""), need, fallback.preferredLocation());
-        String benefit = constrainBenefit(firstPresent(output.benefitPreference(), fallback.benefitPreference(), "unknown"), need, fallback.benefitPreference());
-        String rewrittenQuery = buildRewrittenQuery(need, goal, level, intentTags, skills, categories, location, benefit, constraints);
+        String location = constrainOptional(nullToEmpty(output.preferredLocation()), need, "");
+        String benefit = modelBenefit(output.benefitPreference());
+        String rewrittenQuery = buildRewrittenQuery(need, goal, level, intentTags, skills, categories, location, benefit, queryConstraints);
         RetrievalDtos.ContextDecision contextDecision = normalizeContextDecision(output.contextDecision(), fallback.contextDecision(), previousContext);
 
-        List<String> evidence = new ArrayList<>(fallback.evidence());
+        List<String> evidence = new ArrayList<>(fallback.evidence().stream()
+                .filter(item -> RULE_PREFERENCE_EVIDENCE.stream().noneMatch(item::startsWith))
+                .toList());
         evidence.add("llm query rewrite");
+        evidence.add("location and benefit from model only");
         evidence.add("context action: " + contextDecision.action());
         if (!intentTags.equals(mergedIntentTags)
                 || !skills.equals(mergedSkills)
@@ -296,7 +315,8 @@ public class QueryRewriteService {
                     previousContext.intentTags(),
                     previousContext.skills(),
                     previousContext.preferredCategories(),
-                    previousContext.preferredLocation(),
+                    // Not inherited: a location from an earlier turn may have been negated since (PROBLEM_LOG 075).
+                    current.preferredLocation(),
                     previousContext.benefitPreference(),
                     previousContext.constraints(),
                     decision,
@@ -310,7 +330,8 @@ public class QueryRewriteService {
         LinkedHashSet<String> constraints = merge(previousContext.constraints(), current.constraints());
         String goal = hasTopicSignals(current) ? current.goal() : previousContext.goal();
         String level = "unknown".equalsIgnoreCase(nullToEmpty(current.level())) ? previousContext.level() : current.level();
-        String location = firstPresent(current.preferredLocation(), previousContext.preferredLocation());
+        // Only this turn's location: inheriting one let "线上" stick for an hour (PROBLEM_LOG 075).
+        String location = nullToEmpty(current.preferredLocation());
         String benefit = "unknown".equalsIgnoreCase(nullToEmpty(current.benefitPreference()))
                 ? previousContext.benefitPreference()
                 : current.benefitPreference();
@@ -318,7 +339,9 @@ public class QueryRewriteService {
                 nullToEmpty(previousContext.rewrittenQuery()),
                 nullToEmpty(current.originalQuery())
         )).trim();
-        String rewrittenQuery = buildRewrittenQuery(combinedNeed, goal, level, intentTags, skills, categories, location, benefit, constraints);
+        // Same rule as a fresh rewrite: only constraints worded like the need go into the BM25 text.
+        String rewrittenQuery = buildRewrittenQuery(combinedNeed, goal, level, intentTags, skills, categories, location, benefit,
+                constrainTerms(combinedNeed, constraints, List.of(), MAX_CONSTRAINTS));
         List<String> evidence = new ArrayList<>(current.evidence());
         evidence.add("search session: merged previous context");
 
@@ -410,6 +433,24 @@ public class QueryRewriteService {
         return String.join(" ", terms.stream().filter(value -> value != null && !value.isBlank()).toList()).trim();
     }
 
+    /** The model's constraints; the rule ones only when the model gave none. */
+    private LinkedHashSet<String> modelConstraints(List<String> fromModel, List<String> fromRules, int max) {
+        LinkedHashSet<String> result = new LinkedHashSet<>();
+        List<String> source = fromModel == null || fromModel.stream().allMatch(value -> normalizeTerm(value).isBlank())
+                ? fromRules
+                : fromModel;
+        for (String value : source) {
+            String cleaned = normalizeTerm(value);
+            if (!cleaned.isBlank()) {
+                result.add(cleaned);
+            }
+            if (result.size() >= max) {
+                break;
+            }
+        }
+        return result;
+    }
+
     private LinkedHashSet<String> constrainTerms(String need, LinkedHashSet<String> values, List<String> fallback, int max) {
         LinkedHashSet<String> result = new LinkedHashSet<>();
         List<String> fallbackValues = fallback == null ? List.of() : fallback;
@@ -470,20 +511,10 @@ public class QueryRewriteService {
         return fallbackValue;
     }
 
-    private String constrainBenefit(String value, String need, String fallback) {
+    /** The model's benefit if it is one of the allowed values; no keyword override (PROBLEM_LOG 075). */
+    private String modelBenefit(String value) {
         String cleaned = normalizeTerm(value).toLowerCase(Locale.ROOT);
-        String fallbackValue = normalizeTerm(fallback).toLowerCase(Locale.ROOT);
-        if (!fallbackValue.isBlank() && !"unknown".equals(fallbackValue)) {
-            return fallbackValue;
-        }
-        String normalizedNeed = nullToEmpty(need).toLowerCase(Locale.ROOT);
-        if (matches(normalizedNeed, "报酬", "金钱", "兼职", "有偿", "钱")) {
-            return "money";
-        }
-        if (matches(normalizedNeed, "技能", "经验", "成长", "练习", "学习", "学", "提升")) {
-            return "skill";
-        }
-        return List.of("skill", "money", "both", "unknown").contains(cleaned) ? cleaned : "unknown";
+        return List.of("skill", "money", "both").contains(cleaned) ? cleaned : "unknown";
     }
 
     private boolean isSupportedTerm(String term, String sourceText, String need) {

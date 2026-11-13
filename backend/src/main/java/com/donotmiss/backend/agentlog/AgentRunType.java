@@ -19,5 +19,7 @@ public enum AgentRunType {
     /** F0: an admin trying an agent in the ops playground. */
     AGENT_PLAYGROUND,
     /** F1: a student talking to the master agent. */
-    MASTER_AGENT
+    MASTER_AGENT,
+    /** F1: older Tandem messages folded into the rolling summary. */
+    MASTER_CONTEXT_COMPRESSION
 }

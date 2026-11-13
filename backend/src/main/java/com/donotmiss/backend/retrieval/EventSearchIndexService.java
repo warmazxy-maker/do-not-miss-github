@@ -66,6 +66,54 @@ public class EventSearchIndexService {
         return enabled && vectorEnabled && llmClient.isEnabled();
     }
 
+    /**
+     * PROBLEM_LOG 075: what should be in the index (published, not ended) against what is.
+     * {@code missing}: searchable events the index lacks; {@code stale}: indexed ids that should not be there.
+     */
+    public record Consistency(int expected, int indexed, java.util.List<Long> missing, java.util.List<Long> stale) {
+        public boolean consistent() {
+            return missing.isEmpty() && stale.isEmpty();
+        }
+    }
+
+    /** Empty when search is disabled or the index cannot be read. */
+    public java.util.Optional<Consistency> checkConsistency() {
+        if (!enabled) {
+            return java.util.Optional.empty();
+        }
+        java.util.Set<Long> expected = eventRepository
+                .findByReviewStatusAndEndTimeAfter(EventReviewStatus.APPROVED, LocalDateTime.now()).stream()
+                .map(EventEntity::getId)
+                .collect(java.util.stream.Collectors.toCollection(java.util.TreeSet::new));
+        java.util.Set<Long> indexed = new java.util.TreeSet<>();
+        if (indexExists(indexName)) {
+            com.fasterxml.jackson.databind.JsonNode response;
+            try {
+                response = restClient.post()
+                        .uri("/{index}/_search", indexName)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .body(java.util.Map.of("size", 10_000, "_source", false, "query", java.util.Map.of("match_all", java.util.Map.of())))
+                        .retrieve()
+                        .body(com.fasterxml.jackson.databind.JsonNode.class);
+            } catch (RestClientException ex) {
+                log.warn("Could not read search index {} for the consistency check: {}", indexName, ex.getMessage());
+                return java.util.Optional.empty();
+            }
+            if (response != null) {
+                for (com.fasterxml.jackson.databind.JsonNode hit : response.path("hits").path("hits")) {
+                    try {
+                        indexed.add(Long.parseLong(hit.path("_id").asText()));
+                    } catch (NumberFormatException ignored) {
+                        // Not one of ours.
+                    }
+                }
+            }
+        }
+        java.util.List<Long> missing = expected.stream().filter(id -> !indexed.contains(id)).toList();
+        java.util.List<Long> stale = indexed.stream().filter(id -> !expected.contains(id)).toList();
+        return java.util.Optional.of(new Consistency(expected.size(), indexed.size(), missing, stale));
+    }
+
     /** Only published events that have not ended belong in the index. */
     private static boolean isSearchable(EventEntity event) {
         return event.getReviewStatus() == EventReviewStatus.APPROVED && !event.hasEnded(LocalDateTime.now());

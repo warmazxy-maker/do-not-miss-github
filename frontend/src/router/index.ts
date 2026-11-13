@@ -16,6 +16,7 @@ import StudentEventsView from "@/views/StudentEventsView.vue";
 import StudentFollowsView from "@/views/StudentFollowsView.vue";
 import StudentLayout from "@/views/StudentLayout.vue";
 import StudentModulePlaceholder from "@/views/StudentModulePlaceholder.vue";
+import StudentTandemView from "@/views/StudentTandemView.vue";
 import StudentReservationsView from "@/views/StudentReservationsView.vue";
 import StudentResumeInterviewView from "@/views/StudentResumeInterviewView.vue";
 import StudentScheduleView from "@/views/StudentScheduleView.vue";
@@ -33,6 +34,7 @@ declare module "vue-router" {
 }
 
 const studentChildren: RouteRecordRaw[] = [
+  ["tandem", "student-tandem", "Tandem", "伙伴"],
   ["events", "student-events", "事件", "发现机会"],
   ["reservations", "student-reservations", "我的预约", "行动管理"],
   ["schedule", "student-schedule", "日程", "行动管理"],
@@ -45,7 +47,9 @@ const studentChildren: RouteRecordRaw[] = [
   path,
   name,
   component:
-    path === "events"
+    path === "tandem"
+      ? StudentTandemView
+      : path === "events"
       ? StudentEventsView
       : path === "achievements"
         ? StudentAchievementsView

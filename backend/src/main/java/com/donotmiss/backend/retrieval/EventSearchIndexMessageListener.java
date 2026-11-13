@@ -25,6 +25,15 @@ public class EventSearchIndexMessageListener {
             return;
         }
 
+        if (!eventSearchIndexService.isEnabled()) {
+            // Used to return silently, so a backend started without SEARCH_ENABLED swallowed every
+            // index message and the index fell behind unnoticed (PROBLEM_LOG 075).
+            log.warn("Search is disabled in this backend (SEARCH_ENABLED is not true): event {} was NOT {}. "
+                    + "The search index is now out of date; it is rebuilt at the next start with search enabled.",
+                    message.eventId(), message.action());
+            return;
+        }
+
         if (DomainEventMessages.EVENT_INDEX_UPSERT.equalsIgnoreCase(message.action())) {
             eventSearchIndexService.indexByIdOrThrow(message.eventId());
             log.info("Indexed event {} from async MQ message.", message.eventId());

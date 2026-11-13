@@ -62,6 +62,7 @@ public class OpsHealthService {
     private final OpsMessagingService messagingService;
     private final boolean searchEnabled;
     private final String searchBaseUrl;
+    private final com.donotmiss.backend.retrieval.EventSearchIndexService searchIndexService;
     private final HttpClient httpClient = HttpClient.newBuilder().connectTimeout(HTTP_TIMEOUT).build();
 
     public OpsHealthService(JdbcTemplate jdbcTemplate,
@@ -73,7 +74,8 @@ public class OpsHealthService {
                             OpsQueries queries,
                             OpsMessagingService messagingService,
                             @Value("${app.search.enabled:false}") boolean searchEnabled,
-                            @Value("${app.search.base-url:http://localhost:9200}") String searchBaseUrl) {
+                            @Value("${app.search.base-url:http://localhost:9200}") String searchBaseUrl,
+                            com.donotmiss.backend.retrieval.EventSearchIndexService searchIndexService) {
         this.jdbcTemplate = jdbcTemplate;
         this.dataSource = dataSource;
         this.redisTemplate = redisTemplate;
@@ -84,6 +86,7 @@ public class OpsHealthService {
         this.messagingService = messagingService;
         this.searchEnabled = searchEnabled;
         this.searchBaseUrl = searchBaseUrl;
+        this.searchIndexService = searchIndexService;
     }
 
     public OpsDtos.Overview overview() {
@@ -196,8 +199,28 @@ public class OpsHealthService {
         HealthState state = "red".equals(color) ? HealthState.DOWN
                 : "yellow".equals(color) && !singleNode ? HealthState.DEGRADED : HealthState.UP;
         String summary = "集群状态 " + color + ("yellow".equals(color) && singleNode ? "（单节点副本无法分配，开发环境正常）" : "");
-        return new DependencyHealth("opensearch", "OpenSearch", state, latency, summary,
-                Map.of("cluster", color, "singleNode", singleNode));
+        Map<String, Object> details = new java.util.LinkedHashMap<>();
+        details.put("cluster", color);
+        details.put("singleNode", singleNode);
+        // PROBLEM_LOG 075: a healthy cluster can still hold an index that does not match the events.
+        var consistency = searchIndexService.checkConsistency();
+        if (consistency.isPresent()) {
+            var check = consistency.get();
+            details.put("indexedEvents", check.indexed());
+            details.put("expectedEvents", check.expected());
+            details.put("missingEventIds", check.missing());
+            details.put("staleEventIds", check.stale());
+            if (check.consistent()) {
+                summary += "；索引 " + check.indexed() + " 个活动，和已上架的一致";
+            } else {
+                if (state == HealthState.UP) {
+                    state = HealthState.DEGRADED;
+                }
+                summary += "；索引对不上：应有 " + check.expected() + " 个，索引里 " + check.indexed() + " 个（缺 "
+                        + check.missing().size() + " 个，多 " + check.stale().size() + " 个），AI 搜索会漏掉活动。重启后端会自动重建";
+            }
+        }
+        return new DependencyHealth("opensearch", "OpenSearch", state, latency, summary, details);
     }
 
     private DependencyHealth chatModel() {

@@ -82,5 +82,16 @@ public final class ToolOutput {
         public String label() {
             return from + " 到 " + to;
         }
+
+        /** "11/16～11/22" for the progress list; never throws. */
+        public static String shortLabel(JsonNode arguments) {
+            try {
+                DateRange range = of(arguments);
+                return range.from.getMonthValue() + "/" + range.from.getDayOfMonth() + "～"
+                        + range.to.getMonthValue() + "/" + range.to.getDayOfMonth();
+            } catch (RuntimeException invalid) {
+                return "";
+            }
+        }
     }
 }

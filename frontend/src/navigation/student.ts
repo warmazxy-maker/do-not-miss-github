@@ -1,5 +1,6 @@
 import {
   Award,
+  Bike,
   CalendarDays,
   Compass,
   Flag,
@@ -23,6 +24,10 @@ export interface StudentNavigationGroup {
 }
 
 export const studentNavigationGroups: StudentNavigationGroup[] = [
+  {
+    label: "伙伴",
+    items: [{ to: "/student/tandem", label: "Tandem", icon: Bike }]
+  },
   {
     label: "发现",
     items: [

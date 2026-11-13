@@ -110,6 +110,58 @@ class AgentLoopTest {
     }
 
     @Test
+    void reportsProgressAsItHappens() {
+        ScriptedModel model = new ScriptedModel();
+        model.script.add(messages -> calls("list_things"));
+        model.script.add(messages -> answer("好了"));
+        List<String> events = new ArrayList<>();
+        AgentLoop.Listener listener = new AgentLoop.Listener() {
+            @Override
+            public void onThinking(int round, boolean afterTools) {
+                events.add("think " + round + " " + afterTools);
+            }
+
+            @Override
+            public void onToolStart(String callId, String toolName, String title, String detail) {
+                events.add("start " + callId + " " + title);
+            }
+
+            @Override
+            public void onToolDone(String callId, ToolResultStatus status, String summaryForUser) {
+                events.add("done " + callId + " " + status + " " + summaryForUser);
+            }
+        };
+
+        loop(model).run(spec, "student", "student", AgentRunType.MASTER_AGENT, List.of(), "hi", listener);
+
+        assertThat(events).containsExactly(
+                "think 1 false", "start call_0 工具list_things", "done call_0 OK 查到 1 个", "think 2 true");
+    }
+
+    @Test
+    void playgroundRunsAreReadOnlyForTools() {
+        List<Boolean> seen = new ArrayList<>();
+        ToolRegistry probeRegistry = new ToolRegistry(List.of(readTool("probe", (arguments, caller) -> {
+            seen.add(caller.readOnly());
+            return ToolResult.ok(null, "ok");
+        })), List.of());
+        ToolExecutor probeExecutor = new ToolExecutor(probeRegistry, AgentKitFixtures.students(),
+                new RateLimiter(new AgentKitFixtures.CountingStore(), "Asia/Tokyo"), MAPPER);
+        AgentLoop probeLoop = new AgentLoop(new ScriptedModel() {{
+            script.add(messages -> calls("probe"));
+            script.add(messages -> answer("ok"));
+            script.add(messages -> calls("probe"));
+            script.add(messages -> answer("ok"));
+        }}, probeExecutor, probeRegistry, runService, artifacts, MAPPER, ZoneId.of("Asia/Tokyo"), clock, Duration.ofSeconds(60));
+        AgentSpec probeAgent = agent("probe_agent", List.of("probe"), 2);
+
+        probeLoop.run(probeAgent, "student", "admin", AgentRunType.AGENT_PLAYGROUND, List.of(), "x");
+        probeLoop.run(probeAgent, "student", "student", AgentRunType.MASTER_AGENT, List.of(), "x");
+
+        assertThat(seen).containsExactly(true, false);
+    }
+
+    @Test
     void aFailedToolIsAlwaysReportedToTheStudent() {
         ScriptedModel model = new ScriptedModel();
         model.script.add(messages -> calls("broken"));

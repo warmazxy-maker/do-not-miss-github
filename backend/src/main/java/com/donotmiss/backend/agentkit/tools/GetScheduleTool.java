@@ -48,13 +48,19 @@ public class GetScheduleTool implements AgentTool {
     }
 
     @Override
+    public String describe(JsonNode arguments) {
+        return ToolOutput.DateRange.shortLabel(arguments);
+    }
+
+    @Override
     public ToolResult execute(JsonNode arguments, ToolCaller caller) {
         ToolOutput.DateRange range = ToolOutput.DateRange.of(arguments);
         List<ScheduleDtos.ScheduleItemResponse> items = scheduleService.list(caller.userId(), null).stream()
                 .filter(item -> range.contains(item.startTime()))
                 .toList();
         return ToolOutput.list(objectMapper, items, this::fields,
-                range.label() + " 有 " + items.size() + " 个安排");
+                // The range is already shown next to the title (describe), so not repeated here.
+                "有 " + items.size() + " 个安排");
     }
 
     private Map<String, Object> fields(ScheduleDtos.ScheduleItemResponse item) {

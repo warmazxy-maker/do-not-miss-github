@@ -108,6 +108,50 @@ class ToolExecutorTest {
     }
 
     @Test
+    void readOnlyRunsOnlyRunPlainReadTools() {
+        AgentSpec spec = agent("ro", List.of("echo", "limited", "memo"), 6);
+        ToolExecutor withMemo = new ToolExecutor(new ToolRegistry(List.of(tools.get(0), tools.get(8),
+                tool("memo", new ToolRisk(ToolRisk.DataEffect.INTERNAL_WRITE, ToolRisk.ModelUsage.NONE), NO_PARAMS,
+                        Duration.ofSeconds(1), null, (arguments, caller) -> ToolResult.ok(null, "wrote memo"))), List.of()),
+                AgentKitFixtures.students(), new RateLimiter(new AgentKitFixtures.CountingStore(), "Asia/Tokyo"), MAPPER);
+        ToolCaller readOnly = new ToolCaller("student", "ro", null, true);
+        List<ToolExecutor.Execution> results = withMemo.executeAll(spec, List.of(
+                new ToolCallRequest("1", "echo", "{}", readOnly),
+                new ToolCallRequest("2", "memo", "{}", readOnly),
+                new ToolCallRequest("3", "limited", "{}", readOnly)));
+        assertThat(results.get(0).result().status()).isEqualTo(ToolResultStatus.OK);
+        assertThat(results.get(1).result().status()).isEqualTo(ToolResultStatus.DENIED);
+        assertThat(results.get(2).result().status()).isEqualTo(ToolResultStatus.DENIED);
+        assertThat(results.get(1).result().summaryForUser()).contains("调试台");
+    }
+
+    @Test
+    void aTimedOutToolIsNotInterruptedAndFinishesOnItsOwn() throws Exception {
+        java.util.concurrent.CountDownLatch finished = new java.util.concurrent.CountDownLatch(1);
+        java.util.concurrent.atomic.AtomicBoolean interrupted = new java.util.concurrent.atomic.AtomicBoolean();
+        AgentTool slowPipeline = tool("slow_pipeline", ToolRisk.readOnly(), NO_PARAMS, Duration.ofMillis(100), null,
+                (arguments, caller) -> {
+                    try {
+                        Thread.sleep(400);
+                    } catch (InterruptedException ex) {
+                        interrupted.set(true);
+                        throw ex;
+                    }
+                    finished.countDown();
+                    return ToolResult.ok(null, "late");
+                });
+        ToolExecutor single = new ToolExecutor(new ToolRegistry(List.of(slowPipeline), List.of()),
+                AgentKitFixtures.students(), new RateLimiter(new AgentKitFixtures.CountingStore(), "Asia/Tokyo"), MAPPER);
+
+        ToolResult result = single.executeAll(agent("p", List.of("slow_pipeline"), 6),
+                List.of(new ToolCallRequest("1", "slow_pipeline", "{}", STUDENT))).get(0).result();
+
+        assertThat(result.status()).isEqualTo(ToolResultStatus.ERROR);
+        assertThat(finished.await(2, java.util.concurrent.TimeUnit.SECONDS)).isTrue();
+        assertThat(interrupted).isFalse();
+    }
+
+    @Test
     void failuresBecomeHonestResults() {
         ToolResult timeout = one("hangs", "{}");
         assertThat(timeout.status()).isEqualTo(ToolResultStatus.ERROR);

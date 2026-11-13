@@ -7,6 +7,10 @@ package com.donotmiss.backend.agentkit;
  * @param userId    whose data the tool reads or changes
  * @param agentName which agent made the call
  * @param runId     the agent run it belongs to; may be null in tests
+ * @param readOnly  only read tools may run (the ops playground acts on someone else's data)
  */
-public record ToolCaller(String userId, String agentName, Long runId) {
+public record ToolCaller(String userId, String agentName, Long runId, boolean readOnly) {
+    public ToolCaller(String userId, String agentName, Long runId) {
+        this(userId, agentName, runId, false);
+    }
 }

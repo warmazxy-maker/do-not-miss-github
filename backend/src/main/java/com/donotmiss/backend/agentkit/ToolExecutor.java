@@ -134,6 +134,14 @@ public class ToolExecutor {
                     "这个用户没有使用 " + name + " 的权限。告诉学生这项查询对他不可用。",
                     "没有权限使用「" + definition.title() + "」"), 0));
         }
+        // Read-only runs (the ops playground) must leave no trace on the user: no writes, and no
+        // model-calling tools, which record runs and recommendation impressions under the user.
+        if (call.caller().readOnly() && (definition.risk().dataEffect() != ToolRisk.DataEffect.READ
+                || definition.risk().modelUsage() == ToolRisk.ModelUsage.CALLS_MODEL)) {
+            return Prepared.immediate(new Execution(call, definition, arguments, ToolResult.denied(
+                    "这次运行是只读的调试，这个工具会留下记录，所以没有执行。继续用已有信息回答。",
+                    "「" + definition.title() + "」在调试台里不执行"), 0));
+        }
         if (definition.risk().dataEffect() == ToolRisk.DataEffect.CONFIRM_WRITE) {
             // F2 adds the confirmation card; until then such a tool cannot run at all.
             return Prepared.immediate(new Execution(call, definition, arguments, ToolResult.denied(
@@ -165,7 +173,11 @@ public class ToolExecutor {
                     result = ToolResult.error("工具没有返回结果。", "「" + definition.title() + "」没有返回结果");
                 }
             } catch (TimeoutException ex) {
-                future.cancel(true);
+                // Stop waiting, but do not interrupt: a tool that wraps a pipeline (search_events) still
+                // writes its own run records, and an interrupted thread cannot get a database
+                // connection, which left a recommendation run stuck as RUNNING (PROBLEM_LOG 074).
+                // The tool finishes on its virtual thread and its result is dropped.
+                future.cancel(false);
                 long seconds = definition.timeout().toSeconds();
                 result = ToolResult.error("超过 " + seconds + " 秒没有结果，这次没查到。如实告诉学生。",
                         "「" + definition.title() + "」超过 " + seconds + " 秒没有结果");

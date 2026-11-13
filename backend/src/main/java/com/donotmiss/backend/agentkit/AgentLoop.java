@@ -38,7 +38,8 @@ import java.util.Map;
  */
 @Component
 public class AgentLoop {
-    public static final Duration TURN_BUDGET = Duration.ofSeconds(60);
+    /** 60 s in F0; raised to 90 s in F1 because event search alone often takes 30 s or more. */
+    public static final Duration TURN_BUDGET = Duration.ofSeconds(90);
     private static final DateTimeFormatter NOW_FORMAT =
             DateTimeFormatter.ofPattern("yyyy-MM-dd EEEE HH:mm", Locale.SIMPLIFIED_CHINESE);
 
@@ -87,9 +88,28 @@ public class AgentLoop {
     }
 
     /** One tool call as shown to the student or in the playground. */
-    public record ToolTrace(int round, String toolName, String title, String argumentsJson,
+    public record ToolTrace(int round, String toolName, String title, String detail, String argumentsJson,
                             String status, String summaryForUser, String messageForModel,
                             JsonNode data, long durationMillis) {
+    }
+
+    /**
+     * F1: progress as it happens, for the live step list. Called on the request's worker thread;
+     * implementations must not throw.
+     */
+    public interface Listener {
+        Listener NONE = new Listener() {
+        };
+
+        /** A model round starts; {@code afterTools} is true once at least one tool has run. */
+        default void onThinking(int round, boolean afterTools) {
+        }
+
+        default void onToolStart(String callId, String toolName, String title, String detail) {
+        }
+
+        default void onToolDone(String callId, ToolResultStatus status, String summaryForUser) {
+        }
     }
 
     /**
@@ -109,10 +129,16 @@ public class AgentLoop {
      */
     public Reply run(AgentSpec agent, String subjectUserId, String recordedUserId, AgentRunType runType,
                      List<ToolChat.Message> history, String userMessage) {
+        return run(agent, subjectUserId, recordedUserId, runType, history, userMessage, Listener.NONE);
+    }
+
+    public Reply run(AgentSpec agent, String subjectUserId, String recordedUserId, AgentRunType runType,
+                     List<ToolChat.Message> history, String userMessage, Listener listener) {
         Instant deadline = clock.instant().plus(turnBudget);
         Long runId = runService.startRun(recordedUserId, runType,
                 "agent=" + agent.name() + " prompt=" + agent.promptVersion(), userMessage);
-        ToolCaller caller = new ToolCaller(subjectUserId, agent.name(), runId);
+        // The playground runs on another user's data: it may look, never write.
+        ToolCaller caller = new ToolCaller(subjectUserId, agent.name(), runId, runType == AgentRunType.AGENT_PLAYGROUND);
 
         List<ToolChat.Tool> tools = agent.toolNames().stream()
                 .filter(registry::isEnabled)
@@ -136,6 +162,7 @@ public class AgentLoop {
                 if (clock.instant().isAfter(deadline)) {
                     return finish(runId, timeLimitReply(), traces, notices, rounds, "TIME_LIMIT");
                 }
+                listener.onThinking(step, !traces.isEmpty());
                 ToolChat.Turn turn = modelRound(runId, step, messages, tools);
                 rounds++;
                 if (!turn.wantsTools()) {
@@ -145,8 +172,16 @@ public class AgentLoop {
                 List<ToolCallRequest> requests = turn.toolCalls().stream()
                         .map(call -> new ToolCallRequest(call.id(), call.name(), call.argumentsJson(), caller))
                         .toList();
+                Map<String, String> details = new LinkedHashMap<>();
+                for (ToolCallRequest request : requests) {
+                    String detail = describe(request);
+                    details.put(request.callId(), detail);
+                    listener.onToolStart(request.callId(), request.toolName(), titleOf(request.toolName()), detail);
+                }
                 for (ToolExecutor.Execution execution : executor.executeAll(agent, requests)) {
-                    record(runId, step, execution, traces, notices);
+                    record(runId, step, execution, details.getOrDefault(execution.request().callId(), ""), traces, notices);
+                    listener.onToolDone(execution.request().callId(), execution.result().status(),
+                            execution.result().summaryForUser());
                     messages.add(ToolChat.Message.toolResult(execution.request().callId(), forModel(execution.result())));
                 }
             }
@@ -155,6 +190,7 @@ public class AgentLoop {
             }
             // Out of tool rounds: one more call without tools, so it answers with what it has.
             messages.add(ToolChat.Message.system("工具调用次数已经用完。请根据已经拿到的信息直接回答，并说明还有哪些没有查到。"));
+            listener.onThinking(agent.maxSteps() + 1, true);
             Long stepId = runService.startStep(runId, AgentStepName.AGENT_FINAL_ANSWER, "步数用完后的最终回答");
             ToolChat.Turn last = model.chat(messages, List.of());
             rounds++;
@@ -185,7 +221,22 @@ public class AgentLoop {
         }
     }
 
-    private void record(Long runId, int round, ToolExecutor.Execution execution,
+    private String titleOf(String toolName) {
+        return registry.find(toolName).map(tool -> tool.definition().title()).orElse(toolName);
+    }
+
+    /** The tool's own short detail for the progress list; arguments may still be invalid here. */
+    private String describe(ToolCallRequest request) {
+        try {
+            JsonNode arguments = objectMapper.readTree(request.argumentsJson() == null || request.argumentsJson().isBlank()
+                    ? "{}" : request.argumentsJson());
+            return registry.find(request.toolName()).map(tool -> tool.describe(arguments)).orElse("");
+        } catch (Exception unreadable) {
+            return "";
+        }
+    }
+
+    private void record(Long runId, int round, ToolExecutor.Execution execution, String detail,
                         List<ToolTrace> traces, List<String> notices) {
         ToolResult result = execution.result();
         String name = execution.request().toolName();
@@ -210,7 +261,7 @@ public class AgentLoop {
         artifact.put("data", result.data());
         artifact.put("durationMillis", execution.durationMillis());
         artifactService.record(runId, AgentStepName.AGENT_TOOL_CALL, "tool_call:" + name, artifact, result.summaryForUser());
-        traces.add(new ToolTrace(round, name, execution.title(), execution.request().argumentsJson(),
+        traces.add(new ToolTrace(round, name, execution.title(), detail, execution.request().argumentsJson(),
                 result.status().name(), result.summaryForUser(), result.messageForModel(), result.data(),
                 execution.durationMillis()));
     }

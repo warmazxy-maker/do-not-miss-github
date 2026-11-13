@@ -153,11 +153,14 @@ public class AiService {
                     queryArtifact(query, previousContext, savedContext),
                     "goal=" + query.goal() + ", action=" + query.contextDecision().action()
             );
+            // Hard filters only from what the student picked explicitly. The rewrite's location and
+            // benefit are preferences: they are already in the rewritten query and the constraints the
+            // ranker reads, and as filters they removed the right event (PROBLEM_LOG 075).
             AiDtos.EventRecommendationRequest retrievalRequest = new AiDtos.EventRecommendationRequest(
                     query.rewrittenQuery(),
                     request.category(),
-                    firstPresent(request.benefitType(), normalizeBenefitPreference(query.benefitPreference())),
-                    firstPresent(request.location(), query.preferredLocation()),
+                    request.benefitType(),
+                    request.location(),
                     request.toolContext()
             );
             List<RetrievedEvent> retrievedEvents = tracedStep(runId, AgentStepName.RETRIEVAL,
@@ -337,7 +340,8 @@ public class AiService {
                             firstPresent(goal.searchQuery(), goal.goal(), request.goal()),
                             null,
                             null,
-                            firstPresent(request.location(), goal.preferredLocation()),
+                            // Explicit location only; the goal's location is a preference (PROBLEM_LOG 075).
+                            request.location(),
                             memory,
                             24,
                             toolContext
@@ -1989,14 +1993,6 @@ public class AiService {
             }
         }
         return "";
-    }
-
-    private String normalizeBenefitPreference(String value) {
-        String normalized = nullToEmpty(value).trim().toLowerCase(Locale.ROOT);
-        return switch (normalized) {
-            case "skill", "money", "both" -> normalized;
-            default -> "";
-        };
     }
 
     private int clamp(int value, int min, int max) {

@@ -17,4 +17,12 @@ public interface AgentTool {
     ToolDefinition definition();
 
     ToolResult execute(JsonNode arguments, ToolCaller caller) throws Exception;
+
+    /**
+     * F1: a short plain detail for the progress list, e.g. "11/16～11/22" next to "查日程".
+     * Arguments are already validated. Empty when there is nothing worth showing.
+     */
+    default String describe(JsonNode arguments) {
+        return "";
+    }
 }

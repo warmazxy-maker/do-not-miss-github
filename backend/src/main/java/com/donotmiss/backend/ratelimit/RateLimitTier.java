@@ -17,7 +17,7 @@ public enum RateLimitTier {
      * F0: one user turn of a tool-using agent (several model rounds plus tools). Tools that call a
      * model are charged again under their own tier.
      */
-    AGENT_TURN("Agent 对话", Subject.USER, true, Window.minutes(5), Window.days(60)),
+    AGENT_TURN("Agent 对话", Subject.USER, true, Window.minutes(8), Window.days(80)),
     /** About one model call per request. */
     AI_LIGHT("AI 功能", Subject.USER, true, Window.minutes(10), Window.days(100)),
     /** An organiser sending an event to the AI review. Charged in the lifecycle, not on an endpoint. */

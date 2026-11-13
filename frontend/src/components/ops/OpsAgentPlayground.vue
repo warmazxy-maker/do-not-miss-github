@@ -84,7 +84,7 @@ function pretty(value: unknown) {
         </div>
         <div>
           <button type="button" class="ops-button" :disabled="!canRun" @click="run"><Play :size="15" /><span>{{ running ? "运行中…（可能要十几秒）" : "运行" }}</span></button>
-          <span class="ops-muted pg-hint">会真实调用模型，计入你自己的“Agent 对话”限流（每分钟 5 次）。工具看到的是所选用户的数据，运行记录记在你名下。</span>
+          <span class="ops-muted pg-hint">会真实调用模型，计入你自己的“Agent 对话”限流（每分钟 8 次）。工具看到的是所选用户的数据，运行记录记在你名下。调试台是只读的：记忆写入和会调用模型的工具（如搜活动）不会执行，避免在这个用户身上留下记录。</span>
         </div>
       </div>
     </div>

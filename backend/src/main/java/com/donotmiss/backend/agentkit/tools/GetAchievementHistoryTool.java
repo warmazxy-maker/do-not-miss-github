@@ -52,6 +52,11 @@ public class GetAchievementHistoryTool implements AgentTool {
     }
 
     @Override
+    public String describe(JsonNode arguments) {
+        return ToolOutput.DateRange.shortLabel(arguments);
+    }
+
+    @Override
     public ToolResult execute(JsonNode arguments, ToolCaller caller) {
         ToolOutput.DateRange range = ToolOutput.DateRange.of(arguments);
         List<AchievementDtos.AchievementRecordResponse> records = achievementService.history(caller.userId()).stream()
@@ -60,7 +65,7 @@ public class GetAchievementHistoryTool implements AgentTool {
                 .toList();
         long withReflection = records.stream().filter(record -> record.did() != null || record.learned() != null).count();
         return ToolOutput.list(objectMapper, records, this::fields,
-                range.label() + " 完成了 " + records.size() + " 项，其中 " + withReflection + " 项写了心得");
+                "完成了 " + records.size() + " 项，其中 " + withReflection + " 项写了心得");
     }
 
     private Map<String, Object> fields(AchievementDtos.AchievementRecordResponse record) {

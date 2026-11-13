@@ -60,6 +60,11 @@ public class ListChallengesTool implements AgentTool {
     }
 
     @Override
+    public String describe(JsonNode arguments) {
+        return STATUS_LABELS.getOrDefault(arguments.path("status").asText(), "");
+    }
+
+    @Override
     public ToolResult execute(JsonNode arguments, ToolCaller caller) {
         String status = arguments.path("status").asText();
         List<ChallengeDtos.ChallengeResponse> challenges = challengeService.list(caller.userId(), status);
