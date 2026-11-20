@@ -10,5 +10,8 @@ public interface TandemGoalRepository extends JpaRepository<TandemGoalEntity, Lo
 
     List<TandemGoalEntity> findByUserIdOrderByCreatedAtDesc(String userId);
 
+    /** F4: the review scanner. */
+    List<TandemGoalEntity> findByStatus(TandemGoalEntity.Status status);
+
     long countByUserIdAndStatus(String userId, TandemGoalEntity.Status status);
 }

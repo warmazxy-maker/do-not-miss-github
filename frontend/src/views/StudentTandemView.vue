@@ -1,16 +1,18 @@
 <script setup lang="ts">
-import { Bike, Brain, Check, ChevronDown, CircleAlert, ClipboardCheck, LoaderCircle, Send, Trash2, X } from "@lucide/vue";
+import { Bell, Bike, Brain, Check, ChevronDown, CircleAlert, ClipboardCheck, LoaderCircle, Send, Trash2, X } from "@lucide/vue";
 import { computed, nextTick, onMounted, ref } from "vue";
 
 import { ApiError } from "@/api/client";
-import { agentActionApi, tandemApi, type AgentAction, type TandemMemory, type TandemMessage, type TandemProgress } from "@/api/tandem";
+import { TANDEM_READ_EVENT, agentActionApi, tandemApi, type AgentAction, type TandemMemory, type TandemMessage, type TandemProgress } from "@/api/tandem";
 import TandemActionCard from "@/components/student/TandemActionCard.vue";
 import TandemGoalsPanel from "@/components/student/TandemGoalsPanel.vue";
+import TandemWakeSettings from "@/components/student/TandemWakeSettings.vue";
 
 /**
  * F1: Tandem. One long conversation; while a turn runs, a step list grows as Tandem decides what
  * to look up (F1 decision 5). Memories are listed on the side, each deletable (F1 decision 2).
  * F2: an answer can carry confirmation cards; only their buttons change data.
+ * F4: Tandem also writes on its own; those messages are marked, and opening the page reads them.
  */
 interface LiveStep {
   key: string;
@@ -34,6 +36,8 @@ const memories = ref<TandemMemory[]>([]);
 const memoryLimit = ref(50);
 const openSteps = ref<number | null>(null);
 const confirmingAll = ref<number | null>(null);
+/** F4: how many proactive messages were new when the page opened; they stay highlighted until reload. */
+const newOnOpen = ref(0);
 const messageList = ref<HTMLElement | null>(null);
 const goalsPanel = ref<InstanceType<typeof TandemGoalsPanel> | null>(null);
 
@@ -46,6 +50,11 @@ onMounted(async () => {
     const page = await tandemApi.messages();
     messages.value = page.messages;
     hasMore.value = page.hasMore;
+    newOnOpen.value = page.messages.filter((message) => message.unread).length;
+    if (newOnOpen.value) {
+      await tandemApi.markRead();
+      window.dispatchEvent(new Event(TANDEM_READ_EVENT));
+    }
     await loadMemories();
   } catch (cause) {
     error.value = text(cause, "对话读取失败");
@@ -94,7 +103,7 @@ async function send(preset?: string) {
         replied = true;
         const reply = data as TandemMessage;
         messages.value.push(
-          { id: reply.id - 0.5, role: "USER", content: message, steps: [], notices: [], degraded: false, createdAt: reply.createdAt, actions: [] },
+          { id: reply.id - 0.5, role: "USER", content: message, steps: [], notices: [], degraded: false, createdAt: reply.createdAt, actions: [], proactive: false, unread: false },
           reply
         );
       } else if (name === "error") {
@@ -213,6 +222,11 @@ function render(content: string) {
   return escaped.replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>");
 }
 
+function when(iso: string) {
+  const date = new Date(iso);
+  return `${date.getMonth() + 1}月${date.getDate()}日 ${String(date.getHours()).padStart(2, "0")}:${String(date.getMinutes()).padStart(2, "0")}`;
+}
+
 function stepLabel(status: string) {
   return status === "OK" || status === "PENDING_CONFIRMATION" ? "" : status === "DENIED" ? "被拒绝" : "没成功";
 }
@@ -242,9 +256,14 @@ function text(cause: unknown, fallback: string) {
           </div>
         </article>
 
-        <article v-for="(message, index) in messages" :key="message.id" :class="`is-${message.role.toLowerCase()}`">
+        <p v-if="newOnOpen" class="tandem-new-banner"><Bell :size="15" />Tandem 主动给你留了 {{ newOnOpen }} 条消息</p>
+        <article v-for="(message, index) in messages" :key="message.id"
+          :class="[`is-${message.role.toLowerCase()}`, { 'is-proactive': message.proactive, 'is-new': message.unread }]">
           <span>{{ message.role === "USER" ? "我" : "Tandem" }}</span>
           <div class="tandem-body">
+          <small v-if="message.proactive" class="tandem-proactive-tag">
+            <Bell :size="12" />主动找你 · {{ when(message.createdAt) }}<template v-if="message.unread"> · 新</template>
+          </small>
           <div v-if="message.notices.length" class="tandem-notices">
             <p v-for="(notice, n) in message.notices" :key="n"><CircleAlert :size="15" />{{ notice }}</p>
           </div>
@@ -302,6 +321,7 @@ function text(cause: unknown, fallback: string) {
 
     <aside class="coach-memory-panel">
       <TandemGoalsPanel ref="goalsPanel" />
+      <TandemWakeSettings />
       <section class="coach-review-summary">
         <header><Brain :size="19" /><strong>Tandem 记住的事</strong><span>{{ activeMemories.length }} / {{ memoryLimit }}</span></header>
         <p class="tandem-memory-hint">只记你亲口说过的关键事实。活动、预约、成绩这些它会随时去查，不会记在这里。不对的可以删掉。</p>
@@ -474,6 +494,36 @@ function text(cause: unknown, fallback: string) {
 .tandem-live em,
 .tandem-used em {
   font-style: normal;
+}
+
+.tandem-new-banner {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+  align-self: center;
+  margin: 0;
+  padding: 4px 12px;
+  border-radius: 999px;
+  background: #fdecea;
+  color: #a33a28;
+  font-size: 13px;
+}
+
+.tandem-proactive-tag {
+  display: inline-flex;
+  gap: 4px;
+  align-items: center;
+  color: var(--teal-dark);
+  font-size: 12px;
+}
+
+.is-proactive .tandem-text {
+  border-color: #b6d8d1;
+  border-left: 3px solid var(--teal-dark);
+}
+
+.is-new .tandem-text {
+  box-shadow: 0 0 0 2px rgba(217, 72, 59, 0.15);
 }
 
 .tandem-cards {

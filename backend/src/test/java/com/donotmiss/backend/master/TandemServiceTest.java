@@ -108,6 +108,22 @@ class TandemServiceTest {
     }
 
     @Test
+    void aProactiveMessageComesBackWithItsHiddenNote() {
+        when(conversations.findById(USER)).thenReturn(Optional.empty());
+        when(memories.findByUserIdOrderByUpdatedAtDesc(USER)).thenReturn(List.of());
+        TandemMessageEntity reminder = withId(TandemMessageEntity.proactive(USER, "提醒一下：会话角明天 18:30 开始。",
+                "（系统记录：按模板发出的提醒，涉及活动 #65）", null), 2);
+        when(messages.findByUserIdAndIdGreaterThanOrderByIdAsc(USER, 0L)).thenReturn(List.of(reminder, user(3, "帮我加进日程")));
+
+        List<ToolChat.Message> history = service.history(USER, 3L);
+
+        int note = history.stream().map(ToolChat.Message::content).toList().indexOf("（系统记录：按模板发出的提醒，涉及活动 #65）");
+        assertThat(note).isGreaterThan(0);
+        assertThat(history.get(note + 1).content()).startsWith("提醒一下");
+        assertThat(service.view(reminder, java.util.Map.of()).unread()).isTrue();
+    }
+
+    @Test
     void clearingVoidsOpenCards() {
         service.clear(USER);
         verify(pendingActions).expireOpen(USER, MasterAgentSpec.NAME);

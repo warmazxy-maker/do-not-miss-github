@@ -65,6 +65,9 @@ public class OpsHealthService {
     private final com.donotmiss.backend.retrieval.EventSearchIndexService searchIndexService;
     private final HttpClient httpClient = HttpClient.newBuilder().connectTimeout(HTTP_TIMEOUT).build();
 
+    /** F4: proactive message counts for the overview. */
+    private final com.donotmiss.backend.master.wake.WakeSettingsService wakeSettings;
+
     public OpsHealthService(JdbcTemplate jdbcTemplate,
                             DataSource dataSource,
                             StringRedisTemplate redisTemplate,
@@ -75,7 +78,9 @@ public class OpsHealthService {
                             OpsMessagingService messagingService,
                             @Value("${app.search.enabled:false}") boolean searchEnabled,
                             @Value("${app.search.base-url:http://localhost:9200}") String searchBaseUrl,
-                            com.donotmiss.backend.retrieval.EventSearchIndexService searchIndexService) {
+                            com.donotmiss.backend.retrieval.EventSearchIndexService searchIndexService,
+                            com.donotmiss.backend.master.wake.WakeSettingsService wakeSettings) {
+        this.wakeSettings = wakeSettings;
         this.jdbcTemplate = jdbcTemplate;
         this.dataSource = dataSource;
         this.redisTemplate = redisTemplate;
@@ -112,6 +117,11 @@ public class OpsHealthService {
             counters.put("outboxPending", outbox.pending());
             counters.put("outboxDeferred", outbox.deferred());
             counters.put("outboxExhausted", outbox.exhausted());
+        } catch (RuntimeException ignored) {
+            // The MySQL card already reports why.
+        }
+        try {
+            counters.putAll(wakeSettings.stats());
         } catch (RuntimeException ignored) {
             // The MySQL card already reports why.
         }

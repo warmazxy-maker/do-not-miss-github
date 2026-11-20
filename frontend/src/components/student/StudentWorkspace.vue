@@ -23,6 +23,7 @@ import {
   type StudentNavigationItem
 } from "@/navigation/student";
 import { opsApi } from "@/api/ops";
+import { TANDEM_READ_EVENT, tandemApi } from "@/api/tandem";
 import { useAuthStore } from "@/stores/auth";
 
 const route = useRoute();
@@ -35,6 +36,21 @@ const quickMenuOpen = ref(false);
 const userMenuOpen = ref(false);
 const mobileMoreOpen = ref(false);
 const opsAllowed = ref(false);
+/** F4: proactive Tandem messages not seen yet, shown as a red dot on its navigation entry. */
+const tandemUnread = ref(0);
+let unreadTimer: number | undefined;
+
+async function refreshUnread() {
+  try {
+    tandemUnread.value = (await tandemApi.unread()).count;
+  } catch {
+    // The dot is a hint; a failed check just leaves it as it was.
+  }
+}
+
+function clearUnread() {
+  tandemUnread.value = 0;
+}
 
 const initial = computed(() => authStore.user?.username.slice(0, 1).toUpperCase() ?? "D");
 const currentTitle = computed(() => String(route.meta.title ?? "学生端"));
@@ -64,6 +80,7 @@ const quickActions = [
 watch(
   () => route.fullPath,
   () => {
+    void refreshUnread();
     quickMenuOpen.value = false;
     userMenuOpen.value = false;
     mobileMoreOpen.value = false;
@@ -130,8 +147,15 @@ onMounted(() => {
     .access()
     .then((result) => (opsAllowed.value = result.allowed))
     .catch(() => (opsAllowed.value = false));
+  void refreshUnread();
+  unreadTimer = window.setInterval(refreshUnread, 60_000);
+  window.addEventListener(TANDEM_READ_EVENT, clearUnread);
 });
-onBeforeUnmount(() => window.removeEventListener("keydown", handleGlobalKeydown));
+onBeforeUnmount(() => {
+  window.removeEventListener("keydown", handleGlobalKeydown);
+  window.clearInterval(unreadTimer);
+  window.removeEventListener(TANDEM_READ_EVENT, clearUnread);
+});
 </script>
 
 <template>
@@ -163,7 +187,8 @@ onBeforeUnmount(() => window.removeEventListener("keydown", handleGlobalKeydown)
             :class="{ 'is-active': isActive(item) }"
           >
             <component :is="item.icon" :size="19" />
-            <span>{{ item.label }}</span>
+            <span>{{ item.label }}<b v-if="item.to === '/student/tandem' && tandemUnread" class="nav-unread"
+              :title="`${tandemUnread} 条新消息`">{{ tandemUnread > 9 ? "9+" : tandemUnread }}</b></span>
             <ChevronRight :size="15" />
           </RouterLink>
         </section>

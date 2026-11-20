@@ -702,6 +702,22 @@ a {
     transform 150ms ease;
 }
 
+/* F4: proactive Tandem messages not seen yet. */
+.student-nav-group .nav-unread {
+  display: inline-block;
+  min-width: 18px;
+  margin-left: 6px;
+  padding: 0 5px;
+  border-radius: 999px;
+  background: #d9483b;
+  color: #fff;
+  font-size: 11px;
+  font-weight: 700;
+  line-height: 18px;
+  text-align: center;
+  vertical-align: 1px;
+}
+
 .student-nav-group a::before {
   content: "";
   position: absolute;

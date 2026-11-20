@@ -15,7 +15,7 @@ import org.springframework.stereotype.Component;
 public class GetGoalsTool implements AgentTool {
     private static final ToolDefinition DEFINITION = new ToolDefinition(
             "get_goals", 1, "查目标",
-            "查询学生的目标：进行中的（最多 3 个）和最近结束的，含每个里程碑现在的状态、进度和已经带来证据的能力。"
+            "查询学生的目标：进行中的（最多 3 个）和最近结束的，含每个步骤现在的状态、进度和已经带来证据的能力。"
                     + "系统每轮会给你一份简要的目标列表；需要细节（说明、回顾记录、时间）或回顾目标时再用这个。",
             CreateGoalTool.parse("{\"type\": \"object\", \"properties\": {}, \"additionalProperties\": false}"),
             ToolRisk.readOnly(), Permission.STUDENT_FEATURES, null, ToolDefinition.DEFAULT_TIMEOUT);

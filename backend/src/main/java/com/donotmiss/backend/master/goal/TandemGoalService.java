@@ -126,7 +126,7 @@ public class TandemGoalService {
         return new Goals(active, past, MAX_ACTIVE);
     }
 
-    GoalView view(TandemGoalEntity goal) {
+    public GoalView view(TandemGoalEntity goal) {
         List<MilestoneView> steps = milestones.findByGoalIdOrderByPositionAscIdAsc(goal.getId()).stream()
                 .map(this::milestoneView).toList();
         int done = (int) steps.stream().filter(MilestoneView::done).count();
@@ -217,7 +217,6 @@ public class TandemGoalService {
         StringBuilder text = new StringBuilder("【学生的目标】（进行中 " + all.active().size() + " 个，最多 "
                 + MAX_ACTIVE + " 个；编号用于修改）\n");
         Instant now = Instant.now();
-        List<String> dueForReview = new ArrayList<>();
         for (GoalView goal : all.active()) {
             text.append("#").append(goal.id()).append(" [").append(goal.typeLabel()).append("] ").append(goal.title());
             if (goal.targetDate() != null) {
@@ -236,16 +235,13 @@ public class TandemGoalService {
             }
             for (int i = 0; i < goal.milestones().size(); i++) {
                 MilestoneView step = goal.milestones().get(i);
-                text.append("   ").append(i + 1).append(". [里程碑 #").append(step.id()).append("] ")
+                text.append("   ").append(i + 1).append(". [步骤 #").append(step.id()).append("] ")
                         .append(step.kindLabel()).append(" #").append(step.refId()).append(" ").append(step.title())
                         .append(step.when() == null ? "" : "（" + step.when() + "）")
                         .append(" —— ").append(step.stateLabel()).append("\n");
             }
             if (!goal.growth().isEmpty()) {
                 text.append("   已经带来证据的能力：").append(String.join("、", goal.growth())).append("\n");
-            }
-            if (!since.plus(REVIEW_AFTER).isAfter(now)) {
-                dueForReview.add("#" + goal.id());
             }
         }
         if (!all.past().isEmpty()) {
@@ -254,10 +250,7 @@ public class TandemGoalService {
                             + goal.done() + "/" + goal.total() + "）")
                     .collect(Collectors.joining("；"))).append("\n");
         }
-        if (!dueForReview.isEmpty()) {
-            text.append("目标 ").append(String.join("、", dueForReview))
-                    .append(" 超过 7 天没有回顾了：合适的时候问学生一句要不要一起看看进展，只问一次，学生没接话就不再提。");
-        }
+        // F4: the "review is due" nudge no longer lives here; the invitation arrives as a proactive message.
         return text.toString().trim();
     }
 
@@ -276,7 +269,7 @@ public class TandemGoalService {
             index++;
             int given = (item.has("event_id") ? 1 : 0) + (item.has("challenge_id") ? 1 : 0) + (item.has("new_challenge") ? 1 : 0);
             if (given != 1) {
-                throw ApiException.badRequest("第 " + index + " 个里程碑要在活动、已有挑战、新挑战三者中选一个");
+                throw ApiException.badRequest("第 " + index + " 个步骤要在活动、已有挑战、新挑战三者中选一个");
             }
             ObjectNode step = objectMapper.createObjectNode();
             String note = WriteSupport.blankToNull(WriteSupport.text(item, "note"));
@@ -286,7 +279,7 @@ public class TandemGoalService {
                 EventEntity event = events.findById(eventId)
                         .orElseThrow(() -> ApiException.badRequest("活动 #" + eventId + " 不存在"));
                 if (event.getReviewStatus() != EventReviewStatus.APPROVED || event.hasEnded(LocalDateTime.now(zone))) {
-                    throw ApiException.badRequest("活动「" + event.getTitle() + "」未上架或已结束，不能作为里程碑");
+                    throw ApiException.badRequest("活动「" + event.getTitle() + "」未上架或已结束，不能作为步骤");
                 }
                 step.put("kind", TandemGoalMilestoneEntity.Kind.EVENT.name());
                 step.put("refId", eventId);
@@ -308,7 +301,7 @@ public class TandemGoalService {
                 for (String field : List.of("title", "category", "goal", "description")) {
                     String value = WriteSupport.blankToNull(WriteSupport.text(spec, field));
                     if (value == null) {
-                        throw ApiException.badRequest("第 " + index + " 个里程碑的新挑战缺少" + field);
+                        throw ApiException.badRequest("第 " + index + " 个步骤的新挑战缺少" + field);
                     }
                     challenge.put(field, value);
                 }
@@ -331,7 +324,7 @@ public class TandemGoalService {
                 : step.has("newChallenge") ? "新挑战" : "挑战";
         String when = step.hasNonNull("when") ? "（" + step.path("when").asText() + "）" : "";
         String note = step.hasNonNull("note") ? " —— " + step.path("note").asText() : "";
-        return new ActionCard.Field("里程碑 " + number, kind + "：" + step.path("title").asText() + when + note);
+        return new ActionCard.Field("第 " + number + " 步", kind + "：" + step.path("title").asText() + when + note);
     }
 
     // ---- applying cards (inside the confirmation transaction) ----
@@ -527,7 +520,7 @@ public class TandemGoalService {
         TandemGoalEntity goal = load(userId, goalId);
         TandemGoalMilestoneEntity step = milestones.findById(milestoneId)
                 .filter(found -> found.getGoalId().equals(goal.getId()))
-                .orElseThrow(() -> ApiException.notFound("这个目标里没有这个里程碑"));
+                .orElseThrow(() -> ApiException.notFound("这个目标里没有这个步骤"));
         milestones.delete(step);
         goal.touch();
         return view(goal);

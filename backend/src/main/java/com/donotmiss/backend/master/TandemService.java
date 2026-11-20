@@ -117,7 +117,7 @@ public class TandemService {
     }
 
     /** What the model sees before the new message: memories, summary, then the recent messages. */
-    List<ToolChat.Message> history(String userId, Long currentMessageId) {
+    public List<ToolChat.Message> history(String userId, Long currentMessageId) {
         List<ToolChat.Message> history = new ArrayList<>();
         history.add(ToolChat.Message.system(memoryBlock(userId)));
         history.add(ToolChat.Message.system(goals.contextBlock(userId)));
@@ -138,6 +138,10 @@ public class TandemService {
             if (message.isUser()) {
                 history.add(ToolChat.Message.user(message.getContent()));
                 continue;
+            }
+            if (message.getContextNote() != null && !message.getContextNote().isBlank()) {
+                // F4: why Tandem wrote this on its own, and the ids involved, so a reply to it is understood.
+                history.add(ToolChat.Message.system(message.getContextNote()));
             }
             String toolNote = toolNote(message);
             if (!toolNote.isEmpty()) {
@@ -211,7 +215,7 @@ public class TandemService {
 
     // ---- working memory: fold older messages into the summary ----
 
-    void compressLater(String userId) {
+    public void compressLater(String userId) {
         if (!compressing.add(userId)) {
             return;
         }
@@ -300,6 +304,18 @@ public class TandemService {
         conversations.deleteById(userId);
     }
 
+    /** F4: proactive messages not seen yet, for the red dot. */
+    @Transactional(readOnly = true)
+    public long unreadCount(String userId) {
+        return messages.countByUserIdAndProactiveTrueAndReadAtIsNull(userId);
+    }
+
+    /** F4: the student opened the conversation, so every proactive message is now read. */
+    @Transactional
+    public void markRead(String userId) {
+        messages.markProactiveRead(userId, java.time.Instant.now());
+    }
+
     @Transactional(readOnly = true)
     public TandemDtos.Memories memories(String userId) {
         LocalDate today = LocalDate.now(zone);
@@ -323,7 +339,8 @@ public class TandemService {
                 ? List.of() : cards.getOrDefault(message.getRunId(), List.of());
         return new TandemDtos.Message(message.getId(), message.getRole(), message.getContent(),
                 read(message.getStepsJson(), STEPS), read(message.getNoticesJson(), STRINGS),
-                message.isDegraded(), message.getCreatedAt(), own);
+                message.isDegraded(), message.getCreatedAt(), own, message.isProactive(),
+                message.isProactive() && message.getReadAt() == null);
     }
 
     private String json(Object value) {

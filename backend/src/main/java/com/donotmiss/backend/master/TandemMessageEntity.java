@@ -45,6 +45,18 @@ public class TandemMessageEntity {
     @Column(name = "created_at", nullable = false)
     private Instant createdAt;
 
+    /** F4: Tandem wrote this on its own, woken by something that happened on the platform. */
+    @Column(nullable = false)
+    private boolean proactive;
+
+    /** F4: when the student first saw a proactive message; null = unread. */
+    @Column(name = "read_at")
+    private Instant readAt;
+
+    /** F4: what the model is told about this message later (why it was sent, ids involved). */
+    @Column(name = "context_note", length = 1000)
+    private String contextNote;
+
     protected TandemMessageEntity() {
     }
 
@@ -69,6 +81,26 @@ public class TandemMessageEntity {
         message.runId = runId;
         message.createdAt = Instant.now();
         return message;
+    }
+
+    /** F4: a message Tandem leaves on its own, in the same conversation (F4 decision 1). */
+    public static TandemMessageEntity proactive(String userId, String content, String contextNote, Long runId) {
+        TandemMessageEntity message = assistant(userId, content, "[]", "[]", false, runId);
+        message.proactive = true;
+        message.contextNote = contextNote == null || contextNote.length() <= 1000 ? contextNote : contextNote.substring(0, 1000);
+        return message;
+    }
+
+    public boolean isProactive() {
+        return proactive;
+    }
+
+    public Instant getReadAt() {
+        return readAt;
+    }
+
+    public String getContextNote() {
+        return contextNote;
     }
 
     public Long getId() {

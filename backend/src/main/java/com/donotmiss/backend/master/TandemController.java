@@ -11,6 +11,8 @@ import jakarta.annotation.PreDestroy;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import com.donotmiss.backend.master.goal.TandemGoalEntity;
+import com.donotmiss.backend.master.wake.WakeSettingsService;
+import org.springframework.web.bind.annotation.PutMapping;
 import com.donotmiss.backend.master.goal.TandemGoalService;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotNull;
@@ -49,14 +51,16 @@ public class TandemController {
 
     private final TandemService tandemService;
     private final TandemGoalService goalService;
+    private final WakeSettingsService wakeSettings;
     private final CurrentUser currentUser;
     private final RateLimiter rateLimiter;
     private final ExecutorService workers = Executors.newVirtualThreadPerTaskExecutor();
 
-    public TandemController(TandemService tandemService, TandemGoalService goalService, CurrentUser currentUser,
-                            RateLimiter rateLimiter) {
+    public TandemController(TandemService tandemService, TandemGoalService goalService,
+                            WakeSettingsService wakeSettings, CurrentUser currentUser, RateLimiter rateLimiter) {
         this.tandemService = tandemService;
         this.goalService = goalService;
+        this.wakeSettings = wakeSettings;
         this.currentUser = currentUser;
         this.rateLimiter = rateLimiter;
     }
@@ -112,6 +116,30 @@ public class TandemController {
     @DeleteMapping("/memories/{id}")
     public void deleteMemory(@PathVariable Long id, HttpServletRequest request) {
         tandemService.deleteMemory(currentUser.id(request), id);
+    }
+
+    // ---- F4: proactive messages ----
+
+    /** For the red dot on the navigation (F4 decision 1). */
+    @GetMapping("/unread")
+    public Map<String, Long> unread(HttpServletRequest request) {
+        return Map.of("count", tandemService.unreadCount(currentUser.id(request)));
+    }
+
+    @PostMapping("/read")
+    public void markRead(HttpServletRequest request) {
+        tandemService.markRead(currentUser.id(request));
+    }
+
+    @GetMapping("/wake-settings")
+    public WakeSettingsService.Settings wakeSettings(HttpServletRequest request) {
+        return wakeSettings.get(currentUser.id(request));
+    }
+
+    @PutMapping("/wake-settings")
+    public WakeSettingsService.Settings updateWakeSettings(@RequestBody WakeSettingsService.Update body,
+                                                           HttpServletRequest request) {
+        return wakeSettings.update(currentUser.id(request), body);
     }
 
     // ---- F3: goals. The student's own clicks need no card (F3 decision 7). ----

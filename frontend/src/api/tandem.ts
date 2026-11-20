@@ -46,6 +46,9 @@ export interface TandemMessage {
   degraded: boolean;
   createdAt: string;
   actions: AgentAction[];
+  /** F4: Tandem wrote it on its own; unread until the conversation is opened. */
+  proactive: boolean;
+  unread: boolean;
 }
 
 export interface TandemMessagePage {
@@ -81,8 +84,22 @@ export const tandemApi = {
   memories: () => api.get<{ memories: TandemMemory[]; limit: number }>("/api/tandem/memories"),
   deleteMemory: (id: number) => api.delete<void>(`/api/tandem/memories/${id}`),
   chat: (message: string, onEvent: (name: string, data: unknown) => void) =>
-    apiStream("/api/tandem/chat", { message }, onEvent)
+    apiStream("/api/tandem/chat", { message }, onEvent),
+  unread: () => api.get<{ count: number }>("/api/tandem/unread"),
+  markRead: () => api.post<void>("/api/tandem/read"),
+  wakeSettings: () => api.get<WakeSettings>("/api/tandem/wake-settings"),
+  saveWakeSettings: (enabled: boolean, disabledKinds: string[]) =>
+    api.put<WakeSettings>("/api/tandem/wake-settings", { enabled, disabledKinds })
 };
+
+/** F4: the student's switches for proactive messages. */
+export interface WakeSettings {
+  enabled: boolean;
+  kinds: { kind: string; label: string; enabled: boolean }[];
+}
+
+/** Fired after the conversation is opened, so the red dot clears at once. */
+export const TANDEM_READ_EVENT = "tandem-read";
 
 /** F3: goals; milestones are events or challenges, their state read from the platform. */
 export interface GoalMilestone {

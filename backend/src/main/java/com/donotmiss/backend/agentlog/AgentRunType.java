@@ -21,5 +21,7 @@ public enum AgentRunType {
     /** F1: a student talking to the master agent. */
     MASTER_AGENT,
     /** F1: older Tandem messages folded into the rolling summary. */
-    MASTER_CONTEXT_COMPRESSION
+    MASTER_CONTEXT_COMPRESSION,
+    /** F4: Tandem woken by a platform event to decide whether to leave the student a message. */
+    MASTER_WAKE
 }

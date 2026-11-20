@@ -32,7 +32,8 @@ const RUN_TYPES = [
   "RESUME_ABILITY_SCORING",
   "BAD_CASE_INTAKE",
   "AGENT_PLAYGROUND",
-  "MASTER_AGENT"
+  "MASTER_AGENT",
+  "MASTER_WAKE"
 ];
 
 const hours = ref(24);

@@ -55,11 +55,11 @@ public class CreateGoalTool implements ConfirmableTool {
     private static final ObjectMapper SCHEMA_MAPPER = new ObjectMapper();
     private static final ToolDefinition DEFINITION = new ToolDefinition(
             "create_goal", 1, "建目标",
-            "和学生一起定一个目标，连同 1～" + TandemGoalService.MAX_MILESTONES + " 个按顺序排好的里程碑。"
-                    + "每个里程碑必须是平台上的一件事：一个活动（event_id，先用“搜活动”找），或学生已有的挑战，"
+            "和学生一起定一个目标，连同 1～" + TandemGoalService.MAX_MILESTONES + " 个按顺序排好的步骤。"
+                    + "每个步骤必须是平台上的一件事：一个活动（event_id，先用“搜活动”找），或学生已有的挑战，"
                     + "或一个新挑战（自学、练习这类没有对应活动的步骤）。进度按平台上真实发生的事算：活动签到了、挑战完成了才算这一步完成。"
                     + "进行中的目标最多 " + TandemGoalService.MAX_ACTIVE + " 个。不会直接执行：生成一张卡片，学生确认后才建。"
-                    + "活动只是列为里程碑，不会自动预约，需要预约时另外出预约卡片。",
+                    + "活动只是列为步骤，不会自动预约，需要预约时另外出预约卡片。",
             parse("""
                     {
                       "type": "object",
@@ -118,7 +118,7 @@ public class CreateGoalTool implements ConfirmableTool {
         }
         JsonNode items = arguments.path("milestones");
         if (items.isEmpty() || items.size() > TandemGoalService.MAX_MILESTONES) {
-            throw ApiException.badRequest("里程碑要有 1～" + TandemGoalService.MAX_MILESTONES + " 个");
+            throw ApiException.badRequest("步骤要有 1～" + TandemGoalService.MAX_MILESTONES + " 个");
         }
         List<ObjectNode> steps = goals.resolveMilestones(caller.userId(), items, Set.of());
 
@@ -150,7 +150,7 @@ public class CreateGoalTool implements ConfirmableTool {
             effects.add("会同时新建 " + newChallenges + " 个挑战");
         }
         if (steps.stream().anyMatch(step -> "EVENT".equals(step.path("kind").asText()))) {
-            effects.add("活动只是列为里程碑，不会自动预约");
+            effects.add("活动只是列为步骤，不会自动预约");
         }
         return new Proposal(new ActionCard("建目标", title, fields, effects, List.of(), null), payload);
     }
@@ -171,7 +171,7 @@ public class CreateGoalTool implements ConfirmableTool {
     public String undo(JsonNode payload, JsonNode undoData, String userId) {
         TandemGoalEntity goal = goals.load(userId, undoData.path("goalId").asLong());
         if (!goals.matches(goal, undoData.path("after"))) {
-            throw ApiException.badRequest("这个目标建好之后被改过了（比如删了里程碑、标了完成），为了不覆盖你的修改，没有撤销");
+            throw ApiException.badRequest("这个目标建好之后被改过了（比如删了步骤、标了完成），为了不覆盖你的修改，没有撤销");
         }
         goals.deleteCreatedChallenges(userId, undoData.path("challenges"));
         goals.deleteWithMilestones(goal);

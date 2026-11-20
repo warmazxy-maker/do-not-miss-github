@@ -31,6 +31,11 @@ const counters = computed(() => {
     { label: "Outbox 延后重试中", value: value.outboxDeferred, tab: "messaging" as const },
     { label: "Outbox 重试耗尽", value: value.outboxExhausted, tab: "messaging" as const, alert: (value.outboxExhausted ?? 0) > 0 },
     { label: "评估任务失败", value: value.assessmentJobsFailed, tab: "journeys" as const, alert: (value.assessmentJobsFailed ?? 0) > 0 },
+    // F4: Tandem's proactive messages (one trigger = one thing worth saying; several can share a message).
+    { label: "24h 主动留言：已说", value: value.tandemWakeSent24h, tab: "agents" as const },
+    { label: "24h 主动留言：跳过", value: value.tandemWakeSkipped24h, tab: "agents" as const },
+    { label: "24h 主动留言：失败", value: value.tandemWakeFailed24h, tab: "agents" as const, alert: (value.tandemWakeFailed24h ?? 0) > 0 },
+    { label: "主动留言待处理", value: value.tandemWakePending, tab: "agents" as const },
     { label: "注册用户", value: value.users, tab: "storage" as const }
   ];
 });

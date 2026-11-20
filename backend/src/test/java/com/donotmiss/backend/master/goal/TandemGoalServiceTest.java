@@ -190,7 +190,7 @@ class TandemGoalServiceTest {
     }
 
     @Test
-    void tandemSeesGoalsAndIsToldWhenAReviewIsDue() throws Exception {
+    void tandemSeesGoalsAndWhenEachWasLastReviewed() throws Exception {
         TandemGoalEntity stale = goal(1, "考过 N2", TandemGoalEntity.Status.ACTIVE);
         Field created = TandemGoalEntity.class.getDeclaredField("createdAt");
         created.setAccessible(true);
@@ -204,7 +204,8 @@ class TandemGoalServiceTest {
 
         assertThat(block).contains("#1 [能力型] 考过 N2").contains("还没回顾过")
                 .contains("上次回顾 0 天前（这周去了一次）")
-                .contains("目标 #1 超过 7 天没有回顾").doesNotContain("目标 #1、#2");
+                // F4: the review invitation arrives as a proactive message, not as a nudge here.
+                .doesNotContain("超过 7 天没有回顾");
     }
 
     @Test

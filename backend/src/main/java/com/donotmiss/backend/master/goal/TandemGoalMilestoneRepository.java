@@ -9,4 +9,7 @@ public interface TandemGoalMilestoneRepository extends JpaRepository<TandemGoalM
     List<TandemGoalMilestoneEntity> findByGoalIdOrderByPositionAscIdAsc(Long goalId);
 
     List<TandemGoalMilestoneEntity> findByGoalIdInOrderByPositionAscIdAsc(Collection<Long> goalIds);
+
+    /** F4: which goals a just-completed event or challenge is a step of. */
+    List<TandemGoalMilestoneEntity> findByUserIdAndKindAndRefId(String userId, TandemGoalMilestoneEntity.Kind kind, Long refId);
 }

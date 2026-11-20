@@ -30,10 +30,10 @@ import java.util.Set;
 public class UpdateGoalTool implements ConfirmableTool {
     private static final ToolDefinition DEFINITION = new ToolDefinition(
             "update_goal", 1, "改目标",
-            "修改学生的一个目标（goal_id 来自系统给你的目标列表）：改文字、类型、日期，增加或去掉里程碑，"
+            "修改学生的一个目标（goal_id 来自系统给你的目标列表）：改文字、类型、日期，增加或去掉步骤，"
                     + "或者把目标标为完成（COMPLETED）、放弃（ABANDONED）、重新开始（ACTIVE）。只填要改的。"
                     + "完成和放弃由学生决定：学生明确说了才出卡片；你觉得该完成或该放弃时，先在回答里问他，他同意了再出。"
-                    + "去掉里程碑用里程碑编号。不会直接执行：生成一张卡片，学生确认后才改。",
+                    + "去掉某一步用步骤编号。不会直接执行：生成一张卡片，学生确认后才改。",
             CreateGoalTool.parse("""
                     {
                       "type": "object",
@@ -125,18 +125,18 @@ public class UpdateGoalTool implements ConfirmableTool {
         for (TandemGoalMilestoneEntity step : current) {
             if (requested.remove(step.getId())) {
                 removeIds.add(step.getId());
-                lines.add(new ActionCard.Field("去掉里程碑", step.getKind().label() + "：" + step.getTitle()));
+                lines.add(new ActionCard.Field("去掉", step.getKind().label() + "：" + step.getTitle()));
             } else {
                 kept.add(step.getKind().name() + ":" + step.getRefId());
             }
         }
         if (!requested.isEmpty()) {
-            throw ApiException.badRequest("这个目标里没有里程碑 " + requested);
+            throw ApiException.badRequest("这个目标里没有步骤 " + requested);
         }
         List<ObjectNode> added = arguments.has("add_milestones")
                 ? goals.resolveMilestones(userId, arguments.path("add_milestones"), kept) : List.of();
         if (current.size() - removeIds.size() + added.size() > TandemGoalService.MAX_MILESTONES) {
-            throw ApiException.badRequest("里程碑最多 " + TandemGoalService.MAX_MILESTONES + " 个");
+            throw ApiException.badRequest("步骤最多 " + TandemGoalService.MAX_MILESTONES + " 个");
         }
         int number = current.size() - removeIds.size();
         for (ObjectNode step : added) {
@@ -154,7 +154,7 @@ public class UpdateGoalTool implements ConfirmableTool {
         };
         List<String> effects = new ArrayList<>();
         if ("COMPLETED".equals(status) || "ABANDONED".equals(status)) {
-            effects.add("目标会移到“过去的目标”，里程碑里的活动和挑战不受影响");
+            effects.add("目标会移到“过去的目标”，步骤里的活动和挑战不受影响");
         }
         long newChallenges = added.stream().filter(step -> step.has("newChallenge")).count();
         if (newChallenges > 0) {
