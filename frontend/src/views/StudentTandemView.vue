@@ -5,6 +5,7 @@ import { computed, nextTick, onMounted, ref } from "vue";
 import { ApiError } from "@/api/client";
 import { agentActionApi, tandemApi, type AgentAction, type TandemMemory, type TandemMessage, type TandemProgress } from "@/api/tandem";
 import TandemActionCard from "@/components/student/TandemActionCard.vue";
+import TandemGoalsPanel from "@/components/student/TandemGoalsPanel.vue";
 
 /**
  * F1: Tandem. One long conversation; while a turn runs, a step list grows as Tandem decides what
@@ -34,10 +35,11 @@ const memoryLimit = ref(50);
 const openSteps = ref<number | null>(null);
 const confirmingAll = ref<number | null>(null);
 const messageList = ref<HTMLElement | null>(null);
+const goalsPanel = ref<InstanceType<typeof TandemGoalsPanel> | null>(null);
 
 const activeMemories = computed(() => memories.value.filter((memory) => !memory.expired));
 const expiredMemories = computed(() => memories.value.filter((memory) => memory.expired));
-const examples = ["我下周有什么安排？", "我现在哪方面最需要加强？", "帮我找点周末能参加、能练口语的活动", "上个月我都做了什么？"];
+const examples = ["我下周有什么安排？", "我想在毕业前把日语口语练到能正常聊天，帮我定个目标", "帮我找点周末能参加、能练口语的活动", "上个月我都做了什么？"];
 
 onMounted(async () => {
   try {
@@ -108,6 +110,7 @@ async function send(preset?: string) {
       messages.value = page.messages;
       hasMore.value = page.hasMore;
       await loadMemories();
+      await goalsPanel.value?.reload();
     }
   } catch (cause) {
     error.value = text(cause, "发送失败");
@@ -148,6 +151,8 @@ function applyProgress(progress: TandemProgress) {
 
 function replaceAction(message: TandemMessage, updated: AgentAction) {
   message.actions = message.actions.map((action) => (action.id === updated.id ? updated : action));
+  // A goal card (or a reservation that is a milestone) changes what the goal panel shows.
+  void goalsPanel.value?.reload();
 }
 
 function openCards(message: TandemMessage) {
@@ -231,7 +236,7 @@ function text(cause: unknown, fallback: string) {
         </button>
         <article v-if="!messages.length && !sending" class="coach-welcome">
           <Bike :size="30" /><h3>我是 Tandem</h3>
-          <p>我能看到你的预约、日程、挑战、成长记录和能力档案，也会记住你告诉我的关键事情。你让我加日程、建挑战、预约活动时，我会先准备一张卡片，你点确认才会执行。想聊什么都可以，比如：</p>
+          <p>我能看到你的预约、日程、挑战、成长记录和能力档案，也会记住你告诉我的关键事情。你让我加日程、建挑战、预约活动、定目标时，我会先准备一张卡片，你点确认才会执行。想聊什么都可以，比如：</p>
           <div class="tandem-examples">
             <button v-for="example in examples" :key="example" type="button" @click="send(example)">{{ example }}</button>
           </div>
@@ -296,6 +301,7 @@ function text(cause: unknown, fallback: string) {
     </section>
 
     <aside class="coach-memory-panel">
+      <TandemGoalsPanel ref="goalsPanel" />
       <section class="coach-review-summary">
         <header><Brain :size="19" /><strong>Tandem 记住的事</strong><span>{{ activeMemories.length }} / {{ memoryLimit }}</span></header>
         <p class="tandem-memory-hint">只记你亲口说过的关键事实。活动、预约、成绩这些它会随时去查，不会记在这里。不对的可以删掉。</p>

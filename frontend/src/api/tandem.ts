@@ -84,6 +84,55 @@ export const tandemApi = {
     apiStream("/api/tandem/chat", { message }, onEvent)
 };
 
+/** F3: goals; milestones are events or challenges, their state read from the platform. */
+export interface GoalMilestone {
+  id: number;
+  kind: "EVENT" | "CHALLENGE";
+  kindLabel: string;
+  refId: number;
+  title: string;
+  note: string | null;
+  state: "DONE" | "TODO" | "RESERVED" | "MISSED" | "UNAVAILABLE";
+  stateLabel: string;
+  done: boolean;
+  when: string | null;
+}
+
+export interface TandemGoal {
+  id: number;
+  title: string;
+  description: string | null;
+  type: "OUTCOME" | "ABILITY" | "HABIT";
+  typeLabel: string;
+  targetDate: string | null;
+  status: "ACTIVE" | "COMPLETED" | "ABANDONED";
+  statusLabel: string;
+  done: number;
+  total: number;
+  milestones: GoalMilestone[];
+  growth: string[];
+  lastReviewedAt: string | null;
+  lastReviewNote: string | null;
+  createdAt: string;
+  closedAt: string | null;
+}
+
+export interface TandemGoals {
+  active: TandemGoal[];
+  past: TandemGoal[];
+  maxActive: number;
+}
+
+export const goalApi = {
+  list: () => api.get<TandemGoals>("/api/tandem/goals"),
+  close: (id: number, status: "COMPLETED" | "ABANDONED") =>
+    api.post<TandemGoal>(`/api/tandem/goals/${id}/close`, { status }),
+  reopen: (id: number) => api.post<TandemGoal>(`/api/tandem/goals/${id}/reopen`),
+  removeMilestone: (id: number, milestoneId: number) =>
+    api.delete<TandemGoal>(`/api/tandem/goals/${id}/milestones/${milestoneId}`),
+  remove: (id: number) => api.delete<void>(`/api/tandem/goals/${id}`)
+};
+
 export const agentActionApi = {
   confirm: (id: number) => api.post<ActionOutcome>(`/api/agent-actions/${id}/confirm`),
   cancel: (id: number) => api.post<ActionOutcome>(`/api/agent-actions/${id}/cancel`),

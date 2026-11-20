@@ -11,6 +11,7 @@ import com.donotmiss.backend.agentlog.AgentStepName;
 import com.donotmiss.backend.ai.OpenAiCompatibleLlmClient;
 import com.donotmiss.backend.ai.ToolChat;
 import com.donotmiss.backend.common.ApiException;
+import com.donotmiss.backend.master.goal.TandemGoalService;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -67,6 +68,7 @@ public class TandemService {
     private final AgentRunService runService;
     private final OpenAiCompatibleLlmClient llmClient;
     private final PendingActionService pendingActions;
+    private final TandemGoalService goals;
     private final ObjectMapper objectMapper;
     private final ZoneId zone;
     private final ExecutorService background = Executors.newVirtualThreadPerTaskExecutor();
@@ -75,7 +77,7 @@ public class TandemService {
     public TandemService(TandemMessageRepository messages, TandemConversationRepository conversations,
                          TandemMemoryRepository memories, AgentRegistry agentRegistry, AgentLoop agentLoop,
                          AgentRunService runService, OpenAiCompatibleLlmClient llmClient,
-                         PendingActionService pendingActions, ObjectMapper objectMapper,
+                         PendingActionService pendingActions, TandemGoalService goals, ObjectMapper objectMapper,
                          @Value("${app.mcp.default-timezone:Asia/Tokyo}") String timezone) {
         this.messages = messages;
         this.conversations = conversations;
@@ -85,6 +87,7 @@ public class TandemService {
         this.runService = runService;
         this.llmClient = llmClient;
         this.pendingActions = pendingActions;
+        this.goals = goals;
         this.objectMapper = objectMapper;
         this.zone = ZoneId.of(timezone);
     }
@@ -117,6 +120,7 @@ public class TandemService {
     List<ToolChat.Message> history(String userId, Long currentMessageId) {
         List<ToolChat.Message> history = new ArrayList<>();
         history.add(ToolChat.Message.system(memoryBlock(userId)));
+        history.add(ToolChat.Message.system(goals.contextBlock(userId)));
         TandemConversationEntity conversation = conversations.findById(userId).orElse(null);
         Long after = conversation == null || conversation.getSummarizedUpTo() == null ? 0L : conversation.getSummarizedUpTo();
         if (conversation != null && conversation.getSummary() != null && !conversation.getSummary().isBlank()) {

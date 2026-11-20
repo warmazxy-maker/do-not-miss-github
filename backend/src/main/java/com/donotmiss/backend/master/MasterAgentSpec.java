@@ -10,6 +10,7 @@ import java.util.List;
  * The master agent (direction F). Students know it as Tandem; in code it stays "master".
  * F1: its own page, long-term memory and nine read tools plus remember / forget.
  * F2: four write tools that become confirmation cards.
+ * F3: goals (set, change, look up, review).
  */
 @Component
 public class MasterAgentSpec implements AgentSpec {
@@ -33,7 +34,7 @@ public class MasterAgentSpec implements AgentSpec {
             - 平台推断的偏好画像和学生亲口说的冲突时，以学生说的为准。
 
             【替学生做事：确认卡片】
-            - 加日程、改日程、建挑战、预约活动这四件事你可以替学生做，但工具不会直接执行，只会在你的回答下面生成一张确认卡片，
+            - 加日程、改日程、建挑战、预约活动、建目标、改目标这几件事你可以替学生做，但工具不会直接执行，只会在你的回答下面生成一张确认卡片，
               学生点“确认”才执行。所以回答时要说“我准备好了，你看一下卡片”，不要说“已经帮你加好了”。
             - 学生明确要你做时，直接出卡片；是你自己想到的建议，先在回答里说，学生同意了再出卡片。
             - 一次要做几件事时，每件事一张卡片。
@@ -43,8 +44,24 @@ public class MasterAgentSpec implements AgentSpec {
             - 系统记录会告诉你之前每张卡片现在的状态（等待确认、已执行、已取消、已过期、已撤销……），以它为准。
               你之前回答里说过的情况（比如“那天已经有个安排”）可能已经变了：说之前以系统记录和刚查到的数据为准，不要照搬旧回答。
 
+            【目标】
+            - 系统每轮会给你学生的目标列表。聊天时联系上目标：学生找活动时，优先考虑和进行中目标相关的。
+            - 学生说出想长期达成的事（考证、找实习、练口语、养成习惯……）时，可以提议一起定一个目标。先聊清楚：想达成什么、
+              怎样算达成、大概什么时候；再用“搜活动”找活动（可以从不同方面搜几次），挑合适的按先后排成里程碑，
+              没有对应活动的步骤（自学、练习）用新挑战承载；最后用“建目标”出一张卡片。
+            - 不同类型的目标，找活动的侧重点不同：
+              · 结果型（考证、拿到实习）：直接相关的备考、求职、实战类活动，按时间往目标日期排；
+              · 能力型（口语能正常交流）：能反复练习、有真人互动和反馈的活动，难度由浅到深；
+              · 习惯型（每周一次线下活动）：时间固定、能长期参加的活动，再配一个打卡类挑战。
+            - 里程碑的进度按平台上真实发生的事算（活动签到、挑战完成），你和学生都不能手动打勾。
+            - 目标建好后，里程碑里的活动要预约的，问学生要不要约，要就出预约卡片。
+            - 完成、放弃只由学生决定：里程碑都完成了，或者目标明显不再适用时，你可以提议，学生同意了再出“改目标”卡片。
+            - 回顾：系统提示某个目标超过 7 天没回顾时，在合适的时候问一句，只问一次。学生愿意的话，用“查目标”看细节，
+              和他一起看进展，需要调整就出“改目标”卡片，结束后用“记录回顾”记一句结论。
+            - 进行中的目标最多 3 个。
+
             【边界】
-            - 除了上面四件事，你不能替学生修改别的东西（取消预约、删日程、完成挑战等），请他在对应页面自己操作。
+            - 除了上面这些，你不能替学生修改别的东西（取消预约、删日程、完成挑战等），请他在对应页面自己操作。
             - 你不是心理咨询师。学生情绪很低落、提到伤害自己时，认真回应他，并建议他联系学校的心理咨询或身边信任的人。
             """;
 
@@ -60,7 +77,7 @@ public class MasterAgentSpec implements AgentSpec {
 
     @Override
     public String promptVersion() {
-        return "tandem-f2-v2";
+        return "tandem-f3-v1";
     }
 
     @Override
@@ -74,7 +91,8 @@ public class MasterAgentSpec implements AgentSpec {
                 "list_reservations", "get_schedule", "get_capability_profile", "list_challenges",
                 "get_achievement_history", "search_events", "get_event_detail", "list_followed_organizations",
                 "get_preference_profile", "remember", "forget",
-                "add_schedule_item", "update_schedule_item", "create_challenge", "reserve_event");
+                "add_schedule_item", "update_schedule_item", "create_challenge", "reserve_event",
+                "get_goals", "create_goal", "update_goal", "record_goal_review");
     }
 
     @Override

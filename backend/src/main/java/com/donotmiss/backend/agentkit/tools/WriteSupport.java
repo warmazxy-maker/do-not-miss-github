@@ -14,8 +14,8 @@ import java.util.Locale;
 import java.util.Objects;
 
 /** Shared pieces of the F2 write tools: time labels, clash warnings, snapshots for rollback. */
-final class WriteSupport {
-    static final String REPLACES_SCHEMA = """
+public final class WriteSupport {
+    public static final String REPLACES_SCHEMA = """
             "%s": {"type": "integer", "minimum": 1,
                    "description": "要替换的旧卡片编号。学生想改一张还没确认的卡片时填它，旧卡片会作废"}
             """.formatted(ConfirmableTool.REPLACES_ARGUMENT);
@@ -28,7 +28,7 @@ final class WriteSupport {
     }
 
     /** "11月21日（周五）14:00–15:30"; an end on another day gets its own date. */
-    static String timeRange(LocalDateTime start, LocalDateTime end) {
+    public static String timeRange(LocalDateTime start, LocalDateTime end) {
         if (start == null) {
             return "";
         }
@@ -40,7 +40,7 @@ final class WriteSupport {
     }
 
     /** Active schedule items that overlap the range; a warning on the card, never a block. */
-    static List<String> clashes(ScheduleService schedule, String userId, LocalDateTime start, LocalDateTime end,
+    public static List<String> clashes(ScheduleService schedule, String userId, LocalDateTime start, LocalDateTime end,
                                 Long ignoreItemId, String ignoreType, Long ignoreSourceId) {
         List<ScheduleDtos.ScheduleItemResponse> overlapping = schedule.list(userId, null).stream()
                 .filter(item -> !Objects.equals(item.id(), ignoreItemId))
@@ -59,7 +59,7 @@ final class WriteSupport {
     }
 
     /** How a schedule item looks; a rollback only runs while it still looks exactly like this. */
-    static ObjectNode snapshot(ObjectMapper mapper, ScheduleDtos.ScheduleItemResponse item) {
+    public static ObjectNode snapshot(ObjectMapper mapper, ScheduleDtos.ScheduleItemResponse item) {
         ObjectNode node = mapper.createObjectNode();
         node.put("title", item.title());
         node.put("start", item.startTime() == null ? null : item.startTime().toString());
@@ -70,21 +70,21 @@ final class WriteSupport {
         return node;
     }
 
-    static String text(JsonNode node, String field) {
+    public static String text(JsonNode node, String field) {
         JsonNode value = node.path(field);
         return value.isMissingNode() || value.isNull() ? null : value.asText();
     }
 
-    static LocalDateTime time(JsonNode node, String field) {
+    public static LocalDateTime time(JsonNode node, String field) {
         String value = text(node, field);
         return value == null ? null : LocalDateTime.parse(value);
     }
 
-    static String blankToNull(String value) {
+    public static String blankToNull(String value) {
         return value == null || value.isBlank() ? null : value.trim();
     }
 
-    static String clip(String value, int max) {
+    public static String clip(String value, int max) {
         if (value == null) {
             return null;
         }

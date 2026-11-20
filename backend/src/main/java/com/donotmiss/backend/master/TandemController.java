@@ -10,7 +10,10 @@ import com.donotmiss.backend.ratelimit.RateLimiter;
 import jakarta.annotation.PreDestroy;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import com.donotmiss.backend.master.goal.TandemGoalEntity;
+import com.donotmiss.backend.master.goal.TandemGoalService;
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.MediaType;
@@ -45,12 +48,15 @@ public class TandemController {
     private static final long STREAM_TIMEOUT_MILLIS = 120_000;
 
     private final TandemService tandemService;
+    private final TandemGoalService goalService;
     private final CurrentUser currentUser;
     private final RateLimiter rateLimiter;
     private final ExecutorService workers = Executors.newVirtualThreadPerTaskExecutor();
 
-    public TandemController(TandemService tandemService, CurrentUser currentUser, RateLimiter rateLimiter) {
+    public TandemController(TandemService tandemService, TandemGoalService goalService, CurrentUser currentUser,
+                            RateLimiter rateLimiter) {
         this.tandemService = tandemService;
+        this.goalService = goalService;
         this.currentUser = currentUser;
         this.rateLimiter = rateLimiter;
     }
@@ -106,6 +112,38 @@ public class TandemController {
     @DeleteMapping("/memories/{id}")
     public void deleteMemory(@PathVariable Long id, HttpServletRequest request) {
         tandemService.deleteMemory(currentUser.id(request), id);
+    }
+
+    // ---- F3: goals. The student's own clicks need no card (F3 decision 7). ----
+
+    @GetMapping("/goals")
+    public TandemGoalService.Goals goals(HttpServletRequest request) {
+        return goalService.list(currentUser.id(request));
+    }
+
+    public record CloseGoalRequest(@NotNull TandemGoalEntity.Status status) {
+    }
+
+    @PostMapping("/goals/{id}/close")
+    public TandemGoalService.GoalView closeGoal(@PathVariable Long id, @Valid @RequestBody CloseGoalRequest body,
+                                                HttpServletRequest request) {
+        return goalService.close(currentUser.id(request), id, body.status());
+    }
+
+    @PostMapping("/goals/{id}/reopen")
+    public TandemGoalService.GoalView reopenGoal(@PathVariable Long id, HttpServletRequest request) {
+        return goalService.reopen(currentUser.id(request), id);
+    }
+
+    @DeleteMapping("/goals/{id}/milestones/{milestoneId}")
+    public TandemGoalService.GoalView removeMilestone(@PathVariable Long id, @PathVariable Long milestoneId,
+                                                      HttpServletRequest request) {
+        return goalService.removeMilestone(currentUser.id(request), id, milestoneId);
+    }
+
+    @DeleteMapping("/goals/{id}")
+    public void deleteGoal(@PathVariable Long id, HttpServletRequest request) {
+        goalService.delete(currentUser.id(request), id);
     }
 
     private static void send(SseEmitter emitter, String name, Object data) {

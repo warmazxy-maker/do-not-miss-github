@@ -9,6 +9,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.donotmiss.backend.agentkit.actions.ActionCard;
 import com.donotmiss.backend.agentkit.actions.ActionView;
 import com.donotmiss.backend.agentkit.actions.PendingActionService;
+import com.donotmiss.backend.master.goal.TandemGoalService;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 
@@ -37,8 +38,9 @@ class TandemServiceTest {
     private final AgentRunService runService = mock(AgentRunService.class);
     private final OpenAiCompatibleLlmClient llm = mock(OpenAiCompatibleLlmClient.class);
     private final PendingActionService pendingActions = mock(PendingActionService.class);
+    private final TandemGoalService goals = mock(TandemGoalService.class);
     private final TandemService service = new TandemService(messages, conversations, memories,
-            mock(AgentRegistry.class), mock(AgentLoop.class), runService, llm, pendingActions, new ObjectMapper(), "Asia/Tokyo");
+            mock(AgentRegistry.class), mock(AgentLoop.class), runService, llm, pendingActions, goals, new ObjectMapper(), "Asia/Tokyo");
 
     private static <T> T withId(T entity, long id) {
         try {
@@ -64,6 +66,7 @@ class TandemServiceTest {
         TandemConversationEntity conversation = TandemConversationEntity.empty(USER);
         conversation.fold("学生在找后端方向的活动。", 10L);
         when(conversations.findById(USER)).thenReturn(Optional.of(conversation));
+        when(goals.contextBlock(USER)).thenReturn("【学生的目标】考过 N2");
         when(memories.findByUserIdOrderByUpdatedAtDesc(USER)).thenReturn(List.of(
                 withId(TandemMemoryEntity.create(USER, TandemMemoryEntity.Category.CONSTRAINT, "周末要打工", null, null, null), 7),
                 withId(TandemMemoryEntity.create(USER, TandemMemoryEntity.Category.COMMITMENT, "上周说好写心得", null, null,
@@ -76,12 +79,13 @@ class TandemServiceTest {
 
         List<ToolChat.Message> history = service.history(USER, 13L);
 
-        assertThat(history).extracting(ToolChat.Message::role).containsExactly(
+        assertThat(history).extracting(ToolChat.Message::role).containsExactly(ToolChat.Role.SYSTEM,
                 ToolChat.Role.SYSTEM, ToolChat.Role.SYSTEM, ToolChat.Role.USER, ToolChat.Role.SYSTEM, ToolChat.Role.ASSISTANT);
         assertThat(history.get(0).content()).contains("#7 [约束] 周末要打工").doesNotContain("写心得");
-        assertThat(history.get(1).content()).contains("学生在找后端方向的活动");
-        assertThat(history.get(3).content()).contains("查日程（11/16～11/22） → 0 个安排").contains("原始数据没有保留");
-        assertThat(history.get(4).content()).isEqualTo("下周没有安排。");
+        assertThat(history.get(1).content()).isEqualTo("【学生的目标】考过 N2");
+        assertThat(history.get(2).content()).contains("学生在找后端方向的活动");
+        assertThat(history.get(4).content()).contains("查日程（11/16～11/22） → 0 个安排").contains("原始数据没有保留");
+        assertThat(history.get(5).content()).isEqualTo("下周没有安排。");
     }
 
     @Test
@@ -98,7 +102,7 @@ class TandemServiceTest {
 
         List<ToolChat.Message> history = service.history(USER, 3L);
 
-        String note = history.stream().map(ToolChat.Message::content).filter(text -> text.contains("确认卡片")).findFirst().orElseThrow();
+        String note = history.stream().map(ToolChat.Message::content).filter(text -> text != null && text.contains("确认卡片")).findFirst().orElseThrow();
         assertThat(note).contains("第 5 号 预约活动「日语口语角」——已执行（已预约，也加进了日程表）")
                 .contains("第 6 号").contains("等待确认");
     }
