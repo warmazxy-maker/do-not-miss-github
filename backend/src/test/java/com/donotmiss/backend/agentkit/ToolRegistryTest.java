@@ -67,6 +67,15 @@ class ToolRegistryTest {
     }
 
     @Test
+    void writeToolsMustBeConfirmableAndAcceptAReplacedCard() {
+        assertThatThrownBy(() -> new ToolRegistry(List.of(tool("sneaky_write",
+                new ToolRisk(ToolRisk.DataEffect.CONFIRM_WRITE, ToolRisk.ModelUsage.NONE), AgentKitFixtures.NO_PARAMS,
+                java.time.Duration.ofSeconds(1), null, NOTHING)), List.of()))
+                .hasMessageContaining("must implement ConfirmableTool");
+        assertThat(new ToolRegistry(List.of(AgentKitFixtures.confirmTool("good_write")), List.of()).contains("good_write")).isTrue();
+    }
+
+    @Test
     void riskDimensionsAreListedInOrder() {
         assertThat(ToolRisk.readOnly().dimensions()).containsExactly(
                 java.util.Map.entry("数据", "只读"), java.util.Map.entry("模型", "不调用模型"));

@@ -3,6 +3,8 @@ package com.donotmiss.backend.master;
 import com.donotmiss.backend.agentkit.AgentLoop;
 import com.donotmiss.backend.agentkit.AgentRegistry;
 import com.donotmiss.backend.agentkit.AgentSpec;
+import com.donotmiss.backend.agentkit.actions.ActionView;
+import com.donotmiss.backend.agentkit.actions.PendingActionService;
 import com.donotmiss.backend.agentlog.AgentRunService;
 import com.donotmiss.backend.agentlog.AgentRunType;
 import com.donotmiss.backend.agentlog.AgentStepName;
@@ -26,6 +28,8 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
@@ -62,6 +66,7 @@ public class TandemService {
     private final AgentLoop agentLoop;
     private final AgentRunService runService;
     private final OpenAiCompatibleLlmClient llmClient;
+    private final PendingActionService pendingActions;
     private final ObjectMapper objectMapper;
     private final ZoneId zone;
     private final ExecutorService background = Executors.newVirtualThreadPerTaskExecutor();
@@ -69,7 +74,8 @@ public class TandemService {
 
     public TandemService(TandemMessageRepository messages, TandemConversationRepository conversations,
                          TandemMemoryRepository memories, AgentRegistry agentRegistry, AgentLoop agentLoop,
-                         AgentRunService runService, OpenAiCompatibleLlmClient llmClient, ObjectMapper objectMapper,
+                         AgentRunService runService, OpenAiCompatibleLlmClient llmClient,
+                         PendingActionService pendingActions, ObjectMapper objectMapper,
                          @Value("${app.mcp.default-timezone:Asia/Tokyo}") String timezone) {
         this.messages = messages;
         this.conversations = conversations;
@@ -78,6 +84,7 @@ public class TandemService {
         this.agentLoop = agentLoop;
         this.runService = runService;
         this.llmClient = llmClient;
+        this.pendingActions = pendingActions;
         this.objectMapper = objectMapper;
         this.zone = ZoneId.of(timezone);
     }
@@ -103,7 +110,7 @@ public class TandemService {
         TandemMessageEntity answer = messages.save(TandemMessageEntity.assistant(userId, reply.reply(),
                 json(steps), json(reply.notices()), reply.degraded(), reply.runId()));
         compressLater(userId);
-        return view(answer);
+        return view(answer, cardsOf(userId, List.of(answer)));
     }
 
     /** What the model sees before the new message: memories, summary, then the recent messages. */
@@ -122,6 +129,7 @@ public class TandemService {
         if (recent.size() > COMPRESS_AFTER_MESSAGES) {
             recent = recent.subList(recent.size() - COMPRESS_AFTER_MESSAGES, recent.size());
         }
+        Map<Long, List<ActionView>> cards = cardsOf(userId, recent);
         for (TandemMessageEntity message : recent) {
             if (message.isUser()) {
                 history.add(ToolChat.Message.user(message.getContent()));
@@ -130,6 +138,10 @@ public class TandemService {
             String toolNote = toolNote(message);
             if (!toolNote.isEmpty()) {
                 history.add(ToolChat.Message.system(toolNote));
+            }
+            String cardNote = cardNote(cards.getOrDefault(message.getRunId(), List.of()));
+            if (!cardNote.isEmpty()) {
+                history.add(ToolChat.Message.system(cardNote));
             }
             history.add(ToolChat.Message.assistant(message.getContent(), List.of()));
         }
@@ -147,6 +159,34 @@ public class TandemService {
                         + " → " + step.summary())
                 .collect(Collectors.joining("；"));
         return "（系统记录：下一条回答之前，你调用了 " + calls + "。原始数据没有保留，需要时重新查。）";
+    }
+
+    /**
+     * F2: where each card of an earlier answer stands now, so Tandem never claims an unconfirmed
+     * card was done, and knows which open card to replace.
+     */
+    private String cardNote(List<ActionView> cards) {
+        if (cards.isEmpty()) {
+            return "";
+        }
+        String list = cards.stream()
+                .map(card -> "第 " + card.id() + " 号 " + card.card().kind() + "「" + card.card().headline() + "」——"
+                        + card.statusLabel() + (card.message() == null || card.message().isBlank() ? "" : "（" + card.message() + "）"))
+                .collect(Collectors.joining("；"));
+        // PROBLEM_LOG 076: "已撤销" alone was read as still in effect; spell out what each state means.
+        return "（系统记录：下一条回答里你提出了确认卡片，它们现在的状态：" + list + "。"
+                + "已执行＝已经生效；已撤销＝学生撤回了，结果已经恢复原样，等于没做；"
+                + "已取消、已过期、已被替换、执行失败＝没有执行。这条回答里描述的情况可能已经过时，以这里和工具查到的为准。）";
+    }
+
+    private Map<Long, List<ActionView>> cardsOf(String userId, List<TandemMessageEntity> shown) {
+        List<Long> runIds = shown.stream()
+                .filter(message -> !message.isUser())
+                .map(TandemMessageEntity::getRunId)
+                .filter(Objects::nonNull)
+                .distinct()
+                .toList();
+        return pendingActions.viewsByRun(userId, runIds);
     }
 
     String memoryBlock(String userId) {
@@ -241,12 +281,17 @@ public class TandemService {
         boolean hasMore = newestFirst.size() > PAGE_SIZE;
         List<TandemMessageEntity> shown = new ArrayList<>(newestFirst.subList(0, Math.min(PAGE_SIZE, newestFirst.size())));
         Collections.reverse(shown);
-        return new TandemDtos.MessagePage(shown.stream().map(this::view).toList(), hasMore);
+        Map<Long, List<ActionView>> cards = cardsOf(userId, shown);
+        return new TandemDtos.MessagePage(shown.stream().map(message -> view(message, cards)).toList(), hasMore);
     }
 
-    /** Clears the conversation and its summary; long-term memories stay (F1 decision 9). */
+    /**
+     * Clears the conversation and its summary; long-term memories stay (F1 decision 9). Open cards
+     * are voided (F2 decision 6); what was already done stays done and can be changed on its page.
+     */
     @Transactional
     public void clear(String userId) {
+        pendingActions.expireOpen(userId, MasterAgentSpec.NAME);
         messages.deleteAllOfUser(userId);
         conversations.deleteById(userId);
     }
@@ -269,10 +314,12 @@ public class TandemService {
         memories.delete(memory);
     }
 
-    TandemDtos.Message view(TandemMessageEntity message) {
+    TandemDtos.Message view(TandemMessageEntity message, Map<Long, List<ActionView>> cards) {
+        List<ActionView> own = message.isUser() || message.getRunId() == null
+                ? List.of() : cards.getOrDefault(message.getRunId(), List.of());
         return new TandemDtos.Message(message.getId(), message.getRole(), message.getContent(),
                 read(message.getStepsJson(), STEPS), read(message.getNoticesJson(), STRINGS),
-                message.isDegraded(), message.getCreatedAt());
+                message.isDegraded(), message.getCreatedAt(), own);
     }
 
     private String json(Object value) {

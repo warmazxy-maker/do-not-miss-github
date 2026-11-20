@@ -242,7 +242,8 @@ public class AgentLoop {
         String name = execution.request().toolName();
         Long stepId = runService.startStep(runId, AgentStepName.AGENT_TOOL_CALL,
                 name + " " + compact(execution.request().argumentsJson(), 300));
-        if (result.status() == ToolResultStatus.OK) {
+        // A confirmation card is a normal outcome, not something that went wrong.
+        if (result.status() == ToolResultStatus.OK || result.status() == ToolResultStatus.PENDING_CONFIRMATION) {
             runService.completeStep(stepId, result.summaryForUser());
         } else {
             runService.failStep(stepId, new IllegalStateException(result.status() + ": " + result.messageForModel()));

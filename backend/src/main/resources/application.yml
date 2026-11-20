@@ -62,6 +62,8 @@ app:
   agent:
     # F0: comma-separated tool names to switch off without a code change (restart needed).
     disabled-tools: ${AGENT_DISABLED_TOOLS:}
+    # F2: how long a confirmation card can still be confirmed.
+    action-ttl-hours: ${AGENT_ACTION_TTL_HOURS:24}
   admin-zero:
     # Password of the super administrator created at startup (D1). Keep it only in the local .env.
     password: ${ADMIN_ZERO_PASSWORD:}

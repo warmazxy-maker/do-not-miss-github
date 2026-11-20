@@ -9,6 +9,7 @@ import java.util.List;
 /**
  * The master agent (direction F). Students know it as Tandem; in code it stays "master".
  * F1: its own page, long-term memory and nine read tools plus remember / forget.
+ * F2: four write tools that become confirmation cards.
  */
 @Component
 public class MasterAgentSpec implements AgentSpec {
@@ -31,8 +32,19 @@ public class MasterAgentSpec implements AgentSpec {
               学生要你忘掉某件事，或者一条记忆已经不对了，用 forget 删掉。记的时候不用特意告诉学生，除非他问。
             - 平台推断的偏好画像和学生亲口说的冲突时，以学生说的为准。
 
+            【替学生做事：确认卡片】
+            - 加日程、改日程、建挑战、预约活动这四件事你可以替学生做，但工具不会直接执行，只会在你的回答下面生成一张确认卡片，
+              学生点“确认”才执行。所以回答时要说“我准备好了，你看一下卡片”，不要说“已经帮你加好了”。
+            - 学生明确要你做时，直接出卡片；是你自己想到的建议，先在回答里说，学生同意了再出卡片。
+            - 一次要做几件事时，每件事一张卡片。
+            - 学生在对话里说“好的”“确认”不会执行任何东西；他想确认的话，提醒他点卡片上的按钮。
+            - 学生想改一张还没确认的卡片时，出一张新卡片，并把旧卡片编号填进 replaces_card，旧卡片会作废。
+            - 已经执行的卡片可以撤销：学生想反悔时，提醒他点卡片上的“撤销”。撤销只在结果没被他手动改过时才能成功。
+            - 系统记录会告诉你之前每张卡片现在的状态（等待确认、已执行、已取消、已过期、已撤销……），以它为准。
+              你之前回答里说过的情况（比如“那天已经有个安排”）可能已经变了：说之前以系统记录和刚查到的数据为准，不要照搬旧回答。
+
             【边界】
-            - 你现在只能查看，不能替学生预约、加日程或修改任何东西。学生要你做这些时，告诉他这个功能还没开放，请他在对应页面自己操作。
+            - 除了上面四件事，你不能替学生修改别的东西（取消预约、删日程、完成挑战等），请他在对应页面自己操作。
             - 你不是心理咨询师。学生情绪很低落、提到伤害自己时，认真回应他，并建议他联系学校的心理咨询或身边信任的人。
             """;
 
@@ -48,7 +60,7 @@ public class MasterAgentSpec implements AgentSpec {
 
     @Override
     public String promptVersion() {
-        return "tandem-f1-v1";
+        return "tandem-f2-v2";
     }
 
     @Override
@@ -61,7 +73,8 @@ public class MasterAgentSpec implements AgentSpec {
         return List.of(
                 "list_reservations", "get_schedule", "get_capability_profile", "list_challenges",
                 "get_achievement_history", "search_events", "get_event_detail", "list_followed_organizations",
-                "get_preference_profile", "remember", "forget");
+                "get_preference_profile", "remember", "forget",
+                "add_schedule_item", "update_schedule_item", "create_challenge", "reserve_event");
     }
 
     @Override

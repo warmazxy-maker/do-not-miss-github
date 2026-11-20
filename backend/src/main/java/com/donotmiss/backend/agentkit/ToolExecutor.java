@@ -1,5 +1,7 @@
 package com.donotmiss.backend.agentkit;
 
+import com.donotmiss.backend.agentkit.actions.ConfirmableTool;
+import com.donotmiss.backend.agentkit.actions.PendingActionService;
 import com.donotmiss.backend.common.ApiException;
 import com.donotmiss.backend.ratelimit.RateLimitedException;
 import com.donotmiss.backend.ratelimit.RateLimiter;
@@ -38,14 +40,16 @@ public class ToolExecutor {
     private final ToolPermissions permissions;
     private final RateLimiter rateLimiter;
     private final ObjectMapper objectMapper;
+    private final PendingActionService pendingActions;
     private final ExecutorService workers = Executors.newVirtualThreadPerTaskExecutor();
 
     public ToolExecutor(ToolRegistry registry, ToolPermissions permissions, RateLimiter rateLimiter,
-                        ObjectMapper objectMapper) {
+                        ObjectMapper objectMapper, PendingActionService pendingActions) {
         this.registry = registry;
         this.permissions = permissions;
         this.rateLimiter = rateLimiter;
         this.objectMapper = objectMapper;
+        this.pendingActions = pendingActions;
     }
 
     /** One finished call, with what is needed to record and display it. */
@@ -142,12 +146,6 @@ public class ToolExecutor {
                     "这次运行是只读的调试，这个工具会留下记录，所以没有执行。继续用已有信息回答。",
                     "「" + definition.title() + "」在调试台里不执行"), 0));
         }
-        if (definition.risk().dataEffect() == ToolRisk.DataEffect.CONFIRM_WRITE) {
-            // F2 adds the confirmation card; until then such a tool cannot run at all.
-            return Prepared.immediate(new Execution(call, definition, arguments, ToolResult.denied(
-                    "需要学生确认的操作还没有开放，告诉学生你暂时不能帮他做这件事，请他自己去对应页面操作。",
-                    "「" + definition.title() + "」需要确认，这个功能还没开放"), 0));
-        }
         if (definition.rateLimitTier() != null) {
             try {
                 rateLimiter.consume(definition.rateLimitTier(), call.caller().userId());
@@ -166,7 +164,10 @@ public class ToolExecutor {
         ToolResult result;
         {
             // Not closed per call: closing would wait for a timed-out tool that ignores the interrupt.
-            Future<ToolResult> future = workers.submit(() -> prepared.tool.execute(prepared.arguments, prepared.request.caller()));
+            // F2: a write tool never runs here; the call becomes a confirmation card instead.
+            Future<ToolResult> future = workers.submit(() -> prepared.tool instanceof ConfirmableTool confirmable
+                    ? pendingActions.propose(confirmable, prepared.arguments, prepared.request.caller())
+                    : prepared.tool.execute(prepared.arguments, prepared.request.caller()));
             try {
                 result = future.get(definition.timeout().toMillis(), TimeUnit.MILLISECONDS);
                 if (result == null) {

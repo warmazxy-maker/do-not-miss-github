@@ -1,6 +1,9 @@
 package com.donotmiss.backend.agentkit;
 
 import com.donotmiss.backend.access.Permission;
+import com.donotmiss.backend.agentkit.actions.ActionCard;
+import com.donotmiss.backend.agentkit.actions.ConfirmableTool;
+import com.donotmiss.backend.agentkit.actions.PendingActionService;
 import com.donotmiss.backend.ratelimit.RateLimitStore;
 import com.donotmiss.backend.ratelimit.RateLimitTier;
 import com.fasterxml.jackson.databind.JsonNode;
@@ -47,6 +50,43 @@ final class AgentKitFixtures {
                 return body.run(arguments, caller);
             }
         };
+    }
+
+    static final JsonNode CONFIRM_PARAMS = json(
+            "{\"type\":\"object\",\"properties\":{\"replaces_card\":{\"type\":\"integer\",\"minimum\":1}},"
+                    + "\"additionalProperties\":false}");
+
+    /** F2: a write tool that only ever becomes a card; it must never run directly. */
+    static ConfirmableTool confirmTool(String name) {
+        ToolDefinition definition = new ToolDefinition(name, 1, "工具" + name, "测试写入工具 " + name, CONFIRM_PARAMS,
+                new ToolRisk(ToolRisk.DataEffect.CONFIRM_WRITE, ToolRisk.ModelUsage.NONE),
+                Permission.STUDENT_FEATURES, null, Duration.ofSeconds(1));
+        return new ConfirmableTool() {
+            @Override
+            public ToolDefinition definition() {
+                return definition;
+            }
+
+            @Override
+            public Proposal propose(JsonNode arguments, ToolCaller caller) {
+                return new Proposal(new ActionCard("测试", name, List.of(), List.of(), List.of(), null), MAPPER.createObjectNode());
+            }
+
+            @Override
+            public Applied apply(JsonNode payload, String userId) {
+                return new Applied("done", MAPPER.createObjectNode());
+            }
+
+            @Override
+            public String undo(JsonNode payload, JsonNode undoData, String userId) {
+                return "undone";
+            }
+        };
+    }
+
+    /** The executor hands write tools to this; tests stub what it returns. */
+    static PendingActionService pendingActions() {
+        return org.mockito.Mockito.mock(PendingActionService.class);
     }
 
     static AgentTool readTool(String name, Body body) {

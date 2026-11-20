@@ -142,7 +142,12 @@ public class TandemController {
         @Override
         public synchronized void onToolDone(String callId, ToolResultStatus status, String summaryForUser) {
             String key = keyOfCall.remove(callId);
-            String state = status == ToolResultStatus.OK ? "ok" : status == ToolResultStatus.DENIED ? "denied" : "error";
+            String state = switch (status) {
+                case OK -> "ok";
+                case PENDING_CONFIRMATION -> "pending";
+                case DENIED -> "denied";
+                default -> "error";
+            };
             send(emitter, "step", new TandemDtos.Progress(key, "tool", null, null, state, summaryForUser));
         }
     }

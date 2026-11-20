@@ -36,6 +36,11 @@ public record ToolResult(
         return new ToolResult(ToolResultStatus.ERROR, null, reason, summaryForUser, null);
     }
 
+    /** F2: the call became a confirmation card; nothing has changed yet. */
+    public static ToolResult pending(JsonNode data, String messageForModel, String summaryForUser) {
+        return new ToolResult(ToolResultStatus.PENDING_CONFIRMATION, data, messageForModel, summaryForUser, null);
+    }
+
     public static ToolResult denied(String reason, String summaryForUser) {
         return new ToolResult(ToolResultStatus.DENIED, null, reason, summaryForUser, null);
     }

@@ -1,5 +1,6 @@
 package com.donotmiss.backend.agentkit;
 
+import com.donotmiss.backend.agentkit.actions.ConfirmableTool;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -57,6 +58,15 @@ public class ToolRegistry {
             } else if (definition.risk().modelUsage() == ToolRisk.ModelUsage.CALLS_MODEL
                     && definition.rateLimitTier() == null) {
                 problems.add(name + ": a tool that calls a model must have a rate-limit tier");
+            }
+            if (definition.risk() != null) {
+                boolean confirmWrite = definition.risk().dataEffect() == ToolRisk.DataEffect.CONFIRM_WRITE;
+                if (confirmWrite != (tool instanceof ConfirmableTool)) {
+                    problems.add(name + ": a CONFIRM_WRITE tool must implement ConfirmableTool, and only such a tool");
+                } else if (confirmWrite && (definition.parameters() == null || !definition.parameters().path("properties")
+                        .has(ConfirmableTool.REPLACES_ARGUMENT))) {
+                    problems.add(name + ": a confirmable tool must accept '" + ConfirmableTool.REPLACES_ARGUMENT + "'");
+                }
             }
             if (definition.timeout() == null || definition.timeout().isNegative() || definition.timeout().isZero()) {
                 problems.add(name + ": timeout must be positive");

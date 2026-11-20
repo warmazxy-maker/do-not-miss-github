@@ -1,13 +1,15 @@
 <script setup lang="ts">
-import { Bike, Brain, Check, ChevronDown, CircleAlert, LoaderCircle, Send, Trash2, X } from "@lucide/vue";
+import { Bike, Brain, Check, ChevronDown, CircleAlert, ClipboardCheck, LoaderCircle, Send, Trash2, X } from "@lucide/vue";
 import { computed, nextTick, onMounted, ref } from "vue";
 
 import { ApiError } from "@/api/client";
-import { tandemApi, type TandemMemory, type TandemMessage, type TandemProgress } from "@/api/tandem";
+import { agentActionApi, tandemApi, type AgentAction, type TandemMemory, type TandemMessage, type TandemProgress } from "@/api/tandem";
+import TandemActionCard from "@/components/student/TandemActionCard.vue";
 
 /**
  * F1: Tandem. One long conversation; while a turn runs, a step list grows as Tandem decides what
  * to look up (F1 decision 5). Memories are listed on the side, each deletable (F1 decision 2).
+ * F2: an answer can carry confirmation cards; only their buttons change data.
  */
 interface LiveStep {
   key: string;
@@ -30,6 +32,7 @@ const error = ref("");
 const memories = ref<TandemMemory[]>([]);
 const memoryLimit = ref(50);
 const openSteps = ref<number | null>(null);
+const confirmingAll = ref<number | null>(null);
 const messageList = ref<HTMLElement | null>(null);
 
 const activeMemories = computed(() => memories.value.filter((memory) => !memory.expired));
@@ -89,7 +92,7 @@ async function send(preset?: string) {
         replied = true;
         const reply = data as TandemMessage;
         messages.value.push(
-          { id: reply.id - 0.5, role: "USER", content: message, steps: [], notices: [], degraded: false, createdAt: reply.createdAt },
+          { id: reply.id - 0.5, role: "USER", content: message, steps: [], notices: [], degraded: false, createdAt: reply.createdAt, actions: [] },
           reply
         );
       } else if (name === "error") {
@@ -143,8 +146,37 @@ function applyProgress(progress: TandemProgress) {
   });
 }
 
+function replaceAction(message: TandemMessage, updated: AgentAction) {
+  message.actions = message.actions.map((action) => (action.id === updated.id ? updated : action));
+}
+
+function openCards(message: TandemMessage) {
+  return message.actions.filter((action) => action.canConfirm);
+}
+
+/** One click for several cards; still one confirmation per card on the server, in order. */
+async function confirmAll(message: TandemMessage) {
+  confirmingAll.value = message.id;
+  error.value = "";
+  const failed: string[] = [];
+  try {
+    for (const action of openCards(message)) {
+      try {
+        const outcome = await agentActionApi.confirm(action.id);
+        replaceAction(message, outcome.action);
+        if (!outcome.ok) failed.push(`「${action.card.headline}」：${outcome.message}`);
+      } catch (cause) {
+        failed.push(`「${action.card.headline}」：${text(cause, "没有执行")}`);
+      }
+    }
+    if (failed.length) error.value = `有 ${failed.length} 张没有执行成功：${failed.join("；")}`;
+  } finally {
+    confirmingAll.value = null;
+  }
+}
+
 async function clearConversation() {
-  if (!window.confirm("清空对话后，Tandem 就不记得之前聊过什么了。它记住的关键事实（右侧列表）不受影响。确定清空吗？")) return;
+  if (!window.confirm("清空对话后，Tandem 就不记得之前聊过什么了，还没确认的卡片也会作废（已经执行的不受影响）。它记住的关键事实（右侧列表）不受影响。确定清空吗？")) return;
   try {
     await tandemApi.clear();
     messages.value = [];
@@ -177,7 +209,7 @@ function render(content: string) {
 }
 
 function stepLabel(status: string) {
-  return status === "OK" ? "" : status === "DENIED" ? "被拒绝" : "没成功";
+  return status === "OK" || status === "PENDING_CONFIRMATION" ? "" : status === "DENIED" ? "被拒绝" : "没成功";
 }
 
 function text(cause: unknown, fallback: string) {
@@ -199,7 +231,7 @@ function text(cause: unknown, fallback: string) {
         </button>
         <article v-if="!messages.length && !sending" class="coach-welcome">
           <Bike :size="30" /><h3>我是 Tandem</h3>
-          <p>我能看到你的预约、日程、挑战、成长记录和能力档案，也会记住你告诉我的关键事情。想聊什么都可以，比如：</p>
+          <p>我能看到你的预约、日程、挑战、成长记录和能力档案，也会记住你告诉我的关键事情。你让我加日程、建挑战、预约活动时，我会先准备一张卡片，你点确认才会执行。想聊什么都可以，比如：</p>
           <div class="tandem-examples">
             <button v-for="example in examples" :key="example" type="button" @click="send(example)">{{ example }}</button>
           </div>
@@ -212,9 +244,18 @@ function text(cause: unknown, fallback: string) {
             <p v-for="(notice, n) in message.notices" :key="n"><CircleAlert :size="15" />{{ notice }}</p>
           </div>
           <p class="tandem-text" v-html="render(message.content)"></p>
+          <div v-if="message.actions?.length" class="tandem-cards">
+            <TandemActionCard v-for="action in message.actions" :key="action.id" :action="action"
+              @updated="(updated) => replaceAction(message, updated)" />
+            <button v-if="openCards(message).length > 1" type="button" class="tandem-confirm-all"
+              :disabled="confirmingAll !== null" @click="confirmAll(message)">
+              <LoaderCircle v-if="confirmingAll === message.id" class="spin" :size="14" />
+              全部确认（{{ openCards(message).length }} 张）
+            </button>
+          </div>
           <div v-if="message.steps.length" class="tandem-used">
             <button type="button" @click="openSteps = openSteps === index ? null : index">
-              查了 {{ message.steps.length }} 项：{{ message.steps.map((step) => step.title).join("、") }}
+              用了 {{ message.steps.length }} 项：{{ message.steps.map((step) => step.title).join("、") }}
               <ChevronDown :size="14" :class="{ flipped: openSteps === index }" />
             </button>
             <ul v-if="openSteps === index">
@@ -237,6 +278,7 @@ function text(cause: unknown, fallback: string) {
               <li v-for="step in liveSteps" :key="step.key" :class="step.status">
                 <LoaderCircle v-if="step.status === 'running'" class="spin" :size="15" />
                 <Check v-else-if="step.status === 'ok'" :size="15" />
+                <ClipboardCheck v-else-if="step.status === 'pending'" :size="15" />
                 <X v-else :size="15" />
                 <strong>{{ step.title }}</strong><span v-if="step.detail">{{ step.detail }}</span>
                 <em v-if="step.summary">{{ step.summary }}</em>
@@ -426,6 +468,34 @@ function text(cause: unknown, fallback: string) {
 .tandem-live em,
 .tandem-used em {
   font-style: normal;
+}
+
+.tandem-cards {
+  display: grid;
+  gap: 6px;
+  margin-top: 4px;
+}
+
+.tandem-confirm-all {
+  justify-self: start;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 12px;
+  border: 1px solid var(--teal-dark);
+  border-radius: 6px;
+  background: #fff;
+  color: var(--teal-dark);
+  cursor: pointer;
+}
+
+.tandem-confirm-all:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+
+.tandem-live li.pending svg {
+  color: var(--teal-dark);
 }
 
 .tandem-memory-hint {

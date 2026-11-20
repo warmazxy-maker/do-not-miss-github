@@ -20,13 +20,14 @@ import java.util.Set;
  *
  * <p>Supported: {@code type} (object, string, integer, number, boolean, array), {@code properties},
  * {@code required}, {@code additionalProperties: false}, {@code enum}, {@code minimum},
- * {@code maximum}, {@code minLength}, {@code maxLength}, {@code format: "date"} (YYYY-MM-DD),
+ * {@code maximum}, {@code minLength}, {@code maxLength}, {@code format: "date"} (YYYY-MM-DD), {@code format: "date-time-local"} (YYYY-MM-DDTHH:mm, no zone),
  * {@code items}, plus the annotations {@code description} and {@code title}.</p>
  */
 public final class ToolSchemas {
     private static final Set<String> KEYWORDS = Set.of(
             "type", "properties", "required", "additionalProperties", "enum", "minimum", "maximum",
             "minLength", "maxLength", "format", "items", "description", "title");
+    private static final Set<String> FORMATS = Set.of("date", "date-time-local");
     private static final Set<String> TYPES = Set.of("object", "string", "integer", "number", "boolean", "array");
 
     private ToolSchemas() {
@@ -59,8 +60,8 @@ public final class ToolSchemas {
         if (!TYPES.contains(type)) {
             problems.add(path + ": type must be one of " + TYPES);
         }
-        if (schema.has("format") && !"date".equals(schema.path("format").asText())) {
-            problems.add(path + ": only format 'date' is supported");
+        if (schema.has("format") && !FORMATS.contains(schema.path("format").asText())) {
+            problems.add(path + ": format must be one of " + FORMATS);
         }
         if (schema.has("additionalProperties") && !schema.path("additionalProperties").isBoolean()) {
             problems.add(path + ": additionalProperties must be true or false");
@@ -145,6 +146,13 @@ public final class ToolSchemas {
                         LocalDate.parse(text);
                     } catch (DateTimeParseException ex) {
                         errors.add(path + " 应该是 YYYY-MM-DD 格式的日期");
+                    }
+                }
+                if ("date-time-local".equals(schema.path("format").asText(""))) {
+                    try {
+                        java.time.LocalDateTime.parse(text);
+                    } catch (DateTimeParseException ex) {
+                        errors.add(path + " 应该是 YYYY-MM-DDTHH:mm 格式的时间");
                     }
                 }
             }

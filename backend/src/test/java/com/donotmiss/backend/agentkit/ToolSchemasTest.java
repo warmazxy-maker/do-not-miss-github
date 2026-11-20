@@ -27,6 +27,18 @@ class ToolSchemasTest {
     }
 
     @Test
+    void localDateTimeFormatIsChecked() {
+        com.fasterxml.jackson.databind.JsonNode schema = json(
+                "{\"type\":\"object\",\"properties\":{\"start\":{\"type\":\"string\",\"format\":\"date-time-local\"}}}");
+        assertThat(ToolSchemas.problemsIn(schema)).isEmpty();
+        assertThat(ToolSchemas.validate(schema, json("{\"start\":\"2026-11-21T14:00\"}"))).isEmpty();
+        assertThat(ToolSchemas.validate(schema, json("{\"start\":\"明天下午三点\"}")))
+                .containsExactly("start 应该是 YYYY-MM-DDTHH:mm 格式的时间");
+        assertThat(ToolSchemas.problemsIn(json("{\"type\":\"object\",\"properties\":{\"x\":{\"type\":\"string\",\"format\":\"email\"}}}")))
+                .anyMatch(problem -> problem.contains("format"));
+    }
+
+    @Test
     void validArgumentsPass() {
         assertThat(ToolSchemas.validate(RANGE, json("{\"from\":\"2026-11-01\",\"status\":\"ACTIVE\",\"limit\":3}"))).isEmpty();
     }

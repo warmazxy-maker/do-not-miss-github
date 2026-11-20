@@ -1,5 +1,7 @@
 package com.donotmiss.backend.agentkit;
 
+import com.donotmiss.backend.agentkit.actions.ConfirmableTool;
+import com.donotmiss.backend.agentkit.actions.PendingActionService;
 import com.donotmiss.backend.common.ApiException;
 import com.donotmiss.backend.ratelimit.RateLimitTier;
 import com.donotmiss.backend.ratelimit.RateLimiter;
@@ -15,9 +17,15 @@ import static com.donotmiss.backend.agentkit.AgentKitFixtures.json;
 import static com.donotmiss.backend.agentkit.AgentKitFixtures.readTool;
 import static com.donotmiss.backend.agentkit.AgentKitFixtures.tool;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 class ToolExecutorTest {
     private static final ToolCaller STUDENT = new ToolCaller("student", "test", null);
+    private final PendingActionService PENDING = AgentKitFixtures.pendingActions();
 
     private final List<AgentTool> tools = List.of(
             readTool("echo", (arguments, caller) -> ToolResult.ok(json("{\"user\":\"" + caller.userId() + "\"}"), "回显")),
@@ -43,15 +51,14 @@ class ToolExecutorTest {
                     json("{\"type\":\"object\",\"properties\":{\"days\":{\"type\":\"integer\",\"minimum\":1}},"
                             + "\"required\":[\"days\"],\"additionalProperties\":false}"),
                     Duration.ofSeconds(1), null, (arguments, caller) -> ToolResult.ok(arguments, "ok")),
-            tool("writes", new ToolRisk(ToolRisk.DataEffect.CONFIRM_WRITE, ToolRisk.ModelUsage.NONE), NO_PARAMS,
-                    Duration.ofSeconds(1), null, (arguments, caller) -> ToolResult.ok(null, "wrote")),
+            AgentKitFixtures.confirmTool("writes"),
             tool("limited", new ToolRisk(ToolRisk.DataEffect.READ, ToolRisk.ModelUsage.CALLS_MODEL), NO_PARAMS,
                     Duration.ofSeconds(1), RateLimitTier.AI_HEAVY, (arguments, caller) -> ToolResult.ok(null, "ok")),
             readTool("switched_off", (arguments, caller) -> ToolResult.ok(null, "ok")));
 
     private final ToolRegistry registry = new ToolRegistry(tools, List.of("switched_off"));
     private final ToolExecutor executor = new ToolExecutor(registry, AgentKitFixtures.students(),
-            new RateLimiter(new AgentKitFixtures.CountingStore(), "Asia/Tokyo"), MAPPER);
+            new RateLimiter(new AgentKitFixtures.CountingStore(), "Asia/Tokyo"), MAPPER, PENDING);
     private final AgentSpec agent = agent("tester",
             tools.stream().map(t -> t.definition().name()).toList(), 6);
 
@@ -101,10 +108,21 @@ class ToolExecutorTest {
     }
 
     @Test
-    void confirmWritesDoNotRunBeforeF2() {
-        ToolResult result = one("writes", "{}");
+    void confirmWritesBecomeCardsInsteadOfRunning() throws Exception {
+        when(PENDING.propose(any(), any(), any())).thenReturn(ToolResult.pending(null, "card", "准备了确认卡片"));
+
+        ToolResult result = one("writes", "{\"replaces_card\":3}");
+
+        assertThat(result.status()).isEqualTo(ToolResultStatus.PENDING_CONFIRMATION);
+        verify(PENDING).propose(any(ConfirmableTool.class), eq(json("{\"replaces_card\":3}")), eq(STUDENT));
+    }
+
+    @Test
+    void confirmWritesNeverRunInTheReadOnlyPlayground() throws Exception {
+        ToolResult result = one(agent, "writes", "{}", new ToolCaller("student", "test", null, true));
+
         assertThat(result.status()).isEqualTo(ToolResultStatus.DENIED);
-        assertThat(result.summaryForUser()).contains("还没开放");
+        verify(PENDING, never()).propose(any(), any(), any());
     }
 
     @Test
@@ -113,7 +131,7 @@ class ToolExecutorTest {
         ToolExecutor withMemo = new ToolExecutor(new ToolRegistry(List.of(tools.get(0), tools.get(8),
                 tool("memo", new ToolRisk(ToolRisk.DataEffect.INTERNAL_WRITE, ToolRisk.ModelUsage.NONE), NO_PARAMS,
                         Duration.ofSeconds(1), null, (arguments, caller) -> ToolResult.ok(null, "wrote memo"))), List.of()),
-                AgentKitFixtures.students(), new RateLimiter(new AgentKitFixtures.CountingStore(), "Asia/Tokyo"), MAPPER);
+                AgentKitFixtures.students(), new RateLimiter(new AgentKitFixtures.CountingStore(), "Asia/Tokyo"), MAPPER, PENDING);
         ToolCaller readOnly = new ToolCaller("student", "ro", null, true);
         List<ToolExecutor.Execution> results = withMemo.executeAll(spec, List.of(
                 new ToolCallRequest("1", "echo", "{}", readOnly),
@@ -141,7 +159,7 @@ class ToolExecutorTest {
                     return ToolResult.ok(null, "late");
                 });
         ToolExecutor single = new ToolExecutor(new ToolRegistry(List.of(slowPipeline), List.of()),
-                AgentKitFixtures.students(), new RateLimiter(new AgentKitFixtures.CountingStore(), "Asia/Tokyo"), MAPPER);
+                AgentKitFixtures.students(), new RateLimiter(new AgentKitFixtures.CountingStore(), "Asia/Tokyo"), MAPPER, PENDING);
 
         ToolResult result = single.executeAll(agent("p", List.of("slow_pipeline"), 6),
                 List.of(new ToolCallRequest("1", "slow_pipeline", "{}", STUDENT))).get(0).result();

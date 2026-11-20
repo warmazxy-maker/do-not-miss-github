@@ -1,5 +1,6 @@
 package com.donotmiss.backend.agentkit;
 
+import com.donotmiss.backend.agentkit.actions.PendingActionService;
 import com.donotmiss.backend.agentlog.AgentRunService;
 import com.donotmiss.backend.agentlog.AgentRunType;
 import com.donotmiss.backend.agentlog.AgentTraceArtifactService;
@@ -34,6 +35,7 @@ class AgentLoopTest {
     private final AgentRunService runService = mock(AgentRunService.class);
     private final AgentTraceArtifactService artifacts = mock(AgentTraceArtifactService.class);
     private final MutableClock clock = new MutableClock(Instant.parse("2026-11-12T03:00:00Z"));
+    private final PendingActionService PENDING = AgentKitFixtures.pendingActions();
 
     private final ToolRegistry registry = new ToolRegistry(List.of(
             readTool("list_things", (arguments, caller) -> ToolResult.ok(json("{\"items\":[\"Spring Boot 工作坊\"]}"), "查到 1 个")),
@@ -41,7 +43,7 @@ class AgentLoopTest {
                 throw new IllegalStateException("db down");
             })), List.of());
     private final ToolExecutor executor = new ToolExecutor(registry, AgentKitFixtures.students(),
-            new RateLimiter(new AgentKitFixtures.CountingStore(), "Asia/Tokyo"), MAPPER);
+            new RateLimiter(new AgentKitFixtures.CountingStore(), "Asia/Tokyo"), MAPPER, PENDING);
     private final AgentSpec spec = agent("tester", List.of("list_things", "broken"), 2);
 
     AgentLoopTest() {
@@ -81,6 +83,28 @@ class AgentLoopTest {
 
     private AgentLoop.Reply run(ScriptedModel model) {
         return loop(model).run(spec, "student", "student", AgentRunType.AGENT_PLAYGROUND, List.of(), "我有哪些安排？");
+    }
+
+    @Test
+    void aConfirmationCardIsANormalOutcomeNotANotice() throws Exception {
+        ToolRegistry withWrite = new ToolRegistry(List.of(AgentKitFixtures.confirmTool("writes")), List.of());
+        ToolExecutor writeExecutor = new ToolExecutor(withWrite, AgentKitFixtures.students(),
+                new RateLimiter(new AgentKitFixtures.CountingStore(), "Asia/Tokyo"), MAPPER, PENDING);
+        when(PENDING.propose(any(), any(), any())).thenReturn(
+                ToolResult.pending(json("{\"card_id\":7}"), "等学生确认", "准备了确认卡片：测试「writes」"));
+        ScriptedModel model = new ScriptedModel();
+        model.script.add(messages -> calls("writes"));
+        model.script.add(messages -> answer("我准备好了，你看一下卡片。"));
+
+        AgentLoop.Reply reply = new AgentLoop(model, writeExecutor, withWrite, runService, artifacts, MAPPER,
+                ZoneId.of("Asia/Tokyo"), clock, Duration.ofSeconds(60))
+                .run(agent("w", List.of("writes"), 2), "student", "student", AgentRunType.MASTER_AGENT, List.of(), "帮我加个日程");
+
+        assertThat(reply.notices()).isEmpty();
+        assertThat(reply.toolCalls()).singleElement()
+                .satisfies(trace -> assertThat(trace.status()).isEqualTo("PENDING_CONFIRMATION"));
+        // The model is told the card exists and nothing has run yet.
+        assertThat(model.seen.get(1).get(model.seen.get(1).size() - 1).content()).contains("PENDING_CONFIRMATION");
     }
 
     @Test
@@ -146,7 +170,7 @@ class AgentLoopTest {
             return ToolResult.ok(null, "ok");
         })), List.of());
         ToolExecutor probeExecutor = new ToolExecutor(probeRegistry, AgentKitFixtures.students(),
-                new RateLimiter(new AgentKitFixtures.CountingStore(), "Asia/Tokyo"), MAPPER);
+                new RateLimiter(new AgentKitFixtures.CountingStore(), "Asia/Tokyo"), MAPPER, PENDING);
         AgentLoop probeLoop = new AgentLoop(new ScriptedModel() {{
             script.add(messages -> calls("probe"));
             script.add(messages -> answer("ok"));

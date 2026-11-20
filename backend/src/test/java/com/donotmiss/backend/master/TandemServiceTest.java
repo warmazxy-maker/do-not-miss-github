@@ -6,6 +6,9 @@ import com.donotmiss.backend.agentlog.AgentRunService;
 import com.donotmiss.backend.ai.OpenAiCompatibleLlmClient;
 import com.donotmiss.backend.ai.ToolChat;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.donotmiss.backend.agentkit.actions.ActionCard;
+import com.donotmiss.backend.agentkit.actions.ActionView;
+import com.donotmiss.backend.agentkit.actions.PendingActionService;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 
@@ -13,6 +16,7 @@ import java.lang.reflect.Field;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -32,8 +36,9 @@ class TandemServiceTest {
     private final TandemMemoryRepository memories = mock(TandemMemoryRepository.class);
     private final AgentRunService runService = mock(AgentRunService.class);
     private final OpenAiCompatibleLlmClient llm = mock(OpenAiCompatibleLlmClient.class);
+    private final PendingActionService pendingActions = mock(PendingActionService.class);
     private final TandemService service = new TandemService(messages, conversations, memories,
-            mock(AgentRegistry.class), mock(AgentLoop.class), runService, llm, new ObjectMapper(), "Asia/Tokyo");
+            mock(AgentRegistry.class), mock(AgentLoop.class), runService, llm, pendingActions, new ObjectMapper(), "Asia/Tokyo");
 
     private static <T> T withId(T entity, long id) {
         try {
@@ -77,6 +82,31 @@ class TandemServiceTest {
         assertThat(history.get(1).content()).contains("学生在找后端方向的活动");
         assertThat(history.get(3).content()).contains("查日程（11/16～11/22） → 0 个安排").contains("原始数据没有保留");
         assertThat(history.get(4).content()).isEqualTo("下周没有安排。");
+    }
+
+    @Test
+    void historyTellsTandemWhereItsCardsStandNow() {
+        when(conversations.findById(USER)).thenReturn(Optional.empty());
+        when(memories.findByUserIdOrderByUpdatedAtDesc(USER)).thenReturn(List.of());
+        TandemMessageEntity answer = withId(TandemMessageEntity.assistant(USER, "我准备好了，你看一下卡片。", "[]", "[]", false, 99L), 2);
+        when(messages.findByUserIdAndIdGreaterThanOrderByIdAsc(USER, 0L)).thenReturn(List.of(user(1, "帮我约那个日语角"), answer,
+                user(3, "确认了吗")));
+        ActionCard card = new ActionCard("预约活动", "日语口语角", List.of(), List.of(), List.of(), null);
+        when(pendingActions.viewsByRun(USER, List.of(99L))).thenReturn(Map.of(99L, List.of(
+                new ActionView(5L, "reserve_event", card, "DONE", "已执行", "已预约，也加进了日程表", null, false, true),
+                new ActionView(6L, "add_schedule_item", card, "PENDING", "等待确认", null, null, true, false))));
+
+        List<ToolChat.Message> history = service.history(USER, 3L);
+
+        String note = history.stream().map(ToolChat.Message::content).filter(text -> text.contains("确认卡片")).findFirst().orElseThrow();
+        assertThat(note).contains("第 5 号 预约活动「日语口语角」——已执行（已预约，也加进了日程表）")
+                .contains("第 6 号").contains("等待确认");
+    }
+
+    @Test
+    void clearingVoidsOpenCards() {
+        service.clear(USER);
+        verify(pendingActions).expireOpen(USER, MasterAgentSpec.NAME);
     }
 
     @Test

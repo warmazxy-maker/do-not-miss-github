@@ -53,5 +53,7 @@ public enum AgentStepName {
     CAPABILITY_V2_WRITE,
     AGENT_MODEL_TURN,
     AGENT_TOOL_CALL,
-    AGENT_FINAL_ANSWER
+    AGENT_FINAL_ANSWER,
+    /** F2: a confirmation card was proposed, confirmed, cancelled, expired or rolled back. */
+    AGENT_ACTION
 }

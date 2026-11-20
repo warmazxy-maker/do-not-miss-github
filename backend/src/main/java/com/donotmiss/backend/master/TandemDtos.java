@@ -1,5 +1,6 @@
 package com.donotmiss.backend.master;
 
+import com.donotmiss.backend.agentkit.actions.ActionView;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
 
@@ -18,8 +19,9 @@ public final class TandemDtos {
     public record Step(String tool, String title, String detail, String status, String summary) {
     }
 
+    /** {@code actions}: F2 confirmation cards proposed in this answer (assistant messages only). */
     public record Message(Long id, String role, String content, List<Step> steps, List<String> notices,
-                          boolean degraded, Instant createdAt) {
+                          boolean degraded, Instant createdAt, List<ActionView> actions) {
     }
 
     public record MessagePage(List<Message> messages, boolean hasMore) {
